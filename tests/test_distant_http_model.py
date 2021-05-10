@@ -7,7 +7,7 @@ import time
 import pytest
 import requests
 
-from modelkit.core.model import DistantHTTPModel
+from modelkit.core.models.distant_model import DistantHTTPModel
 from modelkit.core.service import ModelLibrary
 from tests import TEST_DIR
 

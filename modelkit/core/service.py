@@ -15,12 +15,7 @@ import redis
 import modelkit.assets
 from modelkit.assets.manager import AssetsManager
 from modelkit.assets.settings import AssetSpec
-from modelkit.core.model import (
-    DistantHTTPModel,
-    Model,
-    TensorflowModel,
-    _create_model_object,
-)
+from modelkit.core.model import Model, _create_model_object
 from modelkit.core.model_configuration import ModelConfiguration, configure, list_assets
 from modelkit.core.settings import ServiceSettings
 from modelkit.log import logger
@@ -298,15 +293,18 @@ class ModelLibrary:
 
     async def close_connections(self):
         for model in self.models.values():
-            if isinstance(model, TensorflowModel) or isinstance(
-                model, DistantHTTPModel
-            ):
+            try:
                 if model.aiohttp_session:
                     await model.aiohttp_session.close()
                     model.aiohttp_session = None
+            except AttributeError:
+                pass
+            try:
                 if model.requests_session:
                     model.requests_session.close()
                     model.requests_session = None
+            except AttributeError:
+                pass
 
     def _iterate_test_cases(self):
         model_types = {type(model_type) for model_type in self._models.values()}
