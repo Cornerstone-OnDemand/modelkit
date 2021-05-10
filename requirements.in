@@ -1,0 +1,14 @@
+aiohttp
+boto3
+google-cloud-storage
+click
+filelock
+humanize
+numpy
+pydantic
+python-dateutil
+redis
+structlog
+tenacity
+tqdm
+typing_extensions; python_version<"3.8"

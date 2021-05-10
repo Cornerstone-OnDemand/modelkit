@@ -1,0 +1,87 @@
+*.py[codi]
+
+# VSCode history
+.history/
+dev/
+
+# C extensions
+*.so
+
+# Packages
+.eggs
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+var
+sdist
+develop-eggs
+.installed.cfg
+lib
+lib64
+*.whl
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.cache
+.coverage
+nosetests.xml
+htmlcov
+unittest.xml
+.mypy_cache
+
+# Translations
+*.mo
+
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
+
+# Complexity
+output/*.html
+output/*/index.html
+
+# Docs
+/docs/site
+
+# Editors temporary files
+*.sw[a-z]
+
+# Finder
+.DS_Store
+
+# PyCharm
+.idea
+
+# Visual Studio Code config
+.vscode
+
+# env
+.python-version
+
+# mypy
+.mypy_cache
+
+# python version
+.python-version
+
+# pytest
+.pytest_cache
+
+# tmp files
+/tmp/
+/*.json
+/*.zip
+
+# coverage file
+coverage.xml
+
+# jmeter
+tests/perf/*.jtl
+tests/perf/*_report
+tests/perf/*.log

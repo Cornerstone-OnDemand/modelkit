@@ -1,0 +1,46 @@
+# Project information
+site_name: 'modelkit documentation'
+site_description: 'Library for machine learning models'
+
+nav:
+  - Home:
+    - Index: 'index.md'
+    - Configuration: 'configuration.md'
+    - CLI: 'cli.md'
+  - Python lib:
+    - Overview: 'library/overview.md'
+    - Consuming models: 'library/using_models.md'
+    - Prediction service: 'library/prediction_service.md'
+    - Developing models: 'library/developing_modelkit.md'
+    - Tensorflow models: 'library/tensorflow_models.md'
+    - Testing: 'library/testing.md'
+    - Logging: 'logging.md'
+  - Assets:
+    - Introduction: 'assets/index.md'
+    - Assets push: 'assets/assets_push.md'
+    - Environment: 'assets/environment.md'
+    - Development: 'assets/assets.md'
+    - Local cache: 'assets/working_dir.md'
+
+theme:
+  name: 'material'
+  features:
+    - tabs
+
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - meta
+  - admonition
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+  # - git-revision-date-localized
+
+repo_name: 'modelkit/modelkit'
+repo_url: 'https://github.com/modelkit/modelkit'
+extra:
+  repo_icon: 'gitlab'
+

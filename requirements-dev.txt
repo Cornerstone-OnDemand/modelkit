@@ -1,0 +1,27 @@
+-r requirements.txt
+
+# tests
+mypy
+coverage
+pytest
+pytest-asyncio
+uvicorn
+black
+flake8
+isort
+# cli
+memory-profiler
+networkx
+# logs + 🌈 = 😎
+colorama
+# releases
+towncrier
+# optional
+grpcio
+tensorflow
+tensorflow-serving-api
+# docs
+mkdocs-material
+pymdown-extensions
+# pip
+pip-tools
