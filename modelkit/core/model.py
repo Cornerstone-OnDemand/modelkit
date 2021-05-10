@@ -137,7 +137,7 @@ class InternalDataModel(pydantic.BaseModel):
 PYDANTIC_ERROR_TRUNCATION = 20
 
 
-class modelkitDataValidationException(Exception):
+class ModelkitDataValidationException(Exception):
     def __init__(
         self,
         model_identifier,
@@ -163,7 +163,7 @@ class modelkitDataValidationException(Exception):
         super().__init__(f"{error_str} `{model_identifier}`.\n" + pydantic_exc_output)
 
 
-class ValidationInitializationException(modelkitDataValidationException):
+class ValidationInitializationException(ModelkitDataValidationException):
     def __init__(self, *args, **kwargs):
         super().__init__(
             *args,
@@ -172,7 +172,7 @@ class ValidationInitializationException(modelkitDataValidationException):
         )
 
 
-class ReturnValueValidationException(modelkitDataValidationException):
+class ReturnValueValidationException(ModelkitDataValidationException):
     def __init__(self, *args, **kwargs):
         super().__init__(
             *args,
@@ -181,7 +181,7 @@ class ReturnValueValidationException(modelkitDataValidationException):
         )
 
 
-class ItemValidationException(modelkitDataValidationException):
+class ItemValidationException(ModelkitDataValidationException):
     def __init__(self, *args, **kwargs):
         super().__init__(
             *args,
