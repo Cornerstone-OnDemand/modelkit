@@ -108,7 +108,8 @@ def test_iso_serving_mode(tf_serving):
     _compare_models(model_rest, model_grpc, TEST_ITEMS)
 
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(prod_prediction_service.close_connections())
+    loop.run_until_complete(svc_serving_rest.close_connections())
+    loop.run_until_complete(svc_serving_grpc.close_connections())
     assert model_rest.aiohttp_session is None
 
 

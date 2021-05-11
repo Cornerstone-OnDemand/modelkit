@@ -88,7 +88,11 @@ class TensorflowModel(Model[ItemType, ReturnType]):
         vects = {
             key: np.stack([item[key] for item in items], axis=0) for key in items[0]
         }
-        return [await self._tensorflow_predict(vects)]
+        prediction = await self._tensorflow_predict(vects)
+        return [
+            {key: prediction[key][k, ...] for key in self.output_shapes}
+            for k in range(len(items))
+        ]
 
     async def _tensorflow_predict(
         self, vects: Dict[str, np.ndarray], grpc_dtype=None
@@ -131,7 +135,7 @@ class TensorflowModel(Model[ItemType, ReturnType]):
             output_key: np.array(
                 r.outputs[output_key].ListFields()[-1][1],
                 dtype=self.output_dtypes.get(output_key),
-            ).reshape(vect.shape[0], -1)
+            ).reshape((vect.shape[0],) + self.output_shapes[output_key])
             for output_key in self.output_tensor_mapping
         }
 

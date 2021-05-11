@@ -26,7 +26,8 @@ def tf_serving_fixture(request, required_models, models=None):
             [
                 "tensorflow_model_server",
                 "--model_config_file="
-                f"{os.environ['WORKING_DIR']}/{os.environ['ASSETS_PREFIX']}/testing.config",
+                f"{os.environ['WORKING_DIR']}/{os.environ['ASSETS_PREFIX']}/"
+                "testing.config",
             ]
             + cmd
         )
@@ -57,7 +58,7 @@ def tf_serving_fixture(request, required_models, models=None):
                 "-p",
                 "8501:8501",
                 "tensorflow/serving:2.4.0",
-                f"--model_config_file=/config/testing.config",
+                "--model_config_file=/config/testing.config",
             ]
             + cmd
         )
