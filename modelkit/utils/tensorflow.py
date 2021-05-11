@@ -1,5 +1,4 @@
 import random
-import time
 
 import requests
 
@@ -10,7 +9,36 @@ try:
     from tensorflow_serving.apis import prediction_service_pb2_grpc
     from tensorflow_serving.apis.get_model_metadata_pb2 import GetModelMetadataRequest
 except ModuleNotFoundError:
-    logger.info("tensorflow is not installed")
+    logger.info("Tensorflow serving is not installed")
+
+from tenacity import (
+    retry,
+    retry_if_exception,
+    stop_after_attempt,
+    wait_random_exponential,
+)
+
+
+def log_after_retry(retry_state):
+    logger.info(
+        "Retrying TF serving connection",
+        fun=retry_state.fn.__name__,
+        attempt_number=retry_state.attempt_number,
+        wait_time=retry_state.outcome_timestamp - retry_state.start_time,
+    )
+
+
+def retriable_error(exception):
+    return isinstance(exception, Exception)
+
+
+TF_SERVING_RETRY_POLICY = {
+    "wait": wait_random_exponential(multiplier=1, min=4, max=10),
+    "stop": stop_after_attempt(5),
+    "retry": retry_if_exception(retriable_error),
+    "after": log_after_retry,
+    "reraise": True,
+}
 
 
 class TFServingError(Exception):
@@ -32,7 +60,15 @@ def write_config(destination, models, verbose=False):
             print(f.read())
 
 
-def wait_local_serving(model_asset, host, port, mode, timeout):
+@retry(**TF_SERVING_RETRY_POLICY)
+def _wait_local_serving(model_asset, host, port, mode):
+    if mode == "grpc":
+        return try_local_serving_grpc(model_asset, host, port)
+    elif mode in {"rest", "rest-async"}:
+        return try_local_serving_restful(model_asset, host, port)
+
+
+def wait_local_serving(model_asset, host, port, mode):
     logger.info(
         "Connecting to tensorflow serving",
         tf_serving_host=host,
@@ -40,33 +76,7 @@ def wait_local_serving(model_asset, host, port, mode, timeout):
         model_asset=model_asset,
         mode=mode,
     )
-
-    start_time = time.monotonic()
-    while True:
-        try:
-            if mode == "grpc":
-                return try_local_serving_grpc(model_asset, host, port)
-            elif mode in {"rest", "rest-async"}:
-                return try_local_serving_restful(model_asset, host, port)
-        except Exception as e:
-            duration = time.monotonic() - start_time
-            logger.info(
-                "Waiting for tensorflow server",
-                model_asset=model_asset,
-                duration=duration,
-                mode=mode,
-                error=e,
-            )
-            if duration > timeout:
-                logger.error(
-                    "Fail to launch tensorflow server",
-                    model_asset=model_asset,
-                    duration=duration,
-                    exception=e,
-                    mode=mode,
-                )
-                raise TFServingError("Cannot get working tensorflow server in time")
-            time.sleep(1)
+    return _wait_local_serving(model_asset, host, port, mode)
 
 
 def try_local_serving_grpc(model_name, host, port):
@@ -90,10 +100,9 @@ def try_local_serving_restful(model_name, host, port):
     return response.json()
 
 
-def stub_need_connection(stub):
-    if stub is None:
-        return True
-    else:
+@retry(**TF_SERVING_RETRY_POLICY)
+def make_grpc_serving_request(request, stub, model_name, host, port):
+    if stub is None or random.randint(0, 10000) == 0:
         # this allow to refresh the connections regularly and thus to take
         # into account new pods arriving
         # It gives less control than monitoring request counts or connection
@@ -102,22 +111,10 @@ def stub_need_connection(stub):
         # this number we may assume to reconnect every few seconds in case
         # of high load. In case of low load, we do not really care of load
         # balancing
-        return random.randint(0, 10000) == 0
-
-
-def make_serving_request(request, stub, model_name, host, port, mode, timeout):
-    for i in range(5):
-        if stub_need_connection(stub):
-            stub = wait_local_serving(model_name, host, port, mode, timeout)
-        try:
-            r = stub.Predict(request, 1)
-            return r, stub
-        except Exception as e:
-            logger.warning(
-                "Request failed, retrying",
-                attempt=i + 1,
-                exception=e,
-                model_name=model_name,
-            )
-            stub = None
-    raise Exception(f"Unable to perform tensorflow serving request for {model_name}")
+        stub = wait_local_serving(model_name, host, port, "grpc")
+    try:
+        r = stub.Predict(request, 1)
+        return r, stub
+    finally:
+        stub = None
+        raise

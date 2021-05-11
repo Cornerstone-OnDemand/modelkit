@@ -68,7 +68,7 @@ def tf_serving_fixture(request, required_models, models=None):
             tfserving_proc.terminate()
 
     request.addfinalizer(finalize)
-    wait_local_serving(required_models[0], "localhost", 8500, "grpc", 60)
+    wait_local_serving(required_models[0], "localhost", 8500, "grpc")
 
 
 def _diff_lines(ref_name, ref_lines, lines):

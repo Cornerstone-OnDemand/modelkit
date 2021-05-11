@@ -11,7 +11,7 @@ from modelkit.core.types import ItemType, ReturnType
 from modelkit.log import logger
 from modelkit.utils.tensorflow import (
     TFServingError,
-    make_serving_request,
+    make_grpc_serving_request,
     wait_local_serving,
 )
 
@@ -65,7 +65,6 @@ class TensorflowModel(Model[ItemType, ReturnType]):
         self.tf_serving_host = self.service_settings.tf_serving_host
         self.tf_serving_port = self.service_settings.tf_serving_port
         self.tf_serving_mode = self.service_settings.tf_serving_mode
-        self.tf_serving_timeout_s = self.service_settings.tf_serving_timeout_s
 
         if self.enable_tf_serving and self.tf_serving_mode:
             wait_local_serving(
@@ -73,7 +72,6 @@ class TensorflowModel(Model[ItemType, ReturnType]):
                 self.tf_serving_host,
                 self.tf_serving_port,
                 self.tf_serving_mode,
-                self.tf_serving_timeout_s,
             )
         else:
             saved_model = tf.saved_model.load(os.path.join(self.asset_path, "1"))
@@ -122,14 +120,12 @@ class TensorflowModel(Model[ItemType, ReturnType]):
                 tf.compat.v1.make_tensor_proto(vect, dtype=dtype)
             )
 
-        r, self.grpc_stub = make_serving_request(
+        r, self.grpc_stub = make_grpc_serving_request(
             request,
             self.grpc_stub,
             self.configuration_key,
             self.tf_serving_host,
             self.tf_serving_port,
-            self.tf_serving_mode,
-            self.tf_serving_timeout_s,
         )
         return {
             output_key: np.array(
