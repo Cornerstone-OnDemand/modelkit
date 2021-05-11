@@ -99,8 +99,7 @@ These can be further manipulated by reimplementing the
 ### Empty predictions
 
 Oftentimes we manipulate the item before feeding it to TF, e.g. doing text cleaning or
-vectorization. This sometimes results in making the prediction trivial. For example, if
-a cleaned job title ends up being `""` there is nothing to do.
+vectorization. This sometimes results in making the prediction trivial. 
 
 In this case we use the following pattern, wherein we leverage the method
 `TensorflowModel._rebuild_predictions_with_mask`:
@@ -119,7 +118,7 @@ async def _predict_multiple(
         results = await self._tensorflow_predict(
             {"input_tensor": items_to_predict}
         )
-    # Merge the just-computed predictions with empty vectors for empty job titles
+    # Merge the just-computed predictions with empty vectors for empty items
     # Making sure everything is well-aligned
     return self._rebuild_predictions_with_mask(mask, results)
 ```

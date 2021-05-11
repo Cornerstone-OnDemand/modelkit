@@ -6,10 +6,10 @@ The belief is that test cases for models constitute essential documentation for 
 
 ### ModelLibrary fixture and autotesting
 
-`modelkit.core.testing.make_ModelLibrary_test` creates a `ModelLibrary` fixture and a test that can be used in your pytest testing suite. Call the following in a test file discoverable by pytest:
+`modelkit.core.fixtures.make_modellibrary_test` creates a `ModelLibrary` fixture and a test that can be used in your pytest testing suite. Call the following in a test file discoverable by pytest:
 
 ```python
-from modelkit.core.testing import make_ModelLibrary_test
+from modelkit.core.fixtures import make_modellibrary_test
 
 make_ModelLibrary_test(
     **prediction_service_arguments, # insert any arguments to ModelLibrary here

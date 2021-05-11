@@ -272,8 +272,6 @@ This is what an `modelkit.core.model.Asset` is.
 !!! info
     In fact, it is defined the other way around: `Model`s are `Asset`s with a predict function, and thus `Model` inherits from `Asset`.
 
-A good example is the skill distance asset. The loaded `Trie` data structure is the same for all `Model`s, but the strategy to retrieve information may not. For example we query it differently when looking at the aggregate distance over skills, versus filling a dense square sub matrix of the distance matrix. Therefore, we have different skill distance `Model` objects, that all share the same `skill_distance_asset` key in their `model_dependencies`.
-
 !!! info
     There are two ways to use a data asset in a `Model`: either load it directly via its configuration and the `_deserialize_asset`, or package it in an `Asset` and use the deserialized object via model dependencies.
 

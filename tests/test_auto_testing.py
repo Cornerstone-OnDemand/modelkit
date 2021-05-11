@@ -3,7 +3,7 @@ from typing import Dict
 import pydantic
 
 from modelkit.core.model import Model
-from modelkit.core.testing import ModelLibrary_auto_test, ModelLibrary_fixture
+from modelkit.core.fixtures import modellibrary_auto_test, modellibrary_fixture
 from modelkit.core.types import ModelTestingConfiguration
 
 
@@ -64,12 +64,12 @@ def test_list_cases():
 # but also a fixture called testing_prediction_service with a
 # ModelLibrary
 # pytest will run the test_auto_prediction_service test
-ModelLibrary_fixture(
+modellibrary_fixture(
     models=TestableModel,
     fixture_name="testing_prediction_service",
 )
 
-ModelLibrary_auto_test(
+modellibrary_auto_test(
     models=TestableModel,
     fixture_name="testing_prediction_service",
     test_name="test_auto_prediction_service",

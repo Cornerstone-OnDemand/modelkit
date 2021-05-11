@@ -17,13 +17,13 @@ class JSONTestResult:
     fn: str
 
 
-def ModelLibrary_auto_test(
+def modellibrary_auto_test(
     configuration=None,
     models=None,
     required_models=None,
     #  fixture name
-    fixture_name="testing_prediction_service",
-    test_name="testing_prediction_service",
+    fixture_name="testing_model_library",
+    test_name="testing_model_library",
     necessary_fixtures=None,
     fixture_scope="session",
     test_dir=".",
@@ -69,7 +69,7 @@ def ModelLibrary_auto_test(
     frame.f_locals[test_name] = test_function
 
 
-def ModelLibrary_fixture(
+def modellibrary_fixture(
     # arguments passed directly to ModelLibrary
     settings=None,
     assetsmanager_settings=None,
@@ -77,7 +77,7 @@ def ModelLibrary_fixture(
     models=None,
     required_models=None,
     #  fixture name
-    fixture_name="testing_prediction_service",
+    fixture_name="testing_model_library",
     necessary_fixtures=None,
     fixture_scope="session",
 ):

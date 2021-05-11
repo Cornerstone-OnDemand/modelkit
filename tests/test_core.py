@@ -176,7 +176,7 @@ def test_configure_override():
     assert configurations["yolo2"].asset is None
 
 
-def test_ModelLibrary_required_models():
+def test_modellibrary_required_models():
     class SomeModel(Model):
         CONFIGURATIONS = {"yolo": {}, "les simpsons": {}}
 
@@ -190,7 +190,7 @@ def test_ModelLibrary_required_models():
     assert m.batch_size == 64
 
 
-def test_ModelLibrary_no_models(monkeypatch):
+def test_modellibrary_no_models(monkeypatch):
     monkeypatch.setenv("modelkit_MODELS", "")
     p = ModelLibrary(models=None)
     assert p.configuration == {}

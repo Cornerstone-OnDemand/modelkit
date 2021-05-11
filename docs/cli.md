@@ -83,27 +83,3 @@ Starts the TF serving container given the exported models in `${WORKING_DIR}/tfs
     docker rm -f local-tf-serving
     ```
     when you are done.
-
-
-## Specific CLIs
-
-### Skills CLI
-
-Provides close skills for a given `skill_id`
-```sh
-bin/skills.py top
-```
-
-### Job titles CLI
-
-Does a job-title to skills prediction
-```sh
-bin/job_titles.py to-skills
-```
-
-### Skills in Sentence CLI
-
-Does a skills in sentence prediction
-```sh
-bin/skills_in_sentence.py
-```
