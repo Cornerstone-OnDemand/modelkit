@@ -67,7 +67,7 @@ def gcs_assetsmanager(working_dir):
 def s3_assetsmanager(request, base_dir, working_dir):
     driver_path = os.path.join(base_dir, "local_driver")
     os.makedirs(driver_path)
-    os.makedirs(os.path.join(driver_path, "mlp-build-assets"))
+    os.makedirs(os.path.join(driver_path, "test-assets"))
 
     if "GITLAB_CI" in os.environ or "MINIO_PROCESS" in os.environ:
         minio_proc = subprocess.Popen(
@@ -110,7 +110,7 @@ def s3_assetsmanager(request, base_dir, working_dir):
         driver_settings={
             "storage_provider": "s3",
             "aws_default_region": "us-east-1",
-            "bucket": "mlp-build-assets",
+            "bucket": "test-assets",
             "aws_access_key_id": "minioadmin",
             "aws_secret_access_key": "minioadmin",
             "aws_session_token": None,
