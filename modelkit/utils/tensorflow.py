@@ -73,7 +73,7 @@ def try_local_serving_grpc(model_name, host, port):
     channel = grpc.insecure_channel(
         f"{host}:{port}", [("grpc.lb_policy_name", "round_robin")]
     )
-    stub = prediction_service_pb2_grpc.ModelLibraryStub(channel)
+    stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
     r = GetModelMetadataRequest()
     r.model_spec.name = model_name
     r.metadata_field.append("signature_def")
@@ -105,10 +105,10 @@ def stub_need_connection(stub):
         return random.randint(0, 10000) == 0
 
 
-def make_serving_request(request, stub, model_asset, host, port, mode, timeout):
+def make_serving_request(request, stub, model_name, host, port, mode, timeout):
     for i in range(5):
         if stub_need_connection(stub):
-            stub = wait_local_serving(model_asset, host, port, mode, timeout)
+            stub = wait_local_serving(model_name, host, port, mode, timeout)
         try:
             r = stub.Predict(request, 1)
             return r, stub
@@ -117,7 +117,7 @@ def make_serving_request(request, stub, model_asset, host, port, mode, timeout):
                 "Request failed, retrying",
                 attempt=i + 1,
                 exception=e,
-                model_asset=model_asset,
+                model_name=model_name,
             )
             stub = None
-    raise Exception(f"Unable to perform tensorflow serving request for {model_asset}")
+    raise Exception(f"Unable to perform tensorflow serving request for {model_name}")

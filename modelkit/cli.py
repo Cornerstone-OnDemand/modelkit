@@ -8,11 +8,13 @@ from modelkit.log import logger
 from modelkit.utils.tensorflow import write_config
 
 
-def deploy_tf_models(models, mode, config_name, verbose=False):
+def deploy_tf_models(
+    required_models, mode, config_name="config", verbose=False, models=None
+):
     manager = AssetsManager()
-    configuration = configure(models=None)
+    configuration = configure(models=models)
     model_paths = {}
-    for model_name in models:
+    for model_name in required_models:
         model_configuration = configuration[model_name]
         if not model_configuration.asset:
             raise ValueError("Is this a TensorFlow model with an asset?")
@@ -38,7 +40,7 @@ def deploy_tf_models(models, mode, config_name, verbose=False):
 
     if mode == "local-docker" or mode == "local-process":
         logger.info("Checking that local models are present.")
-        download_assets(configuration=configuration, required_models=models)
+        download_assets(configuration=configuration, required_models=required_models)
         target = os.path.join(
             manager.working_dir, manager.assetsmanager_prefix, f"{config_name}.config"
         )

@@ -26,16 +26,29 @@ except ModuleNotFoundError:
     logger.info("tensorflow is not installed")
 
 
+def safe_np_dump(obj):
+    if isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    return obj.item()
+
+
 class TensorflowModel(Model[ItemType, ReturnType]):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
-        self.model_name = kwargs["model_asset"]
-        output_tensor_mapping = kwargs.pop("output_tensor_mapping", {})
+        output_tensor_mapping = kwargs.pop("output_tensor_mapping", {}) or kwargs[
+            "model_settings"
+        ].get("output_tensor_mapping")
         self.output_tensor_mapping = output_tensor_mapping
-        self.output_shapes = kwargs.get("output_shapes", {})
+        self.output_shapes = kwargs.get("output_shapes", {}) or kwargs[
+            "model_settings"
+        ].get("output_shapes")
         self.output_dtypes = kwargs.pop(
             "output_dtypes", {name: np.float for name in output_tensor_mapping}
-        )
+        ) or kwargs["model_settings"].get("output_dtypes")
         # sanity checks
         assert output_tensor_mapping.keys() == self.output_dtypes.keys()
         assert output_tensor_mapping.keys() == self.output_shapes.keys()
@@ -56,7 +69,7 @@ class TensorflowModel(Model[ItemType, ReturnType]):
 
         if self.enable_tf_serving and self.tf_serving_mode:
             wait_local_serving(
-                self.model_name,
+                self.configuration_key,
                 self.tf_serving_host,
                 self.tf_serving_port,
                 self.tf_serving_mode,
@@ -99,7 +112,7 @@ class TensorflowModel(Model[ItemType, ReturnType]):
         self, vects: Dict[str, np.ndarray], dtype=None
     ) -> Dict[str, np.ndarray]:
         request = PredictRequest()
-        request.model_spec.name = self.model_name
+        request.model_spec.name = self.configuration_key
         for key, vect in vects.items():
             request.inputs[key].CopyFrom(
                 tf.compat.v1.make_tensor_proto(vect, dtype=dtype)
@@ -108,7 +121,7 @@ class TensorflowModel(Model[ItemType, ReturnType]):
         r, self.grpc_stub = make_serving_request(
             request,
             self.grpc_stub,
-            self.model_name,
+            self.configuration_key,
             self.tf_serving_host,
             self.tf_serving_port,
             self.tf_serving_mode,
@@ -129,8 +142,8 @@ class TensorflowModel(Model[ItemType, ReturnType]):
             self.requests_session = requests.Session()
         response = self.requests_session.post(
             f"http://{self.tf_serving_host}:{self.tf_serving_port}"
-            f"/v1/models/{self.model_name}:predict",
-            data=json.dumps({"inputs": vects}),
+            f"/v1/models/{self.configuration_key}:predict",
+            data=json.dumps({"inputs": vects}, default=safe_np_dump),
         )
         if response.status_code != 200:
             raise TFServingError(
@@ -157,8 +170,8 @@ class TensorflowModel(Model[ItemType, ReturnType]):
             self.aiohttp_session = aiohttp.ClientSession()
         async with self.aiohttp_session.post(
             f"http://{self.tf_serving_host}:{self.tf_serving_port}"
-            f"/v1/models/{self.model_name}:predict",
-            data=json.dumps({"inputs": vects}),
+            f"/v1/models/{self.configuration_key}:predict",
+            data=json.dumps({"inputs": vects}, default=safe_np_dump),
         ) as response:
             if response.status != 200:
                 raise TFServingError(

@@ -12,19 +12,21 @@ from modelkit.cli import deploy_tf_models
 from modelkit.utils.tensorflow import wait_local_serving
 
 
-def tf_serving_fixture(request, tf_models):
+def tf_serving_fixture(request, required_models, models=None):
     cmd = [
         "--port=8500",
         "--rest_api_port=8501",
     ]
 
     if "JENKINS_CI" in os.environ:
-        deploy_tf_models(tf_models, "local-process")
+        deploy_tf_models(
+            required_models, "local-process", config_name="testing", models=models
+        )
         proc = subprocess.Popen(
             [
                 "tensorflow_model_server",
                 "--model_config_file="
-                f"{os.environ['WORKING_DIR']}/assets-v3/{tf_models}.config",
+                f"{os.environ['WORKING_DIR']}/{os.environ['ASSETS_PREFIX']}/testing.config",
             ]
             + cmd
         )
@@ -33,7 +35,9 @@ def tf_serving_fixture(request, tf_models):
             proc.terminate()
 
     else:
-        deploy_tf_models(tf_models, "local-docker")
+        deploy_tf_models(
+            required_models, "local-docker", config_name="testing", models=models
+        )
         # kill previous tfserving container (if any)
         subprocess.call(
             ["docker", "rm", "-f", "modelkit-tfserving-tests"],
@@ -47,13 +51,13 @@ def tf_serving_fixture(request, tf_models):
                 "--name",
                 "modelkit-tfserving-tests",
                 "--volume",
-                f"{os.environ['WORKING_DIR']}/assets-v3:/config",
+                f"{os.environ['WORKING_DIR']}/{os.environ['ASSETS_PREFIX']}:/config",
                 "-p",
                 "8500:8500",
                 "-p",
                 "8501:8501",
                 "tensorflow/serving:2.4.0",
-                f"--model_config_file=/config/{tf_models}.config",
+                f"--model_config_file=/config/testing.config",
             ]
             + cmd
         )
@@ -63,7 +67,7 @@ def tf_serving_fixture(request, tf_models):
             tfserving_proc.terminate()
 
     request.addfinalizer(finalize)
-    wait_local_serving(tf_models[0], "localhost", 8500, "grpc", 60)
+    wait_local_serving(required_models[0], "localhost", 8500, "grpc", 60)
 
 
 def _diff_lines(ref_name, ref_lines, lines):
