@@ -115,6 +115,6 @@ def make_grpc_serving_request(request, stub, model_name, host, port):
     try:
         r = stub.Predict(request, 1)
         return r, stub
-    finally:
+    except Exception as e:
         stub = None
         raise
