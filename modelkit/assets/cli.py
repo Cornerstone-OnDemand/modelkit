@@ -85,7 +85,7 @@ def _check_asset_file_number(asset_path):
 @click.argument("asset_path")
 @click.argument("asset_spec")
 @click.option("--bucket", envvar="ASSETS_BUCKET_NAME")
-@click.option("--assetsmanager-prefix", default="assets-v3")
+@click.option("--assetsmanager-prefix", default="modelkit-assets")
 @click.option("--dry-run", is_flag=True)
 def new(asset_path, asset_spec, bucket, assetsmanager_prefix, dry_run):
     """
@@ -135,7 +135,7 @@ def new(asset_path, asset_spec, bucket, assetsmanager_prefix, dry_run):
     "--bump-major", is_flag=True, help="Push a new major version (1.0, 2.0, etc.)"
 )
 @click.option("--bucket", envvar="ASSETS_BUCKET_NAME")
-@click.option("--assetsmanager-prefix", default="assets-v3")
+@click.option("--assetsmanager-prefix", default="modelkit-assets")
 @click.option("--dry-run", is_flag=True)
 def update(asset_path, asset_spec, bucket, assetsmanager_prefix, bump_major, dry_run):
     """
@@ -230,7 +230,7 @@ def update(asset_path, asset_spec, bucket, assetsmanager_prefix, bump_major, dry
 
 @assets.command("list")
 @click.argument("--bucket", envvar="ASSETS_BUCKET_NAME")
-@click.option("--assetsmanager-prefix", default="assets-v3")
+@click.option("--assetsmanager-prefix", default="modelkit-assets")
 def list(bucket, assetsmanager_prefix):
     """lists all available assets and their versions."""
     manager = AssetsManager(

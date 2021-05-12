@@ -44,7 +44,7 @@ class AssetsManagerSettings(BaseSettings):
 
     working_dir: pydantic.DirectoryPath = pydantic.Field(None, env="WORKING_DIR")
     timeout_s: float = pydantic.Field(5 * 60, env="ASSETSMANAGER_TIMEOUT_S")
-    assetsmanager_prefix: str = pydantic.Field("assets-v3", env="ASSETS_PREFIX")
+    assetsmanager_prefix: str = pydantic.Field("modelkit-assets", env="ASSETS_PREFIX")
 
     @validator("driver_settings", always=True)
     @classmethod

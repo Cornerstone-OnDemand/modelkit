@@ -9,7 +9,7 @@ The parameters necessary to instantiate an `AssetsManager` can all be read from 
 | `STORAGE_PROVIDER`        | `gcs`         | `storage_provider`     | `gcs` (default), `s3`, `s3ssm` or `local` |
 | `ASSETS_BUCKET_NAME`      | None          | `bucket`               | Bucket in which data is stored            |
 | `WORKING_DIR`             | None          | `working_dir`          | Local directory to cache assets           |
-| `ASSETS_PREFIX`           | `assets-v3`   | `assetsmanager_prefix` | Objects prefix                            |
+| `ASSETS_PREFIX`           | `modelkit-assets`   | `assetsmanager_prefix` | Objects prefix                            |
 | `ASSETSMANAGER_TIMEOUT_S` | `300`         | `timeout_s`            | file lock timeout when downloading assets |
 
 More settings can be passed in order to configure the driver itself.

@@ -24,7 +24,7 @@ Also see [the CLI documentation](../cli.md).
 
 ## Details
 
-The CLI `bin/tf_serving.py configure local-docker` creates a configuration file for tensorflow serving, with the model locations refered to _relative to the container file system_. As a result, the TF serving container will expect that the `WORKING_DIR/assets-v3` is bound to the `/config` directory inside the container.
+The CLI `bin/tf_serving.py configure local-docker` creates a configuration file for tensorflow serving, with the model locations refered to _relative to the container file system_. As a result, the TF serving container will expect that the `WORKING_DIR/modelkit-assets` is bound to the `/config` directory inside the container.
 
 The container can then be started by pointing TF serving to the
 generated configuration file `--model_config_file=/config/modelkit.config`.

@@ -35,6 +35,7 @@ def test_local_driver_settings(settings_dict, valid, monkeypatch):
 def clean_env(monkeypatch):
     monkeypatch.delenv("WORKING_DIR", raising=False)
     monkeypatch.delenv("ASSETS_BUCKET_NAME", raising=False)
+    monkeypatch.delenv("ASSETS_PREFIX", raising=False)
 
 
 @pytest.mark.parametrize(
@@ -86,7 +87,7 @@ def test_assetsmanager_minimal(monkeypatch, clean_env):
         assert settings.driver_settings.storage_provider == "gcs"
         assert settings.driver_settings.settings == GCSDriverSettings()
         assert settings.driver_settings.settings.bucket == "some-bucket"
-        assert settings.assetsmanager_prefix == "assets-v3"
+        assert settings.assetsmanager_prefix == "modelkit-assets"
         assert settings.working_dir == PosixPath(working_dir)
 
 

@@ -63,9 +63,9 @@ bin/tf_serving.py configure [local-docker|local-process|remote-gcs|remote-s3] SE
 
 Where `SERVICE_NAME` is a key of the dictionary `modelkit.models.config.TF_SERVING_MODELS`.
 
-In `local-docker` mode this will write a configuration file to `${WORKING_DIR}/assets-v3/SERVICE_NAME.config`, usable with a docker container whose `/config` folder points to `${WORKING_DIR}/assets-v3`.
+In `local-docker` mode this will write a configuration file to `${WORKING_DIR}/modelkit-assets/SERVICE_NAME.config`, usable with a docker container whose `/config` folder points to `${WORKING_DIR}/modelkit-assets`.
 
-In `local-process` mode this will write a configuration file to `${WORKING_DIR}/assets-v3/SERVICE_NAME.config`, usable with the TF serving process (that is, will local paths hardcoded in the configuration, this is used in the CI and not recommended).
+In `local-process` mode this will write a configuration file to `${WORKING_DIR}/modelkit-assets/SERVICE_NAME.config`, usable with the TF serving process (that is, will local paths hardcoded in the configuration, this is used in the CI and not recommended).
 
 In `remote-s3` mode this won't upload any data, but with `--verbose` this will print the configuration that you can copy/paste in the src/deploy/tensorflow/tensorflow.config.template file in a given PipelineKit project.
 
