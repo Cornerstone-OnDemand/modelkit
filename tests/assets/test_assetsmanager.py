@@ -23,7 +23,7 @@ def _perform_mng_test(mng):
     # fetch asset
     d = mng._fetch_asset("category-test/some-data.ext", "1.0")
     fetched_path = d["path"]
-    assert fetched_path.endswith(os.path.join("category-test/some-data.ext", "1.0"))
+    assert fetched_path.endswith(os.path.join("category-test", "some-data.ext", "1.0"))
 
     # check that it was not fetched from cache
     assert not d["from_cache"]
@@ -43,7 +43,7 @@ def _perform_mng_test(mng):
     # fetch asset
     d = mng._fetch_asset("category-test/some-data-2", "1.0")
     fetched_path = d["path"]
-    assert fetched_path.endswith(os.path.join("category-test/some-data-2", "1.0"))
+    assert fetched_path.endswith(os.path.join("category-test", "some-data-2", "1.0"))
 
     # check that it was not fetched from cache
     assert not d["from_cache"]

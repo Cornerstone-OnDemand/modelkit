@@ -288,11 +288,11 @@ class AssetsManager:
         """
         with ContextualizedLogging(name=name, version=version):
             cache_asset_path = os.path.join(
-                self.working_dir, self.assetsmanager_prefix, name, version
+                self.working_dir, self.assetsmanager_prefix, *name.split("/"), version
             )
             meta_path = cache_asset_path + ".meta"
             local_asset_path = os.path.join(
-                self.working_dir, self.assetsmanager_prefix, name, version
+                self.working_dir, self.assetsmanager_prefix, *name.split("/"), version
             )
             object_name = self.get_object_name(name, version)
 

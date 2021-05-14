@@ -75,7 +75,7 @@ def _perform_mng_test(mng):
     )
 
     assert list(mng.iterate_assets()) == [
-        ("category-test/some-data", ["1.0", "0.1", "0.0"])
+        (os.path.join("category-test", "some-data"), ["1.0", "0.1", "0.0"])
     ]
 
     # pushing via new works
@@ -90,7 +90,7 @@ def _perform_mng_test(mng):
     assert fetched_asset_dict["version"] == "1.1"
 
     assert list(mng.iterate_assets()) == [
-        ("category-test/some-data", ["1.1", "1.0", "0.1", "0.0"]),
+        (os.path.join("category-test", "some-data"), ["1.1", "1.0", "0.1", "0.0"]),
     ]
 
 

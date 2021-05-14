@@ -50,7 +50,7 @@ class LocalStorageDriver:
                 shutil.copyfileobj(fsrc, fdst)
 
     def download_object(self, bucket_name, object_name, destination_path):
-        object_path = os.path.join(self.bucket, bucket_name, object_name)
+        object_path = os.path.join(self.bucket, bucket_name, *object_name.split("/"))
         if not os.path.isfile(object_path):
             logger.error(
                 "Object not found.", bucket=bucket_name, object_name=object_name
