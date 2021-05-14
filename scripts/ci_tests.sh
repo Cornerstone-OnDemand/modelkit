@@ -1,9 +1,9 @@
 #!/bin/bash
 
 if [[ $JOB_NAME == "ubuntu-latest" ]]; then
-    ENABLE_TF_SERVING=True
-    ENABLE_REDIS=True
-    ENABLE_S3=True
+    ENABLE_TF_SERVING_TEST=True
+    ENABLE_REDIS_TEST=True
+    ENABLE_S3_TEST=True
 fi
 
 nox -s test

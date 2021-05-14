@@ -8,6 +8,7 @@ import pytest
 import modelkit.assets.cli
 from modelkit.assets.manager import AssetsManager
 from modelkit.assets.settings import DriverSettings
+from tests.conftest import skip_unless
 
 test_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -88,16 +89,12 @@ def test_local_assetsmanager(local_assetsmanager):
     _perform_mng_test(local_assetsmanager)
 
 
-@pytest.mark.skipif(
-    os.environ.get("ENABLE_GCS", "False") == "False", reason="GCS not available"
-)
+@skip_unless("ENABLE_GCS_TEST", "True")
 def test_gcs_assetsmanager(gcs_assetsmanager):
     _perform_mng_test(gcs_assetsmanager)
 
 
-@pytest.mark.skipif(
-    os.environ.get("ENABLE_S3", "False") == "False", reason="S3 not available"
-)
+@skip_unless("ENABLE_S3_TEST", "True")
 def test_s3_assetsmanager(s3_assetsmanager):
     _perform_mng_test(s3_assetsmanager)
 
@@ -125,9 +122,7 @@ def test_gcs_service_account_path(working_dir):
     assert list(mng.iterate_assets()) == []
 
 
-@pytest.mark.skipif(
-    os.environ.get("ENABLE_GCS", "False") == "False", reason="GCS not available"
-)
+@skip_unless("ENABLE_GCS_TEST", "True")
 def test_download_object_or_prefix_cli(gcs_assetsmanager):
     original_asset_path = os.path.join(test_path, "testdata", "some_data.json")
 

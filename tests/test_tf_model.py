@@ -1,5 +1,6 @@
 import asyncio
 import os
+import tempfile
 
 import numpy as np
 import pytest
@@ -9,6 +10,7 @@ from modelkit.core.models.tensorflow_model import TensorflowModel
 from modelkit.core.settings import ServiceSettings
 from modelkit.utils import testing
 from tests import TEST_DIR
+from tests.conftest import skip_unless
 
 
 class DummyTFModel(TensorflowModel):
@@ -59,7 +61,7 @@ def test_tf_model(monkeypatch):
     assert np.allclose(v, model.predict({"input_1": v})["lambda"])
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def tf_serving(request, monkeypatch):
     with tempfile.TemporaryDirectory() as tmp_dir:
         monkeypatch.setenv("WORKING_DIR", tmp_dir)
@@ -67,12 +69,12 @@ def tf_serving(request, monkeypatch):
         monkeypatch.setenv("ASSETS_PREFIX", "testdata")
         monkeypatch.setenv("STORAGE_PROVIDER", "local")
 
-        testing.tf_serving_fixture(request, ["dummy_tf_model"], models=DummyTFModel)
+        yield testing.tf_serving_fixture(
+            request, ["dummy_tf_model"], models=DummyTFModel
+        )
 
 
-@pytest.mark.skipif(
-    os.environ.get("ENABLE_TF", "False") == "False", reason="TF serving not available"
-)
+@skip_unless("ENABLE_TF_SERVING_TEST", "True")
 def test_iso_serving_mode(tf_serving):
     model_name = "dummy_tf_model"
     # Get the prediction service running TF with gRPC serving
@@ -195,9 +197,7 @@ def _compare_models(model0, model1, items, tolerance=1e-2):
         )
 
 
-@pytest.mark.skipif(
-    os.environ.get("ENABLE_TF", "False") == "False", reason="TF serving not available"
-)
+@skip_unless("ENABLE_TF_SERVING_TEST", "True")
 def test_iso_async(tf_serving):
     # Get the prediction service running TF with REST serving
     svc = ModelLibrary(

@@ -26,3 +26,8 @@ def event_loop(request):
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
+
+
+def skip_unless(var, value):
+    env = os.environ.get(var)
+    return pytest.mark.skipif(env != value, reason=f"{var} is not {value}")

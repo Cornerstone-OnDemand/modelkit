@@ -3,6 +3,7 @@ import os
 import pytest
 
 from modelkit.assets import errors
+from tests.conftest import skip_unless
 
 
 def _perform_driver_error_object_not_found(driver):
@@ -16,17 +17,13 @@ def test_local_driver(local_assetsmanager):
     _perform_driver_error_object_not_found(local_driver)
 
 
-@pytest.mark.skipif(
-    os.environ.get("ENABLE_GCS", "False") == "False", reason="GCS not available"
-)
+@skip_unless("ENABLE_GCS_TEST", "True")
 def test_gcs_driver(gcs_assetsmanager):
     gcs_driver = gcs_assetsmanager.storage_driver
     _perform_driver_error_object_not_found(gcs_driver)
 
 
-@pytest.mark.skipif(
-    os.environ.get("ENABLE_S3", "False") == "False", reason="S3 not available"
-)
+@skip_unless("ENABLE_S3_TEST", "True")
 def test_s3_driver(s3_assetsmanager):
     s3_driver = s3_assetsmanager.storage_driver
     _perform_driver_error_object_not_found(s3_driver)
