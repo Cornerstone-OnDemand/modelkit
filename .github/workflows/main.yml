@@ -31,4 +31,4 @@ jobs:
       - name: Run Tests
         run: scripts/ci_tests.sh
         env:
-          JOB_NAME: "${{ runner.os }}"
+          OS_NAME: "${{ matrix.os }}"
