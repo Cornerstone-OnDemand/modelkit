@@ -6,6 +6,7 @@ coverage
 pytest
 pytest-asyncio
 uvicorn
+fastapi
 black
 flake8
 isort
