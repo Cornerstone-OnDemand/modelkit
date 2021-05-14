@@ -4,7 +4,7 @@ import pydantic
 
 
 class ServiceSettings(pydantic.BaseSettings):
-    enable_tf_serving: bool = pydantic.Field(True, env="ENABLE_TF_SERVING")
+    enable_tf_serving: bool = pydantic.Field(False, env="ENABLE_TF_SERVING")
     tf_serving_mode: str = pydantic.Field("rest", env="TF_SERVING_MODE")
     tf_serving_host: str = pydantic.Field("localhost", env="TF_SERVING_HOST")
     tf_serving_port: int = pydantic.Field(None, env="TF_SERVING_PORT")
