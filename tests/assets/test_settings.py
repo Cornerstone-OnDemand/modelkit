@@ -1,6 +1,6 @@
 import os
 import tempfile
-from pathlib import PosixPath
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -88,7 +88,7 @@ def test_assetsmanager_minimal(monkeypatch, clean_env):
         assert settings.driver_settings.settings == GCSDriverSettings()
         assert settings.driver_settings.settings.bucket == "some-bucket"
         assert settings.assetsmanager_prefix == "modelkit-assets"
-        assert settings.working_dir == PosixPath(working_dir)
+        assert settings.working_dir == Path(working_dir)
 
 
 def test_assetsmanager_minimal_provider(monkeypatch, clean_env):
@@ -102,8 +102,8 @@ def test_assetsmanager_minimal_provider(monkeypatch, clean_env):
         settings = AssetsManagerSettings()
         assert settings.driver_settings.storage_provider == "local"
         assert settings.driver_settings.settings == LocalDriverSettings()
-        assert settings.driver_settings.settings.bucket == PosixPath(working_dir)
-        assert settings.working_dir == PosixPath(working_dir)
+        assert settings.driver_settings.settings.bucket == Path(working_dir)
+        assert settings.working_dir == Path(working_dir)
 
 
 def test_assetsmanager_minimal_prefix(monkeypatch, clean_env):
@@ -118,4 +118,4 @@ def test_assetsmanager_minimal_prefix(monkeypatch, clean_env):
         assert settings.driver_settings.settings == GCSDriverSettings()
         assert settings.driver_settings.settings.bucket == "some-bucket"
         assert settings.assetsmanager_prefix == "a-prefix"
-        assert settings.working_dir == PosixPath(working_dir)
+        assert settings.working_dir == Path(working_dir)
