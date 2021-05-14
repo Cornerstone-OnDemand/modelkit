@@ -11,7 +11,7 @@ def test(session):
         "run",
         "-m",
         "pytest",
-        env={"PYTHONWARNINGS": "always::DeprecationWarning"},
+        env={"PYTHONWARNINGS": "always::DeprecationWarning", **session.env},
     )
     session.run("coverage", "report", "-m")
     session.run("coverage", "xml")
