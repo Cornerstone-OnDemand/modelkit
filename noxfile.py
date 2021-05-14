@@ -10,8 +10,7 @@ def test(session):
         "coverage",
         "run",
         "-m",
-        "pytest",
-        env={"PYTHONWARNINGS": "always::DeprecationWarning", **session.env},
+        "pytest"
     )
     session.run("coverage", "report", "-m")
     session.run("coverage", "xml")
