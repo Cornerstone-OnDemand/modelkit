@@ -54,6 +54,8 @@ idna==2.10
     # via
     #   requests
     #   yarl
+importlib-metadata==4.0.1
+    # via prettytable
 jmespath==0.10.0
     # via
     #   boto3
@@ -63,6 +65,8 @@ multidict==5.1.0
     #   aiohttp
     #   yarl
 numpy==1.19.4
+    # via -r requirements.in
+prettytable==2.1.0
     # via -r requirements.in
 protobuf==3.14.0
     # via
@@ -114,13 +118,18 @@ typing-extensions==3.7.4.3 ; python_version < "3.8"
     # via
     #   -r requirements.in
     #   aiohttp
+    #   importlib-metadata
     #   yarl
 urllib3==1.26.2
     # via
     #   botocore
     #   requests
+wcwidth==0.2.5
+    # via prettytable
 yarl==1.6.3
     # via aiohttp
+zipp==3.4.1
+    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

@@ -12,3 +12,4 @@ structlog
 tenacity
 tqdm
 typing_extensions; python_version<"3.8"
+prettytable
