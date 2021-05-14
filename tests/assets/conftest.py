@@ -4,6 +4,12 @@ import tempfile
 import uuid
 
 import pytest
+from tenacity import (
+    retry,
+    retry_if_exception,
+    stop_after_attempt,
+    wait_random_exponential,
+)
 
 from modelkit.assets.manager import AssetsManager
 from modelkit.assets.settings import DriverSettings
@@ -63,22 +69,37 @@ def gcs_assetsmanager(working_dir):
     _delete_all_objects(mng)
 
 
+@retry(
+    wait=wait_random_exponential(multiplier=1, min=4, max=10),
+    stop=stop_after_attempt(5),
+    retry=retry_if_exception(lambda x: isinstance(x, Exception)),
+    reraise=True,
+)
+def _start_s3_manager(working_dir):
+    return AssetsManager(
+        driver_settings={
+            "storage_provider": "s3",
+            "aws_default_region": "us-east-1",
+            "bucket": "test-assets",
+            "aws_access_key_id": "minioadmin",
+            "aws_secret_access_key": "minioadmin",
+            "aws_session_token": None,
+            "s3_endpoint": "http://127.0.0.1:9000",
+        },
+        working_dir=working_dir,
+        assetsmanager_prefix=f"test-assets-{uuid.uuid1().hex}",
+    )
+
+
 @pytest.fixture(scope="function")
-def s3_assetsmanager(request, base_dir, working_dir):
-    driver_path = os.path.join(base_dir, "local_driver")
-    os.makedirs(driver_path)
-    os.makedirs(os.path.join(driver_path, "test-assets"))
+def s3_assetsmanager(request):
+    with tempfile.TemporaryDirectory() as base_dir:
+        driver_path = os.path.join(base_dir, "local_driver")
+        working_dir = os.path.join(base_dir, "working_dir")
+        os.makedirs(driver_path)
+        os.makedirs(working_dir)
+        os.makedirs(os.path.join(driver_path, "test-assets"))
 
-    if "GITLAB_CI" in os.environ or "MINIO_PROCESS" in os.environ:
-        minio_proc = subprocess.Popen(
-            ["/usr/local/bin/minio", "server", driver_path, "--address", ":9000"],
-            env={"MINIO_BROWSER": "off", **os.environ},
-        )
-
-        def finalize():
-            minio_proc.terminate()
-
-    else:
         # kill previous minio container (if any)
         subprocess.call(
             ["docker", "rm", "-f", "storage-minio-tests"], stderr=subprocess.DEVNULL
@@ -104,20 +125,7 @@ def s3_assetsmanager(request, base_dir, working_dir):
             subprocess.call(["docker", "stop", "storage-minio-tests"])
             minio_proc.terminate()
 
-    request.addfinalizer(finalize)
+        request.addfinalizer(finalize)
 
-    mng = AssetsManager(
-        driver_settings={
-            "storage_provider": "s3",
-            "aws_default_region": "us-east-1",
-            "bucket": "test-assets",
-            "aws_access_key_id": "minioadmin",
-            "aws_secret_access_key": "minioadmin",
-            "aws_session_token": None,
-            "s3_endpoint": "http://127.0.0.1:9000",
-        },
-        working_dir=working_dir,
-        assetsmanager_prefix=f"test-assets-{uuid.uuid1().hex}",
-    )
-    yield mng
-    _delete_all_objects(mng)
+        mng = _start_s3_manager(working_dir)
+        yield mng
