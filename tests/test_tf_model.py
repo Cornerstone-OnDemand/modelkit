@@ -68,6 +68,9 @@ def tf_serving(request, monkeypatch):
     testing.tf_serving_fixture(request, ["dummy_tf_model"], models=DummyTFModel)
 
 
+@pytest.mark.skipif(
+    os.environ.get("ENABLE_TF", "False") == "False", reason="TF serving not available"
+)
 def test_iso_serving_mode(tf_serving):
     model_name = "dummy_tf_model"
     # Get the prediction service running TF with gRPC serving
@@ -190,6 +193,9 @@ def _compare_models(model0, model1, items, tolerance=1e-2):
         )
 
 
+@pytest.mark.skipif(
+    os.environ.get("ENABLE_TF", "False") == "False", reason="TF serving not available"
+)
 def test_iso_async(tf_serving):
     # Get the prediction service running TF with REST serving
     svc = ModelLibrary(
