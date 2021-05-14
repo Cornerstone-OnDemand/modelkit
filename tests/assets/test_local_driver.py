@@ -15,10 +15,12 @@ def test_local_driver_upload_download_delete():
         assert not local_driver.exists(bucket_path, "some/object")
 
         # put an object
-        with tempfile.NamedTemporaryFile() as tempf:
-            with open(tempf.name, "w") as fsrc:
+        with tempfile.TemporaryDirectory() as tempd:
+            with open(os.path.join(tempd, "name"), "w") as fsrc:
                 fsrc.write("some contents")
-            local_driver.upload_object(tempf.name, bucket_path, "some/object")
+            local_driver.upload_object(
+                os.path.join(tempd, "name"), bucket_path, "some/object"
+            )
         local_driver_file_path = os.path.join(
             driver_settings.settings.bucket, "some", "object"
         )

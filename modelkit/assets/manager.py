@@ -94,8 +94,8 @@ class AssetsManager:
         )
         self.push_asset(asset_path, name, "0.0", dry_run=dry_run)
 
-        with tempfile.NamedTemporaryFile() as fversions:
-            with open(fversions.name, "w") as f:
+        with tempfile.TemporaryDirectory() as dversions:
+            with open(os.path.join(dversions, "versions.json"), "w") as f:
                 json.dump({"versions": ["0.0"]}, f)
             logger.debug(
                 "Pushing versions file",
@@ -104,7 +104,9 @@ class AssetsManager:
             )
             if not dry_run:
                 self.storage_driver.upload_object(
-                    fversions.name, self.bucket, versions_object_name
+                    os.path.join(dversions, "versions.json"),
+                    self.bucket,
+                    versions_object_name,
                 )
 
     def update_asset(
