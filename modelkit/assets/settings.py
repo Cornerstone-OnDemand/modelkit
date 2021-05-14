@@ -42,7 +42,7 @@ NAME_RE = r"[a-z0-9]([a-z0-9\-\_\.]*[a-z0-9])?"
 class AssetsManagerSettings(BaseSettings):
     driver_settings: Optional[DriverSettings]
 
-    working_dir: pydantic.DirectoryPath = pydantic.Field(None, env="WORKING_DIR")
+    working_dir: pydantic.DirectoryPath = pydantic.Field("", env="WORKING_DIR")
     timeout_s: float = pydantic.Field(5 * 60, env="ASSETSMANAGER_TIMEOUT_S")
     assetsmanager_prefix: str = pydantic.Field("modelkit-assets", env="ASSETS_PREFIX")
 
@@ -50,15 +50,6 @@ class AssetsManagerSettings(BaseSettings):
     @classmethod
     def default_driver_settings(cls, v):
         return v or DriverSettings()
-
-    @validator("working_dir")
-    @classmethod
-    def is_env_field_provided(v, field):
-        if not v:
-            raise ValueError(
-                f"env var {field.field_info.extra['env']} must be provided"
-            )
-        return v
 
     class Config:
         env_prefix = ""

@@ -20,9 +20,6 @@ def pytest_collection_modifyitems(config, items):
 def pytest_configure(config):
     config.addinivalue_line("markers", "slow: mark test as slow to run")
 
-    if "WORKING_DIR" not in os.environ:
-        raise ValueError("Needs `WORKING_DIR` to be set")
-
 
 @pytest.fixture(scope="session")
 def event_loop(request):
