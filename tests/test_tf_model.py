@@ -59,13 +59,15 @@ def test_tf_model(monkeypatch):
     assert np.allclose(v, model.predict({"input_1": v})["lambda"])
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def tf_serving(request, monkeypatch):
-    monkeypatch.setenv("ASSETS_BUCKET_NAME", TEST_DIR)
-    monkeypatch.setenv("ASSETS_PREFIX", "testdata")
-    monkeypatch.setenv("STORAGE_PROVIDER", "local")
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        monkeypatch.setenv("WORKING_DIR", tmp_dir)
+        monkeypatch.setenv("ASSETS_BUCKET_NAME", TEST_DIR)
+        monkeypatch.setenv("ASSETS_PREFIX", "testdata")
+        monkeypatch.setenv("STORAGE_PROVIDER", "local")
 
-    testing.tf_serving_fixture(request, ["dummy_tf_model"], models=DummyTFModel)
+        testing.tf_serving_fixture(request, ["dummy_tf_model"], models=DummyTFModel)
 
 
 @pytest.mark.skipif(
