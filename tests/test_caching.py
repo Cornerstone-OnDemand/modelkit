@@ -69,6 +69,9 @@ async def _do_model_test(model, ITEMS):
     assert all([x[1] for x in res])
 
 
+@pytest.mark.skipif(
+    os.environ.get("ENABLE_REDIS", "False") == "False", reason="Redis not available"
+)
 def test_redis_cache(redis_service):
     class SomeModel(Model):
         CONFIGURATIONS = {"model": {"model_settings": {"cache_predictions": True}}}
