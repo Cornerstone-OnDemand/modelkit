@@ -24,6 +24,9 @@ def test_gcs_driver(gcs_assetsmanager):
     _perform_driver_error_object_not_found(gcs_driver)
 
 
+@pytest.mark.skipif(
+    os.environ.get("ENABLE_S3", "False") == "False", reason="S3 not available"
+)
 def test_s3_driver(s3_assetsmanager):
     s3_driver = s3_assetsmanager.storage_driver
     _perform_driver_error_object_not_found(s3_driver)

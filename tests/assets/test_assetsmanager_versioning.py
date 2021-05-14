@@ -104,5 +104,8 @@ def test_gcs_assetsmanager_versioning(gcs_assetsmanager):
     _perform_mng_test(gcs_assetsmanager)
 
 
+@pytest.mark.skipif(
+    os.environ.get("ENABLE_S3", "False") == "False", reason="S3 not available"
+)
 def test_s3_assetsmanager_versioning(s3_assetsmanager):
     _perform_mng_test(s3_assetsmanager)

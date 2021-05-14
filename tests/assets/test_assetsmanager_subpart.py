@@ -70,5 +70,8 @@ def test_gcs_assetsmanager_subpart(gcs_assetsmanager):
     _perform_mng_test_subpart(gcs_assetsmanager)
 
 
+@pytest.mark.skipif(
+    os.environ.get("ENABLE_S3", "False") == "False", reason="S3 not available"
+)
 def test_s3_assetsmanager_subpart(s3_assetsmanager):
     _perform_mng_test_subpart(s3_assetsmanager)
