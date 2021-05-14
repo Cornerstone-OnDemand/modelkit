@@ -2,6 +2,7 @@ import datetime
 import glob
 import json
 import os
+import re
 import tempfile
 import time
 from typing import Union, cast
@@ -12,9 +13,11 @@ from dateutil import parser, tz
 
 from modelkit.assets import errors, utils
 from modelkit.assets.drivers import settings_to_driver
+from modelkit.assets.drivers.local import LocalStorageDriver
 from modelkit.assets.log import logger
 from modelkit.assets.settings import AssetsManagerSettings, AssetSpec
 from modelkit.assets.versioning import (
+    VERSION_RE,
     MajorVersionDoesNotExistError,
     filter_versions,
     increment_version,
@@ -408,3 +411,32 @@ class AssetsManager:
         for asset_name in sorted(assets_set):
             versions_list = self.get_versions_info(asset_name)
             yield (asset_name, versions_list)
+
+
+class LocalAssetsManager(AssetsManager):
+    def get_versions_info(self, name):
+        local_name = os.path.join(self.bucket, self.assetsmanager_prefix, name)
+        versions_list = sort_versions(
+            d
+            for d in os.listdir(local_name)
+            if os.path.isdir(os.path.join(local_name, d))
+            and re.fullmatch(VERSION_RE, d)
+        )
+        return versions_list
+
+    def _fetch_asset(self, name, version, sub_part=None):
+        with ContextualizedLogging(name=name, version=version):
+            local_path = os.path.join(
+                self.storage_driver.bucket, self.assetsmanager_prefix, name, version
+            )
+            if sub_part:
+                local_sub_part = os.path.join(
+                    *(
+                        list(os.path.split(local_path))
+                        + [p for p in sub_part.split("/") if p]
+                    )
+                )
+                return {
+                    "path": local_sub_part,
+                }
+            return {"path": local_path}
