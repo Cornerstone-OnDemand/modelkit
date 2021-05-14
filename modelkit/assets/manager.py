@@ -35,11 +35,12 @@ class AssetsManager:
         settings = AssetsManagerSettings(**kwargs)
 
         self.storage_driver = settings_to_driver(settings.driver_settings)
-        self.bucket = self.storage_driver.bucket
+        if self.storage_driver:
+            self.bucket = self.storage_driver.bucket
 
-        self.timeout = settings.timeout_s
-        self.working_dir = settings.working_dir
-        self.assetsmanager_prefix = settings.assetsmanager_prefix
+            self.timeout = settings.timeout_s
+            self.working_dir = settings.working_dir
+            self.assetsmanager_prefix = settings.assetsmanager_prefix
 
     def get_object_name(self, name, version):
         return "/".join((self.assetsmanager_prefix, name, version))

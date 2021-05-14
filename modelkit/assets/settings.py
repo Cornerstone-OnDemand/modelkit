@@ -14,17 +14,17 @@ SUPPORTED_STORAGE_PROVIDERS = {"s3", "s3ssm", "gcs", "local"}
 
 
 class DriverSettings(BaseSettings):
-    storage_provider: Optional[str] = None
-    settings: Optional[
-        Union[GCSDriverSettings, S3DriverSettings, LocalDriverSettings]
-    ] = None
+    storage_provider: Optional[str]
+    settings: Optional[Union[GCSDriverSettings, S3DriverSettings, LocalDriverSettings]]
 
     @root_validator(pre=True)
     @classmethod
     def dispatch_settings(cls, fields):
         storage_provider = fields.pop("storage_provider", None) or os.getenv(
-            "STORAGE_PROVIDER", "gcs"
+            "STORAGE_PROVIDER", None
         )
+        if not storage_provider:
+            return {"storage_provider": None, "settings": None}
         if storage_provider not in SUPPORTED_STORAGE_PROVIDERS:
             raise ValueError(f"Unkown storage provider `{storage_provider}`.")
         if storage_provider == "gcs":
@@ -40,7 +40,7 @@ NAME_RE = r"[a-z0-9]([a-z0-9\-\_\.]*[a-z0-9])?"
 
 
 class AssetsManagerSettings(BaseSettings):
-    driver_settings: Optional[DriverSettings] = None
+    driver_settings: Optional[DriverSettings]
 
     working_dir: pydantic.DirectoryPath = pydantic.Field(None, env="WORKING_DIR")
     timeout_s: float = pydantic.Field(5 * 60, env="ASSETSMANAGER_TIMEOUT_S")
