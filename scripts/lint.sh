@@ -1,7 +1,4 @@
-#!/usr/bin/env bash
-
-set -e
-set -x
+#!/bin/bash
 
 black modelkit tests bin --check
 isort modelkit tests bin --check-only
