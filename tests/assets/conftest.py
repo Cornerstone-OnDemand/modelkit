@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 import tempfile
 import uuid
@@ -93,39 +94,40 @@ def _start_s3_manager(working_dir):
 
 @pytest.fixture(scope="function")
 def s3_assetsmanager(request):
-    with tempfile.TemporaryDirectory() as base_dir:
-        driver_path = os.path.join(base_dir, "local_driver")
-        working_dir = os.path.join(base_dir, "working_dir")
-        os.makedirs(driver_path)
-        os.makedirs(working_dir)
-        os.makedirs(os.path.join(driver_path, "test-assets"))
+    base_dir = tempfile.mkdtemp()
+    driver_path = os.path.join(base_dir, "local_driver")
+    working_dir = os.path.join(base_dir, "working_dir")
+    os.makedirs(driver_path)
+    os.makedirs(working_dir)
+    os.makedirs(os.path.join(driver_path, "test-assets"))
 
-        # kill previous minio container (if any)
-        subprocess.call(
-            ["docker", "rm", "-f", "storage-minio-tests"], stderr=subprocess.DEVNULL
-        )
-        # start minio as docker container
-        minio_proc = subprocess.Popen(
-            [
-                "docker",
-                "run",
-                "-p",
-                "9000:9000",
-                "--name",
-                "storage-minio-tests",
-                "--volume",
-                f"{driver_path}:/data",
-                "minio/minio",
-                "server",
-                "/data",
-            ]
-        )
+    # kill previous minio container (if any)
+    subprocess.call(
+        ["docker", "rm", "-f", "storage-minio-tests"], stderr=subprocess.DEVNULL
+    )
+    # start minio as docker container
+    minio_proc = subprocess.Popen(
+        [
+            "docker",
+            "run",
+            "-p",
+            "9000:9000",
+            "--name",
+            "storage-minio-tests",
+            "--volume",
+            f"{driver_path}:/data",
+            "minio/minio",
+            "server",
+            "/data",
+        ]
+    )
 
-        def finalize():
-            subprocess.call(["docker", "stop", "storage-minio-tests"])
-            minio_proc.terminate()
+    def finalize():
+        subprocess.call(["docker", "stop", "storage-minio-tests"])
+        minio_proc.terminate()
+        minio_proc.wait()
+        shutil.rmtree(base_dir)
 
-        request.addfinalizer(finalize)
+    request.addfinalizer(finalize)
 
-        mng = _start_s3_manager(working_dir)
-        yield mng
+    return _start_s3_manager(working_dir)
