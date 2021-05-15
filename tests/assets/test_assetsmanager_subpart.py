@@ -1,8 +1,6 @@
 import filecmp
 import os
 
-import pytest
-
 from tests import TEST_DIR
 from tests.conftest import skip_unless
 
