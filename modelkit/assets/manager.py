@@ -13,7 +13,6 @@ from dateutil import parser, tz
 
 from modelkit.assets import errors, utils
 from modelkit.assets.drivers import settings_to_driver
-from modelkit.assets.drivers.local import LocalStorageDriver
 from modelkit.assets.log import logger
 from modelkit.assets.settings import AssetsManagerSettings, AssetSpec
 from modelkit.assets.versioning import (
@@ -413,30 +412,72 @@ class AssetsManager:
             yield (asset_name, versions_list)
 
 
-class LocalAssetsManager(AssetsManager):
-    def get_versions_info(self, name):
-        local_name = os.path.join(self.bucket, self.assetsmanager_prefix, name)
-        versions_list = sort_versions(
-            d
-            for d in os.listdir(local_name)
-            if os.path.isdir(os.path.join(local_name, d))
-            and re.fullmatch(VERSION_RE, d)
-        )
-        return versions_list
+class LocalAssetsManager:
+    def __init__(self, assets_dir):
+        self.assets_dir = assets_dir
 
-    def _fetch_asset(self, name, version, sub_part=None):
-        with ContextualizedLogging(name=name, version=version):
-            local_path = os.path.join(
-                self.storage_driver.bucket, self.assetsmanager_prefix, name, version
+    def get_local_versions_info(self, name):
+        if os.path.isdir(name):
+            return sort_versions(
+                d
+                for d in os.listdir(name)
+                if os.path.isdir(os.path.join(name, d)) and re.fullmatch(VERSION_RE, d)
             )
-            if sub_part:
+        else:
+            return []
+
+    def fetch_asset(self, spec: Union[AssetSpec, str], return_info=False):
+        logger.info("Fetching asset", spec=spec, return_info=return_info)
+
+        if isinstance(spec, str):
+            spec = cast(AssetSpec, AssetSpec.from_string(spec))
+
+        local_name = os.path.join(self.assets_dir, *spec.name.split("/"))
+        versions_list = self.get_local_versions_info(local_name)
+        if not spec.major_version and not spec.minor_version:
+            # no version is specified
+            if not versions_list:
+                # and none exist
+                return {"path": local_name}
+
+        if not spec.major_version or not spec.minor_version:
+            if not versions_list:
+                raise errors.LocalAssetVersionDoesNotExistError(
+                    name=spec.name, major=spec.major_version, minor=spec.minor_version
+                )
+
+            # at least one version info is missing, fetch the latest
+            if not spec.major_version:
+                spec.major_version, spec.minor_version = parse_version(versions_list[0])
+            elif not spec.minor_version:
+                spec.major_version, spec.minor_version = parse_version(
+                    filter_versions(versions_list, major=spec.major_version)[0]
+                )
+
+        version = f"{spec.major_version}.{spec.minor_version}"
+        if version not in versions_list:
+            raise errors.LocalAssetVersionDoesNotExistError(
+                name=spec.name, major=spec.major_version, minor=spec.minor_version
+            )
+
+        with ContextualizedLogging(name=spec.name, version=version):
+            local_path = os.path.join(self.assets_dir, *spec.name.split("/"), version)
+            if spec.sub_part:
                 local_sub_part = os.path.join(
                     *(
                         list(os.path.split(local_path))
-                        + [p for p in sub_part.split("/") if p]
+                        + [p for p in spec.sub_part.split("/") if p]
                     )
                 )
-                return {
+                asset_dict = {
                     "path": local_sub_part,
                 }
-            return {"path": local_path}
+            else:
+                asset_dict = {"path": local_path}
+        if return_info:
+            return {
+                **asset_dict,
+                "version": version,
+            }
+        else:
+            return asset_dict["path"]
