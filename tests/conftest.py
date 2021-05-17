@@ -20,12 +20,14 @@ def pytest_collection_modifyitems(config, items):
 def pytest_configure(config):
     config.addinivalue_line("markers", "slow: mark test as slow to run")
 
-    if "WORKING_DIR" not in os.environ:
-        raise ValueError("Needs `WORKING_DIR` to be set")
-
 
 @pytest.fixture(scope="session")
 def event_loop(request):
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
+
+
+def skip_unless(var, value):
+    env = os.environ.get(var)
+    return pytest.mark.skipif(env != value, reason=f"{var} is not {value}")

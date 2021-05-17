@@ -456,10 +456,14 @@ def test_override_prefix(assetsmanager_settings):
     )
 
     prediction = prediction_service.get_model("my_model").predict({})
-    assert prediction.endswith("assets-prefix/category/asset/1.0")
+    assert prediction.endswith(
+        os.path.join("assets-prefix", "category", "asset", "1.0")
+    )
 
     prediction = prediction_service.get_model("my_override_model").predict({})
-    assert prediction.endswith("assets-prefix/category/override-asset/0.0")
+    assert prediction.endswith(
+        os.path.join("assets-prefix", "category", "override-asset", "0.0")
+    )
 
     prediction_service = ModelLibrary(
         required_models=["my_model", "my_override_model"],
@@ -476,7 +480,11 @@ def test_override_prefix(assetsmanager_settings):
     )
 
     prediction = prediction_service.get_model("my_model").predict({})
-    assert prediction.endswith("assets-prefix/category/asset/1.0")
+    assert prediction.endswith(
+        os.path.join("assets-prefix", "category", "asset", "1.0")
+    )
 
     prediction = prediction_service.get_model("my_override_model").predict({})
-    assert prediction.endswith("override-assets-prefix/category/override-asset/1.0")
+    assert prediction.endswith(
+        os.path.join("override-assets-prefix", "category", "override-asset", "1.0")
+    )

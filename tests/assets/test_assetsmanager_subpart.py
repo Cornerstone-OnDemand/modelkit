@@ -1,9 +1,8 @@
 import filecmp
 import os
 
-import pytest
-
 from tests import TEST_DIR
+from tests.conftest import skip_unless
 
 
 def _perform_mng_test_subpart(mng):
@@ -63,12 +62,11 @@ def test_local_assetsmanager_subpart(local_assetsmanager):
     _perform_mng_test_subpart(local_assetsmanager)
 
 
-@pytest.mark.skipif(
-    os.environ.get("ENABLE_GCS", "False") == "False", reason="GCS not available"
-)
+@skip_unless("ENABLE_GCS_TEST", "True")
 def test_gcs_assetsmanager_subpart(gcs_assetsmanager):
     _perform_mng_test_subpart(gcs_assetsmanager)
 
 
+@skip_unless("ENABLE_S3_TEST", "True")
 def test_s3_assetsmanager_subpart(s3_assetsmanager):
     _perform_mng_test_subpart(s3_assetsmanager)

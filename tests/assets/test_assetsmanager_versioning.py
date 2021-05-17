@@ -4,6 +4,7 @@ import os
 import pytest
 
 from modelkit.assets import errors
+from tests.conftest import skip_unless
 
 test_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -74,7 +75,7 @@ def _perform_mng_test(mng):
     )
 
     assert list(mng.iterate_assets()) == [
-        ("category-test/some-data", ["1.0", "0.1", "0.0"])
+        (os.path.join("category-test", "some-data"), ["1.0", "0.1", "0.0"])
     ]
 
     # pushing via new works
@@ -89,7 +90,7 @@ def _perform_mng_test(mng):
     assert fetched_asset_dict["version"] == "1.1"
 
     assert list(mng.iterate_assets()) == [
-        ("category-test/some-data", ["1.1", "1.0", "0.1", "0.0"]),
+        (os.path.join("category-test", "some-data"), ["1.1", "1.0", "0.1", "0.0"]),
     ]
 
 
@@ -97,12 +98,11 @@ def test_local_assetsmanager_versioning(local_assetsmanager):
     _perform_mng_test(local_assetsmanager)
 
 
-@pytest.mark.skipif(
-    os.environ.get("ENABLE_GCS", "False") == "False", reason="GCS not available"
-)
+@skip_unless("ENABLE_GCS_TEST", "True")
 def test_gcs_assetsmanager_versioning(gcs_assetsmanager):
     _perform_mng_test(gcs_assetsmanager)
 
 
+@skip_unless("ENABLE_S3_TEST", "True")
 def test_s3_assetsmanager_versioning(s3_assetsmanager):
     _perform_mng_test(s3_assetsmanager)

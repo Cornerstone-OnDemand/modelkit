@@ -70,6 +70,9 @@ output/*/index.html
 # python version
 .python-version
 
+# nox
+.nox
+
 # pytest
 .pytest_cache
 
@@ -80,6 +83,7 @@ output/*/index.html
 
 # coverage file
 coverage.xml
+.coverage.*
 
 # jmeter
 tests/perf/*.jtl

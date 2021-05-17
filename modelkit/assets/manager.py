@@ -35,11 +35,12 @@ class AssetsManager:
         settings = AssetsManagerSettings(**kwargs)
 
         self.storage_driver = settings_to_driver(settings.driver_settings)
-        self.bucket = self.storage_driver.bucket
+        if self.storage_driver:
+            self.bucket = self.storage_driver.bucket
 
-        self.timeout = settings.timeout_s
-        self.working_dir = settings.working_dir
-        self.assetsmanager_prefix = settings.assetsmanager_prefix
+            self.timeout = settings.timeout_s
+            self.working_dir = settings.working_dir
+            self.assetsmanager_prefix = settings.assetsmanager_prefix
 
     def get_object_name(self, name, version):
         return "/".join((self.assetsmanager_prefix, name, version))
@@ -93,8 +94,8 @@ class AssetsManager:
         )
         self.push_asset(asset_path, name, "0.0", dry_run=dry_run)
 
-        with tempfile.NamedTemporaryFile() as fversions:
-            with open(fversions.name, "w") as f:
+        with tempfile.TemporaryDirectory() as dversions:
+            with open(os.path.join(dversions, "versions.json"), "w") as f:
                 json.dump({"versions": ["0.0"]}, f)
             logger.debug(
                 "Pushing versions file",
@@ -103,7 +104,9 @@ class AssetsManager:
             )
             if not dry_run:
                 self.storage_driver.upload_object(
-                    fversions.name, self.bucket, versions_object_name
+                    os.path.join(dversions, "versions.json"),
+                    self.bucket,
+                    versions_object_name,
                 )
 
     def update_asset(
@@ -285,11 +288,11 @@ class AssetsManager:
         """
         with ContextualizedLogging(name=name, version=version):
             cache_asset_path = os.path.join(
-                self.working_dir, self.assetsmanager_prefix, name, version
+                self.working_dir, self.assetsmanager_prefix, *name.split("/"), version
             )
             meta_path = cache_asset_path + ".meta"
             local_asset_path = os.path.join(
-                self.working_dir, self.assetsmanager_prefix, name, version
+                self.working_dir, self.assetsmanager_prefix, *name.split("/"), version
             )
             object_name = self.get_object_name(name, version)
 

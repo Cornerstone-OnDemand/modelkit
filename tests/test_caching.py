@@ -8,6 +8,7 @@ import redis
 
 from modelkit.core.model import Model
 from modelkit.core.service import ModelLibrary
+from tests.conftest import skip_unless
 
 
 @pytest.fixture()
@@ -69,6 +70,7 @@ async def _do_model_test(model, ITEMS):
     assert all([x[1] for x in res])
 
 
+@skip_unless("ENABLE_REDIS_TEST", "True")
 def test_redis_cache(redis_service):
     class SomeModel(Model):
         CONFIGURATIONS = {"model": {"model_settings": {"cache_predictions": True}}}
