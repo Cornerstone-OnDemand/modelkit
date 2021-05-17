@@ -433,29 +433,29 @@ class LocalAssetsManager:
             spec = cast(AssetSpec, AssetSpec.from_string(spec))
 
         local_name = os.path.join(self.assets_dir, *spec.name.split("/"))
-        versions_list = self.get_local_versions_info(local_name)
+        local_versions_list = self.get_local_versions_info(local_name)
         if not spec.major_version and not spec.minor_version:
             # no version is specified
-            if not versions_list:
+            if not local_versions_list:
                 # and none exist
                 return {"path": local_name}
 
         if not spec.major_version or not spec.minor_version:
-            if not versions_list:
+            if not local_versions_list:
                 raise errors.LocalAssetVersionDoesNotExistError(
                     name=spec.name, major=spec.major_version, minor=spec.minor_version
                 )
 
             # at least one version info is missing, fetch the latest
             if not spec.major_version:
-                spec.major_version, spec.minor_version = parse_version(versions_list[0])
+                spec.major_version, spec.minor_version = parse_version(local_versions_list[0])
             elif not spec.minor_version:
                 spec.major_version, spec.minor_version = parse_version(
-                    filter_versions(versions_list, major=spec.major_version)[0]
+                    filter_versions(local_versions_list, major=spec.major_version)[0]
                 )
 
         version = f"{spec.major_version}.{spec.minor_version}"
-        if version not in versions_list:
+        if version not in local_versions_list:
             raise errors.LocalAssetVersionDoesNotExistError(
                 name=spec.name, major=spec.major_version, minor=spec.minor_version
             )
