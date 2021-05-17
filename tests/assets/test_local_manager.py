@@ -4,7 +4,8 @@ import tempfile
 import pytest
 
 from modelkit.assets import errors
-from modelkit.assets.manager import LocalAssetsManager
+from modelkit.assets.manager import AssetsManager, LocalAssetsManager
+from tests import TEST_DIR
 
 
 def test_local_manager_no_versions():
@@ -68,3 +69,32 @@ def test_local_manager_with_versions():
         manager = LocalAssetsManager(assets_dir=assets_dir)
         res = manager.fetch_asset("something", return_info=True)
         assert res["path"] == os.path.join(assets_dir, "something", "1.1")
+
+
+def test_local_manager_with_fetch():
+    with tempfile.TemporaryDirectory() as assets_dir:
+        remote_assets_store = AssetsManager(
+            driver_settings={
+                "storage_provider": "local",
+                "bucket": os.path.join(TEST_DIR, "testdata", "test-bucket"),
+            },
+            working_dir=assets_dir,
+            assetsmanager_prefix="assets-prefix",
+        )
+
+        os.makedirs(os.path.join(assets_dir, "category", "asset"))
+        with open(os.path.join(assets_dir, "category", "asset", "0.0"), "w") as f:
+            f.write("OK")
+
+        manager = LocalAssetsManager(
+            assets_dir=assets_dir, remote_assets_store=remote_assets_store
+        )
+
+        res = manager.fetch_asset("category/asset:0.0", return_info=True)
+        assert res["path"] == os.path.join(assets_dir, "category", "asset", "0.0")
+
+        res = manager.fetch_asset("category/asset:0", return_info=True)
+        assert res["path"] == os.path.join(assets_dir, "category", "asset", "0.1")
+
+        res = manager.fetch_asset("category/asset", return_info=True)
+        assert res["path"] == os.path.join(assets_dir, "category", "asset", "1.0")
