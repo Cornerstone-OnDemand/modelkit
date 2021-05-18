@@ -5,7 +5,7 @@ import tempfile
 import threading
 import traceback
 
-from modelkit.assets.manager import AssetsManager
+from modelkit.assets.remote import RemoteAssetsStore
 from tests import TEST_DIR
 
 
@@ -70,19 +70,19 @@ def test_lock_file():
 
 def test_lock_assetsmanager(capsys):
     with tempfile.TemporaryDirectory() as base_dir:
-        working_dir = os.path.join(base_dir, "working_dir")
-        os.makedirs(working_dir)
+        assets_dir = os.path.join(base_dir, "assets_dir")
+        os.makedirs(assets_dir)
 
         driver_path = os.path.join(base_dir, "local_driver")
         os.makedirs(os.path.join(driver_path, "bucket"))
 
         # push an asset
-        mng = AssetsManager(
-            driver_settings={
+        mng = RemoteAssetsStore(
+            storage_driver={
                 "storage_provider": "local",
-                "bucket": os.path.join(driver_path, "bucket"),
+                "bucket": driver_path,
             },
-            working_dir=working_dir,
+            assetsmanager_prefix="prefix",
         )
         data_path = os.path.join(TEST_DIR, "assets", "testdata", "some_data_folder")
         mng.new_asset(data_path, "category-test/some-data.ext")
@@ -92,7 +92,7 @@ def test_lock_assetsmanager(capsys):
         cmd = [
             sys.executable,
             script_path,
-            working_dir,
+            assets_dir,
             driver_path,
             "category-test/some-data.ext:0.0",
         ]
@@ -117,6 +117,6 @@ def test_lock_assetsmanager(capsys):
             t.join()
 
         captured = capsys.readouterr()
-
+        print(captured.out)
         assert "__ok_from_cache__" in captured.out
         assert "__ok_not_from_cache__" in captured.out

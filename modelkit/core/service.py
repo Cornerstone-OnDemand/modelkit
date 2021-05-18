@@ -4,6 +4,7 @@ ModelLibrary
 Ask for model using get_model. Handle loading, refresh...
 """
 import collections
+import copy
 import os
 import re
 import time
@@ -103,12 +104,11 @@ class ModelLibrary:
             logger.info(
                 "Instantiating Override AssetsManager", lazy_loading=self._lazy_loading
             )
-            self._override_assets_manager = AssetsManager(
-                **{
-                    **self.assetsmanager_settings,
-                    "assetsmanager_prefix": self.settings.override_assetsmanager_prefix,
-                }
-            )
+            override_settings = copy.deepcopy(self.assetsmanager_settings)
+            override_settings["remote_store"][
+                "assetsmanager_prefix"
+            ] = self.settings.override_assetsmanager_prefix
+            self._override_assets_manager = AssetsManager(**override_settings)
 
         return self._override_assets_manager
 

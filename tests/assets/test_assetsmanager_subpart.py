@@ -8,7 +8,7 @@ from tests.conftest import skip_unless
 def _perform_mng_test_subpart(mng):
     # test a multi part asset
     data_path = os.path.join(TEST_DIR, "assets", "testdata", "some_data_folder")
-    mng.new_asset(data_path, "category-test/some-data-subpart")
+    mng.remote_assets_store.new_asset(data_path, "category-test/some-data-subpart")
 
     fetched_asset_dict = mng.fetch_asset(
         "category-test/some-data-subpart:0.0[/some_data_in_folder.json]",
@@ -37,7 +37,7 @@ def _perform_mng_test_subpart(mng):
 
     # test a deeper directory structure
     data_path = os.path.join(TEST_DIR, "assets", "testdata")
-    mng.new_asset(data_path, "category-test/some-data-subpart-2")
+    mng.remote_assets_store.new_asset(data_path, "category-test/some-data-subpart-2")
 
     fetched_asset_dict = mng.fetch_asset(
         "category-test/some-data-subpart-2:0.0[some_data.json]",

@@ -13,9 +13,21 @@ from tenacity import (
 )
 
 from modelkit.assets.manager import AssetsManager
-from modelkit.assets.settings import DriverSettings
 
 test_path = os.path.dirname(os.path.realpath(__file__))
+
+
+@pytest.fixture
+def clean_env(monkeypatch):
+    for env_var in [
+        "ASSETS_DIR",
+        "WORKING_DIR",
+        "ASSETS_BUCKET_NAME",
+        "STORAGE_PROVIDER",
+        "ASSETSMANAGER_PREFIX",
+        "ASSETSMANAGER_TIMEOUT_S",
+    ]:
+        monkeypatch.delenv(env_var, raising=False)
 
 
 @pytest.fixture(scope="function")
@@ -33,38 +45,44 @@ def working_dir(base_dir):
 
 
 def _delete_all_objects(mng):
-    for object_name in mng.storage_driver.iterate_objects(
-        mng.bucket, mng.assetsmanager_prefix
+    for object_name in mng.remote_assets_store.storage_driver.iterate_objects(
+        mng.remote_assets_store.bucket, mng.remote_assets_store.prefix
     ):
-        mng.storage_driver.delete_object(mng.bucket, object_name)
+        mng.remote_assets_store.storage_driver.delete_object(
+            mng.remote_assets_store.bucket, object_name
+        )
 
 
 @pytest.fixture(scope="function")
-def local_assetsmanager(base_dir, working_dir):
+def local_assetsmanager(base_dir, working_dir, clean_env):
     bucket_path = os.path.join(base_dir, "local_driver", "bucket")
     os.makedirs(bucket_path)
 
     mng = AssetsManager(
-        driver_settings={
-            "storage_provider": "local",
-            "bucket": bucket_path,
+        assets_dir=working_dir,
+        remote_store={
+            "storage_driver": {
+                "storage_provider": "local",
+                "bucket": bucket_path,
+            }
         },
-        working_dir=working_dir,
     )
     yield mng
     _delete_all_objects(mng)
 
 
 @pytest.fixture(scope="function")
-def gcs_assetsmanager(working_dir):
+def gcs_remote_assetsmanager(working_dir, clean_env):
     mng = AssetsManager(
-        driver_settings=DriverSettings(
-            storage_provider="gcs",
-            service_account_path=None,
-            bucket="modelkit-test-bucket",
-        ),
-        working_dir=working_dir,
-        assetsmanager_prefix=f"test-assets-{uuid.uuid1().hex}",
+        assets_dir=working_dir,
+        remote_store={
+            "storage_driver": {
+                "storage_provider": "gcs",
+                "service_account_path": None,
+                "bucket": "modelkit-test-bucket",
+            },
+            "assetsmanager_prefix": f"test-assets-{uuid.uuid1().hex}",
+        },
     )
     yield mng
     _delete_all_objects(mng)
@@ -78,22 +96,24 @@ def gcs_assetsmanager(working_dir):
 )
 def _start_s3_manager(working_dir):
     return AssetsManager(
-        driver_settings={
-            "storage_provider": "s3",
-            "aws_default_region": "us-east-1",
-            "bucket": "test-assets",
-            "aws_access_key_id": "minioadmin",
-            "aws_secret_access_key": "minioadmin",
-            "aws_session_token": None,
-            "s3_endpoint": "http://127.0.0.1:9000",
+        assets_dir=working_dir,
+        remote_store={
+            "storage_driver": {
+                "provider": "s3",
+                "aws_default_region": "us-east-1",
+                "bucket": "test-assets",
+                "aws_access_key_id": "minioadmin",
+                "aws_secret_access_key": "minioadmin",
+                "aws_session_token": None,
+                "s3_endpoint": "http://127.0.0.1:9000",
+            },
+            "assetsmanager_prefix": f"test-assets-{uuid.uuid1().hex}",
         },
-        working_dir=working_dir,
-        assetsmanager_prefix=f"test-assets-{uuid.uuid1().hex}",
     )
 
 
 @pytest.fixture(scope="function")
-def s3_assetsmanager(request):
+def s3_remote_assetsmanager(request, clean_env):
     base_dir = tempfile.mkdtemp()
     driver_path = os.path.join(base_dir, "local_driver")
     working_dir = os.path.join(base_dir, "working_dir")

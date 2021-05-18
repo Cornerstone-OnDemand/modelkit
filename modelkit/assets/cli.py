@@ -103,7 +103,7 @@ def new(asset_path, asset_spec, bucket, assetsmanager_prefix, dry_run):
     _check_asset_file_number(asset_path)
     manager = AssetsManager(
         assetsmanager_prefix=assetsmanager_prefix,
-        driver_settings=DriverSettings(bucket=bucket),
+        driver=DriverSettings(bucket=bucket),
     )
     print("Current assets manager:")
     print(f" - storage provider = `{manager.storage_driver}`")
@@ -176,7 +176,7 @@ def update(asset_path, asset_spec, bucket, assetsmanager_prefix, bump_major, dry
     _check_asset_file_number(asset_path)
     manager = AssetsManager(
         assetsmanager_prefix=assetsmanager_prefix,
-        driver_settings=DriverSettings(bucket=bucket),
+        driver=DriverSettings(bucket=bucket),
     )
 
     print("Current assets manager:")
@@ -235,7 +235,7 @@ def list(bucket, assetsmanager_prefix):
     """lists all available assets and their versions."""
     manager = AssetsManager(
         assetsmanager_prefix=assetsmanager_prefix,
-        driver_settings=DriverSettings(bucket=bucket),
+        driver=DriverSettings(bucket=bucket),
     )
     table = prettytable.PrettyTable()
     table.field_names = ["Asset name", "Versions"]

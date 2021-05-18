@@ -37,7 +37,7 @@ def test_override_asset():
     config = {
         "some_asset": ModelConfiguration(
             model_type=TestModel,
-            asset="tests/test_asset",
+            asset="asset/that/does/not/exist",
             model_dependencies={"dep_model"},
         ),
         "dep_model": ModelConfiguration(model_type=TestDepModel),
@@ -275,12 +275,14 @@ def assetsmanager_settings():
         os.makedirs(working_dir)
 
         yield {
-            "driver_settings": {
-                "storage_provider": "local",
-                "bucket": os.path.join(TEST_DIR, "testdata", "test-bucket"),
+            "remote_store": {
+                "storage_driver": {
+                    "storage_provider": "local",
+                    "bucket": os.path.join(TEST_DIR, "testdata", "test-bucket"),
+                },
+                "assetsmanager_prefix": "assets-prefix",
             },
-            "assetsmanager_prefix": "assets-prefix",
-            "working_dir": working_dir,
+            "assets_dir": working_dir,
         }
 
 
@@ -456,14 +458,10 @@ def test_override_prefix(assetsmanager_settings):
     )
 
     prediction = prediction_service.get_model("my_model").predict({})
-    assert prediction.endswith(
-        os.path.join("assets-prefix", "category", "asset", "1.0")
-    )
+    assert prediction.endswith(os.path.join("category", "asset", "1.0"))
 
     prediction = prediction_service.get_model("my_override_model").predict({})
-    assert prediction.endswith(
-        os.path.join("assets-prefix", "category", "override-asset", "0.0")
-    )
+    assert prediction.endswith(os.path.join("category", "override-asset", "0.0"))
 
     prediction_service = ModelLibrary(
         required_models=["my_model", "my_override_model"],
@@ -480,11 +478,7 @@ def test_override_prefix(assetsmanager_settings):
     )
 
     prediction = prediction_service.get_model("my_model").predict({})
-    assert prediction.endswith(
-        os.path.join("assets-prefix", "category", "asset", "1.0")
-    )
+    assert prediction.endswith(os.path.join("category", "asset", "1.0"))
 
     prediction = prediction_service.get_model("my_override_model").predict({})
-    assert prediction.endswith(
-        os.path.join("override-assets-prefix", "category", "override-asset", "1.0")
-    )
+    assert prediction.endswith(os.path.join("category", "override-asset", "1.0"))

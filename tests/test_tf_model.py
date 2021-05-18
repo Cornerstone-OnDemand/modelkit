@@ -62,7 +62,7 @@ def test_tf_model(monkeypatch):
 
 
 @pytest.fixture(scope="function")
-def tf_serving(request, monkeypatch):
+def tf_serving(request, monkeypatch, clean_env):
     with tempfile.TemporaryDirectory() as tmp_dir:
         monkeypatch.setenv("WORKING_DIR", tmp_dir)
         monkeypatch.setenv("ASSETS_BUCKET_NAME", TEST_DIR)

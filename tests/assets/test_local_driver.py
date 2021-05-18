@@ -21,9 +21,7 @@ def test_local_driver_upload_download_delete():
             local_driver.upload_object(
                 os.path.join(tempd, "name"), bucket_path, "some/object"
             )
-        local_driver_file_path = os.path.join(
-            driver_settings.settings.bucket, "some", "object"
-        )
+        local_driver_file_path = os.path.join(bucket_path, "some", "object")
         assert os.path.isfile(local_driver_file_path)
         assert local_driver.exists(bucket_path, "some/object")
 
