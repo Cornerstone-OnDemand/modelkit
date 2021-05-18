@@ -52,7 +52,7 @@ def tf_serving_fixture(request, required_models, models=None):
                 "--name",
                 "modelkit-tfserving-tests",
                 "--volume",
-                f"{os.environ['WORKING_DIR']}/{os.environ['ASSETS_PREFIX']}:/config",
+                f"{os.environ['WORKING_DIR']}:/config",
                 "-p",
                 "8500:8500",
                 "-p",

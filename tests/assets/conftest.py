@@ -72,7 +72,7 @@ def local_assetsmanager(base_dir, working_dir, clean_env):
 
 
 @pytest.fixture(scope="function")
-def gcs_remote_assetsmanager(working_dir, clean_env):
+def gcs_assetsmanager(working_dir, clean_env):
     mng = AssetsManager(
         assets_dir=working_dir,
         remote_store={
@@ -99,7 +99,7 @@ def _start_s3_manager(working_dir):
         assets_dir=working_dir,
         remote_store={
             "storage_driver": {
-                "provider": "s3",
+                "storage_provider": "s3",
                 "aws_default_region": "us-east-1",
                 "bucket": "test-assets",
                 "aws_access_key_id": "minioadmin",
@@ -113,7 +113,7 @@ def _start_s3_manager(working_dir):
 
 
 @pytest.fixture(scope="function")
-def s3_remote_assetsmanager(request, clean_env):
+def s3_assetsmanager(request, clean_env):
     base_dir = tempfile.mkdtemp()
     driver_path = os.path.join(base_dir, "local_driver")
     working_dir = os.path.join(base_dir, "working_dir")
