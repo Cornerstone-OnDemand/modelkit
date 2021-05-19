@@ -21,16 +21,20 @@ class GCSDriverSettings(pydantic.BaseSettings):
 
 
 class GCSStorageDriver:
-    def __init__(self, settings: GCSDriverSettings = None):
+    def __init__(self, settings: GCSDriverSettings = None, client=None):
         if not settings:
             settings = GCSDriverSettings()
         self.bucket = settings.bucket
-        if settings.service_account_path:
-            self.client = Client.from_service_account_json(
-                settings.service_account_path
-            )
+
+        if client:
+            self.client = client
         else:
-            self.client = Client()
+            if settings.service_account_path:
+                self.client = Client.from_service_account_json(
+                    settings.service_account_path
+                )
+            else:
+                self.client = Client()
 
     @retry(**RETRY_POLICY)
     def iterate_objects(self, bucket, prefix=None):
