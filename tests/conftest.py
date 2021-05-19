@@ -4,6 +4,20 @@ import os
 import pytest
 
 
+
+@pytest.fixture
+def clean_env(monkeypatch):
+    for env_var in [
+        "ASSETS_DIR",
+        "WORKING_DIR",
+        "ASSETS_BUCKET_NAME",
+        "STORAGE_PROVIDER",
+        "ASSETSMANAGER_PREFIX",
+        "ASSETSMANAGER_TIMEOUT_S",
+    ]:
+        monkeypatch.delenv(env_var, raising=False)
+
+
 def pytest_addoption(parser):
     parser.addoption("--skipslow", action="store_true", help="skip slow tests")
 
