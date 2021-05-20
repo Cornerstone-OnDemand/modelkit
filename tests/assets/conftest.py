@@ -114,7 +114,7 @@ def gcs_assetsmanager(request, working_dir, clean_env):
     reraise=True,
 )
 def _start_s3_manager(working_dir):
-    return AssetsManager(
+    mng = AssetsManager(
         assets_dir=working_dir,
         remote_store={
             "storage_driver": {
@@ -129,17 +129,12 @@ def _start_s3_manager(working_dir):
             "assetsmanager_prefix": f"test-assets-{uuid.uuid1().hex}",
         },
     )
+    mng.remote_assets_store.storage_driver.client.create_bucket(Bucket="test-assets")
+    return mng
 
 
 @pytest.fixture(scope="function")
-def s3_assetsmanager(request, clean_env):
-    base_dir = tempfile.mkdtemp()
-    driver_path = os.path.join(base_dir, "local_driver")
-    working_dir = os.path.join(base_dir, "working_dir")
-    os.makedirs(driver_path)
-    os.makedirs(working_dir)
-    os.makedirs(os.path.join(driver_path, "test-assets"))
-
+def s3_assetsmanager(request, clean_env, working_dir):
     # kill previous minio container (if any)
     subprocess.call(
         ["docker", "rm", "-f", "storage-minio-tests"], stderr=subprocess.DEVNULL
@@ -153,20 +148,13 @@ def s3_assetsmanager(request, clean_env):
             "9000:9000",
             "--name",
             "storage-minio-tests",
-            "--volume",
-            f"{driver_path}:/data",
             "minio/minio",
             "server",
             "/data",
         ]
     )
 
-    def finalize():
-        subprocess.call(["docker", "stop", "storage-minio-tests"])
-        minio_proc.terminate()
-        minio_proc.wait()
-        shutil.rmtree(base_dir)
+    yield _start_s3_manager(working_dir)
 
-    request.addfinalizer(finalize)
-
-    return _start_s3_manager(working_dir)
+    subprocess.call(["docker", "stop", "storage-minio-tests"])
+    minio_proc.wait()
