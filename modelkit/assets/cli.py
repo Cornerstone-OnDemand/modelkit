@@ -37,7 +37,7 @@ def _download_object_or_prefix(manager, asset_path, destination_dir):
     parsed_path = parse_gcs(asset_path)
     asset_path = os.path.join(destination_dir, "myasset")
     try:
-        manager.storage_driver.download_object(
+        manager.remote_assets_store.storage_driver.download_object(
             bucket_name=parsed_path["bucket_name"],
             object_name=parsed_path["object_name"],
             destination_path=asset_path,
@@ -46,7 +46,7 @@ def _download_object_or_prefix(manager, asset_path, destination_dir):
         # maybe prefix containing objects
         paths = [
             path
-            for path in manager.storage_driver.iterate_objects(
+            for path in manager.remote_assets_store.storage_driver.iterate_objects(
                 bucket=parsed_path["bucket_name"], prefix=parsed_path["object_name"]
             )
         ]
@@ -56,7 +56,7 @@ def _download_object_or_prefix(manager, asset_path, destination_dir):
         os.mkdir(asset_path)
         for path in paths:
             object_name = path.split("/")[-1]
-            manager.storage_driver.download_object(
+            manager.remote_assets_store.storage_driver.download_object(
                 bucket_name=parsed_path["bucket_name"],
                 object_name=parsed_path["object_name"] + "/" + object_name,
                 destination_path=os.path.join(asset_path, object_name),

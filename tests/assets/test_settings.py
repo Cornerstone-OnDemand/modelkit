@@ -1,5 +1,4 @@
 import os
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -134,45 +133,42 @@ def test_remote_assets_store_settings(monkeypatch, clean_env, settings_dict, val
             RemoteAssetsStoreSettings(**settings_dict)
 
 
-def test_assetsmanager_minimal(monkeypatch, clean_env):
-    with tempfile.TemporaryDirectory() as assets_dir:
-        monkeypatch.setenv("WORKING_DIR", assets_dir)
-        monkeypatch.setenv("ASSETS_BUCKET_NAME", "some-bucket")
-        monkeypatch.setenv("STORAGE_PROVIDER", "gcs")
-        settings = AssetsManagerSettings()
-        assert settings.remote_store.storage_driver.storage_provider == "gcs"
-        assert settings.remote_store.storage_driver.settings == GCSDriverSettings()
-        assert settings.remote_store.storage_driver.settings.bucket == "some-bucket"
-        assert settings.remote_store.assetsmanager_prefix == "modelkit-assets"
-        assert settings.assets_dir == Path(assets_dir)
+def test_assetsmanager_minimal(monkeypatch, clean_env, working_dir):
+    monkeypatch.setenv("WORKING_DIR", working_dir)
+    monkeypatch.setenv("ASSETS_BUCKET_NAME", "some-bucket")
+    monkeypatch.setenv("STORAGE_PROVIDER", "gcs")
+    settings = AssetsManagerSettings()
+    assert settings.remote_store.storage_driver.storage_provider == "gcs"
+    assert settings.remote_store.storage_driver.settings == GCSDriverSettings()
+    assert settings.remote_store.storage_driver.settings.bucket == "some-bucket"
+    assert settings.remote_store.assetsmanager_prefix == "modelkit-assets"
+    assert settings.assets_dir == Path(working_dir)
 
 
-def test_assetsmanager_minimal_provider(monkeypatch, clean_env):
-    with tempfile.TemporaryDirectory() as assets_dir:
-        monkeypatch.setenv("WORKING_DIR", assets_dir)
-        monkeypatch.setenv("STORAGE_PROVIDER", "local")
+def test_assetsmanager_minimal_provider(monkeypatch, clean_env, working_dir):
+    monkeypatch.setenv("WORKING_DIR", working_dir)
+    monkeypatch.setenv("STORAGE_PROVIDER", "local")
 
-        settings = AssetsManagerSettings()
-        assert not settings.remote_store
+    settings = AssetsManagerSettings()
+    assert not settings.remote_store
 
-        monkeypatch.setenv("ASSETS_BUCKET_NAME", assets_dir)
-        settings = AssetsManagerSettings()
-        assert settings.remote_store.storage_driver.storage_provider == "local"
-        assert settings.remote_store.storage_driver.settings == LocalDriverSettings()
-        assert settings.remote_store.storage_driver.settings.bucket == Path(assets_dir)
-        assert settings.assets_dir == Path(assets_dir)
+    monkeypatch.setenv("ASSETS_BUCKET_NAME", working_dir)
+    settings = AssetsManagerSettings()
+    assert settings.remote_store.storage_driver.storage_provider == "local"
+    assert settings.remote_store.storage_driver.settings == LocalDriverSettings()
+    assert settings.remote_store.storage_driver.settings.bucket == Path(working_dir)
+    assert settings.assets_dir == Path(working_dir)
 
 
-def test_assetsmanager_minimal_prefix(monkeypatch, clean_env):
-    with tempfile.TemporaryDirectory() as assets_dir:
-        monkeypatch.setenv("WORKING_DIR", assets_dir)
-        monkeypatch.setenv("ASSETS_BUCKET_NAME", "some-bucket")
-        monkeypatch.setenv("ASSETS_PREFIX", "a-prefix")
-        monkeypatch.setenv("STORAGE_PROVIDER", "gcs")
+def test_assetsmanager_minimal_prefix(monkeypatch, clean_env, working_dir):
+    monkeypatch.setenv("WORKING_DIR", working_dir)
+    monkeypatch.setenv("ASSETS_BUCKET_NAME", "some-bucket")
+    monkeypatch.setenv("ASSETS_PREFIX", "a-prefix")
+    monkeypatch.setenv("STORAGE_PROVIDER", "gcs")
 
-        settings = AssetsManagerSettings()
-        assert settings.remote_store.storage_driver.storage_provider == "gcs"
-        assert settings.remote_store.storage_driver.settings == GCSDriverSettings()
-        assert settings.remote_store.storage_driver.settings.bucket == "some-bucket"
-        assert settings.remote_store.assetsmanager_prefix == "a-prefix"
-        assert settings.assets_dir == Path(assets_dir)
+    settings = AssetsManagerSettings()
+    assert settings.remote_store.storage_driver.storage_provider == "gcs"
+    assert settings.remote_store.storage_driver.settings == GCSDriverSettings()
+    assert settings.remote_store.storage_driver.settings.bucket == "some-bucket"
+    assert settings.remote_store.assetsmanager_prefix == "a-prefix"
+    assert settings.assets_dir == Path(working_dir)

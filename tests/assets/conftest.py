@@ -23,33 +23,6 @@ from modelkit.assets.remote import RemoteAssetsStore
 test_path = os.path.dirname(os.path.realpath(__file__))
 
 
-@pytest.fixture
-def clean_env(monkeypatch):
-    for env_var in [
-        "ASSETS_DIR",
-        "WORKING_DIR",
-        "ASSETS_BUCKET_NAME",
-        "STORAGE_PROVIDER",
-        "ASSETSMANAGER_PREFIX",
-        "ASSETSMANAGER_TIMEOUT_S",
-    ]:
-        monkeypatch.delenv(env_var, raising=False)
-
-
-@pytest.fixture(scope="function")
-def base_dir():
-    with tempfile.TemporaryDirectory() as base_dir:
-        yield base_dir
-
-
-@pytest.fixture(scope="function")
-def working_dir(base_dir):
-    working_dir = os.path.join(base_dir, "working_dir")
-    os.makedirs(working_dir)
-
-    yield working_dir
-
-
 def _delete_all_objects(mng):
     for object_name in mng.remote_assets_store.storage_driver.iterate_objects(
         mng.remote_assets_store.bucket, mng.remote_assets_store.prefix
@@ -125,10 +98,9 @@ def gcs_assetsmanager(request, working_dir, clean_env):
         assetsmanager_prefix="test-prefix",
         storage_driver={
             "storage_provider": "gcs",
-            "settings": {"bucket": "test-bucket"},
+            "settings": {"bucket": "test-bucket", "client": _get_mock_gcs_client()},
         },
     )
-    remote_store.storage_driver.client = _get_mock_gcs_client()
     remote_store.storage_driver.client.create_bucket("test-bucket")
     mng.remote_assets_store = remote_store
 

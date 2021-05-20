@@ -92,16 +92,16 @@ def test_s3_assetsmanager(s3_assetsmanager):
 
 
 @skip_unless("ENABLE_GCS_TEST", "True")
-def test_download_object_or_prefix_cli(gcs_assetsmanager):
+def test_download_object_or_prefix_cli(gcs_assetsmanager, clean_env):
     original_asset_path = os.path.join(test_path, "testdata", "some_data.json")
-
     gcs_asset_dir = (
-        f"gs://{gcs_assetsmanager.bucket}/{gcs_assetsmanager.assetsmanager_prefix}"
+        f"gs://{gcs_assetsmanager.remote_assets_store.bucket}/"
+        f"{gcs_assetsmanager.remote_assets_store.prefix}"
         "/category-test/some-data.ext"
     )
     gcs_asset_path = gcs_asset_dir + "/1.0"
 
-    gcs_assetsmanager.push_asset(
+    gcs_assetsmanager.remote_assets_store.push_asset(
         original_asset_path, "category-test/some-data.ext", "1.0"
     )
 
@@ -130,8 +130,8 @@ def test_download_object_or_prefix_cli(gcs_assetsmanager):
             modelkit.assets.cli._download_object_or_prefix(
                 gcs_assetsmanager,
                 asset_path=(
-                    f"gs://{gcs_assetsmanager.bucket}/"
-                    f"{gcs_assetsmanager.assetsmanager_prefix}/"
+                    f"gs://{gcs_assetsmanager.remote_assets_store.bucket}/"
+                    f"{gcs_assetsmanager.remote_assets_store.prefix}/"
                     "category-test"
                 ),
                 destination_dir=tmp_dir,

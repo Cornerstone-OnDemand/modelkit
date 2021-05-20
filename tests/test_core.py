@@ -1,5 +1,4 @@
 import os
-import tempfile
 
 import pytest
 
@@ -268,22 +267,18 @@ def test_list_assets():
     )
 
 
-@pytest.fixture()
-def assetsmanager_settings():
-    with tempfile.TemporaryDirectory() as base_dir:
-        working_dir = os.path.join(base_dir, "working_dir")
-        os.makedirs(working_dir)
-
-        yield {
-            "remote_store": {
-                "storage_driver": {
-                    "storage_provider": "local",
-                    "bucket": os.path.join(TEST_DIR, "testdata", "test-bucket"),
-                },
-                "assetsmanager_prefix": "assets-prefix",
+@pytest.fixture
+def assetsmanager_settings(working_dir):
+    yield {
+        "remote_store": {
+            "storage_driver": {
+                "storage_provider": "local",
+                "bucket": os.path.join(TEST_DIR, "testdata", "test-bucket"),
             },
-            "assets_dir": working_dir,
-        }
+            "assetsmanager_prefix": "assets-prefix",
+        },
+        "assets_dir": working_dir,
+    }
 
 
 def test_download_assets_version(assetsmanager_settings):
@@ -338,12 +333,11 @@ def test_download_assets_dependencies(assetsmanager_settings):
     assert assets_info["category/asset:0"]["version"] == "0.1"
 
 
-def test_write_tf_serving_config(assetsmanager_settings):
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        write_config(os.path.join(tmp_dir, "test.config"), {"model0": "/some/path"})
-        ref = testing.ReferenceText(os.path.join(TEST_DIR, "testdata"))
-        with open(os.path.join(tmp_dir, "test.config")) as f:
-            ref.assert_equal("test.config", f.read())
+def test_write_tf_serving_config(base_dir, assetsmanager_settings):
+    write_config(os.path.join(base_dir, "test.config"), {"model0": "/some/path"})
+    ref = testing.ReferenceText(os.path.join(TEST_DIR, "testdata"))
+    with open(os.path.join(base_dir, "test.config")) as f:
+        ref.assert_equal("test.config", f.read())
 
 
 def test_load_model():

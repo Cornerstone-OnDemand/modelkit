@@ -1,8 +1,22 @@
 import asyncio
 import os
+import tempfile
 
 import pytest
 
+
+@pytest.fixture(scope="function")
+def base_dir():
+    with tempfile.TemporaryDirectory() as base_dir:
+        yield base_dir
+
+
+@pytest.fixture(scope="function")
+def working_dir(base_dir):
+    working_dir = os.path.join(base_dir, "working_dir")
+    os.makedirs(working_dir)
+
+    yield working_dir
 
 
 @pytest.fixture
