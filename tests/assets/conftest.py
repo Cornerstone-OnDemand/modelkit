@@ -24,10 +24,10 @@ test_path = os.path.dirname(os.path.realpath(__file__))
 
 
 def _delete_all_objects(mng):
-    for object_name in mng.remote_assets_store.storage_driver.iterate_objects(
+    for object_name in mng.remote_assets_store.driver.iterate_objects(
         mng.remote_assets_store.bucket, mng.remote_assets_store.prefix
     ):
-        mng.remote_assets_store.storage_driver.delete_object(
+        mng.remote_assets_store.driver.delete_object(
             mng.remote_assets_store.bucket, object_name
         )
 
@@ -40,7 +40,7 @@ def local_assetsmanager(base_dir, working_dir, clean_env):
     mng = AssetsManager(
         assets_dir=working_dir,
         remote_store={
-            "storage_driver": {
+            "driver": {
                 "storage_provider": "local",
                 "bucket": bucket_path,
             }
@@ -96,12 +96,12 @@ def gcs_assetsmanager(request, working_dir, clean_env):
     )
     remote_store = RemoteAssetsStore(
         assetsmanager_prefix="test-prefix",
-        storage_driver={
+        driver={
             "storage_provider": "gcs",
             "settings": {"bucket": "test-bucket", "client": _get_mock_gcs_client()},
         },
     )
-    remote_store.storage_driver.client.create_bucket("test-bucket")
+    remote_store.driver.client.create_bucket("test-bucket")
     mng.remote_assets_store = remote_store
 
     yield mng
@@ -117,7 +117,7 @@ def _start_s3_manager(working_dir):
     mng = AssetsManager(
         assets_dir=working_dir,
         remote_store={
-            "storage_driver": {
+            "driver": {
                 "storage_provider": "s3",
                 "aws_default_region": "us-east-1",
                 "bucket": "test-assets",
@@ -129,7 +129,7 @@ def _start_s3_manager(working_dir):
             "assetsmanager_prefix": f"test-assets-{uuid.uuid1().hex}",
         },
     )
-    mng.remote_assets_store.storage_driver.client.create_bucket(Bucket="test-assets")
+    mng.remote_assets_store.driver.client.create_bucket(Bucket="test-assets")
     return mng
 
 

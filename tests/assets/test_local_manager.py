@@ -76,7 +76,7 @@ def test_local_manager_with_fetch(clean_env, working_dir):
     manager = AssetsManager(
         assets_dir=working_dir,
         remote_store={
-            "storage_driver": {
+            "driver": {
                 "storage_provider": "local",
                 "bucket": os.path.join(TEST_DIR, "testdata", "test-bucket"),
             },

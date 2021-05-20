@@ -47,7 +47,7 @@ def clean_env(monkeypatch):
         (
             {
                 "remote_store": {
-                    "storage_driver": {
+                    "driver": {
                         "storage_provider": "local",
                         "bucket": test_path,
                     },
@@ -59,7 +59,7 @@ def clean_env(monkeypatch):
         ),
         (
             {
-                "remote_store": {"storage_driver": {"storage_provider": "gcs"}},
+                "remote_store": {"driver": {"storage_provider": "gcs"}},
                 "assets_dir": "/some/path",
             },
             False,
@@ -67,7 +67,7 @@ def clean_env(monkeypatch):
         (
             {
                 "remote_store": {
-                    "storage_driver": {
+                    "driver": {
                         "storage_provider": "gcs",
                         "bucket": "something-tests",
                     }
@@ -77,19 +77,19 @@ def clean_env(monkeypatch):
             True,
         ),
         (
-            {"remote_store": {"storage_driver": {"storage_provider": "gcs"}}},
+            {"remote_store": {"driver": {"storage_provider": "gcs"}}},
             False,
         ),
         (
             {
                 "remote_store": {
-                    "storage_driver": {"storage_provider": "gcs"},
+                    "driver": {"storage_provider": "gcs"},
                     "other_field": "tests",
                 }
             },
             False,
         ),
-        ({"remote_store": {"storage_driver": {"storage_provider": "local"}}}, False),
+        ({"remote_store": {"driver": {"storage_provider": "local"}}}, False),
     ],
 )
 def test_assetsmanager_settings(monkeypatch, clean_env, settings_dict, valid):
@@ -107,14 +107,14 @@ def test_assetsmanager_settings(monkeypatch, clean_env, settings_dict, valid):
         (
             {
                 "assetsmanager_prefix": "assets-v3",
-                "storage_driver": {"storage_provider": "local", "bucket": test_path},
+                "driver": {"storage_provider": "local", "bucket": test_path},
             },
             True,
         ),
         (
             {
                 "assetsmanager_prefix": "assets-v3",
-                "storage_driver": {
+                "driver": {
                     "storage_provider": "local",
                     "settings": {"bucket": test_path},
                 },
@@ -138,9 +138,9 @@ def test_assetsmanager_minimal(monkeypatch, clean_env, working_dir):
     monkeypatch.setenv("ASSETS_BUCKET_NAME", "some-bucket")
     monkeypatch.setenv("STORAGE_PROVIDER", "gcs")
     settings = AssetsManagerSettings()
-    assert settings.remote_store.storage_driver.storage_provider == "gcs"
-    assert settings.remote_store.storage_driver.settings == GCSDriverSettings()
-    assert settings.remote_store.storage_driver.settings.bucket == "some-bucket"
+    assert settings.remote_store.driver.storage_provider == "gcs"
+    assert settings.remote_store.driver.settings == GCSDriverSettings()
+    assert settings.remote_store.driver.settings.bucket == "some-bucket"
     assert settings.remote_store.assetsmanager_prefix == "modelkit-assets"
     assert settings.assets_dir == Path(working_dir)
 
@@ -154,9 +154,9 @@ def test_assetsmanager_minimal_provider(monkeypatch, clean_env, working_dir):
 
     monkeypatch.setenv("ASSETS_BUCKET_NAME", working_dir)
     settings = AssetsManagerSettings()
-    assert settings.remote_store.storage_driver.storage_provider == "local"
-    assert settings.remote_store.storage_driver.settings == LocalDriverSettings()
-    assert settings.remote_store.storage_driver.settings.bucket == Path(working_dir)
+    assert settings.remote_store.driver.storage_provider == "local"
+    assert settings.remote_store.driver.settings == LocalDriverSettings()
+    assert settings.remote_store.driver.settings.bucket == Path(working_dir)
     assert settings.assets_dir == Path(working_dir)
 
 
@@ -167,8 +167,8 @@ def test_assetsmanager_minimal_prefix(monkeypatch, clean_env, working_dir):
     monkeypatch.setenv("STORAGE_PROVIDER", "gcs")
 
     settings = AssetsManagerSettings()
-    assert settings.remote_store.storage_driver.storage_provider == "gcs"
-    assert settings.remote_store.storage_driver.settings == GCSDriverSettings()
-    assert settings.remote_store.storage_driver.settings.bucket == "some-bucket"
+    assert settings.remote_store.driver.storage_provider == "gcs"
+    assert settings.remote_store.driver.settings == GCSDriverSettings()
+    assert settings.remote_store.driver.settings.bucket == "some-bucket"
     assert settings.remote_store.assetsmanager_prefix == "a-prefix"
     assert settings.assets_dir == Path(working_dir)

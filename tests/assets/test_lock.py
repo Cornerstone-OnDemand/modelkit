@@ -75,7 +75,7 @@ def test_lock_assetsmanager(capsys, working_dir):
 
     # push an asset
     mng = RemoteAssetsStore(
-        storage_driver={
+        driver={
             "storage_provider": "local",
             "bucket": driver_path,
         },

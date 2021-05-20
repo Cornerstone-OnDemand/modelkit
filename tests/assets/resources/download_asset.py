@@ -22,7 +22,7 @@ def download_asset(assets_dir, driver_path, asset_name):
     am = AssetsManager(
         assets_dir=assets_dir,
         remote_store={
-            "storage_driver": {
+            "driver": {
                 "storage_provider": "local",
                 "bucket": driver_path,
             },

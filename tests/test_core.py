@@ -271,7 +271,7 @@ def test_list_assets():
 def assetsmanager_settings(working_dir):
     yield {
         "remote_store": {
-            "storage_driver": {
+            "driver": {
                 "storage_provider": "local",
                 "bucket": os.path.join(TEST_DIR, "testdata", "test-bucket"),
             },

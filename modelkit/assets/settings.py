@@ -39,16 +39,16 @@ class DriverSettings(BaseSettings):
 
 
 class RemoteAssetsStoreSettings(BaseSettings):
-    storage_driver: DriverSettings
+    driver: DriverSettings
     timeout_s: float = pydantic.Field(5 * 60, env="ASSETSMANAGER_TIMEOUT_S")
     assetsmanager_prefix: str = pydantic.Field("modelkit-assets", env="ASSETS_PREFIX")
 
     @root_validator(pre=True)
     @classmethod
     def dispatch_settings(cls, fields):
-        if "storage_driver" not in fields:
+        if "driver" not in fields:
             try:
-                fields["storage_driver"] = DriverSettings()
+                fields["driver"] = DriverSettings()
             except ValidationError:
                 pass
 

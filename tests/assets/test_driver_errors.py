@@ -13,17 +13,17 @@ def _perform_driver_error_object_not_found(driver):
 
 
 def test_local_driver(local_assetsmanager):
-    local_driver = local_assetsmanager.remote_assets_store.storage_driver
+    local_driver = local_assetsmanager.remote_assets_store.driver
     _perform_driver_error_object_not_found(local_driver)
 
 
 @skip_unless("ENABLE_GCS_TEST", "True")
 def test_gcs_driver(gcs_assetsmanager):
-    gcs_driver = gcs_assetsmanager.remote_assets_store.storage_driver
+    gcs_driver = gcs_assetsmanager.remote_assets_store.driver
     _perform_driver_error_object_not_found(gcs_driver)
 
 
 @skip_unless("ENABLE_S3_TEST", "True")
 def test_s3_driver(s3_assetsmanager):
-    s3_driver = s3_assetsmanager.remote_assets_store.storage_driver
+    s3_driver = s3_assetsmanager.remote_assets_store.driver
     _perform_driver_error_object_not_found(s3_driver)
