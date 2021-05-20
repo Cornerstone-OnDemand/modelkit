@@ -15,19 +15,20 @@ from modelkit.assets.log import logger
 class GCSDriverSettings(pydantic.BaseSettings):
     bucket: str = pydantic.Field(..., env="ASSETS_BUCKET_NAME")
     service_account_path: Optional[str] = None
+    client: Optional[storage.Client]
 
     class Config:
         extra = "forbid"
 
 
 class GCSStorageDriver:
-    def __init__(self, settings: GCSDriverSettings = None, client=None):
+    def __init__(self, settings: GCSDriverSettings = None):
         if not settings:
             settings = GCSDriverSettings()
         self.bucket = settings.bucket
 
-        if client:
-            self.client = client
+        if settings.client:
+            self.client = settings.client
         else:
             if settings.service_account_path:
                 self.client = Client.from_service_account_json(
