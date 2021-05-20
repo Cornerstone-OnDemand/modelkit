@@ -6,6 +6,7 @@ from pydantic import ValidationError
 
 from modelkit.assets.drivers.gcs import GCSDriverSettings
 from modelkit.assets.drivers.local import LocalDriverSettings
+from modelkit.assets.drivers.s3 import S3DriverSettings
 from modelkit.assets.settings import (
     AssetsManagerSettings,
     DriverSettings,
@@ -16,19 +17,21 @@ test_path = os.path.dirname(os.path.realpath(__file__))
 
 
 @pytest.mark.parametrize(
-    "settings_dict, valid",
+    "settings_dict, valid, expected_type",
     [
-        ({"storage_provider": "local"}, False),
-        ({"storage_provider": "local", "some_other_param": "blabli"}, False),
-        ({"storage_provider": "local", "bucket": test_path}, True),
+        ({"storage_provider": "notsupported"}, False, None),
+        ({"storage_provider": "local"}, False, None),
+        ({"storage_provider": "local", "some_other_param": "blabli"}, False, None),
+        ({"storage_provider": "local", "bucket": test_path}, True, LocalDriverSettings),
+        ({"storage_provider": "gcs", "bucket": test_path}, True, GCSDriverSettings),
+        ({"storage_provider": "s3", "bucket": test_path}, True, S3DriverSettings),
+        ({"storage_provider": "s3ssm", "bucket": test_path}, True, S3DriverSettings),
     ],
 )
-def test_local_driver_settings(settings_dict, valid, monkeypatch):
-    if "bucket" not in settings_dict:
-        monkeypatch.delenv("ASSETS_BUCKET_NAME", raising=False)
+def test_driver_settings(settings_dict, valid, expected_type, clean_env):
     if valid:
         driver_settings = DriverSettings(**settings_dict)
-        assert isinstance(driver_settings.settings, LocalDriverSettings)
+        assert isinstance(driver_settings.settings, expected_type)
     else:
         with pytest.raises(ValidationError):
             DriverSettings(**settings_dict)
