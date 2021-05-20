@@ -37,13 +37,6 @@ def test_driver_settings(settings_dict, valid, expected_type, clean_env):
             DriverSettings(**settings_dict)
 
 
-@pytest.fixture
-def clean_env(monkeypatch):
-    monkeypatch.delenv("WORKING_DIR", raising=False)
-    monkeypatch.delenv("ASSETS_BUCKET_NAME", raising=False)
-    monkeypatch.delenv("ASSETS_PREFIX", raising=False)
-
-
 @pytest.mark.parametrize(
     "settings_dict, valid",
     [
