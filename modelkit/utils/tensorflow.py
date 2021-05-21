@@ -41,10 +41,6 @@ TF_SERVING_RETRY_POLICY = {
 }
 
 
-class TFServingError(Exception):
-    pass
-
-
 def write_config(destination, models, verbose=False):
     with open(destination, "w") as f:
         f.write("model_config_list: {\n")

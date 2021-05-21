@@ -9,11 +9,7 @@ import requests
 from modelkit.core.model import Model
 from modelkit.core.types import ItemType, ReturnType
 from modelkit.log import logger
-from modelkit.utils.tensorflow import (
-    TFServingError,
-    make_grpc_serving_request,
-    wait_local_serving,
-)
+from modelkit.utils.tensorflow import make_grpc_serving_request, wait_local_serving
 
 try:
     import tensorflow as tf
@@ -24,6 +20,10 @@ try:
 
 except ModuleNotFoundError:
     logger.info("tensorflow is not installed")
+
+
+class TFServingError(Exception):
+    pass
 
 
 def safe_np_dump(obj):
