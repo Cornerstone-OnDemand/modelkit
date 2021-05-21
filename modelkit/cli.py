@@ -2,8 +2,8 @@ import os
 
 from modelkit.assets.manager import AssetsManager
 from modelkit.assets.settings import AssetSpec
+from modelkit.core.library import download_assets
 from modelkit.core.model_configuration import configure
-from modelkit.core.service import download_assets
 from modelkit.log import logger
 from modelkit.utils.tensorflow import write_config
 

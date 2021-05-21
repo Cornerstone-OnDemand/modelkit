@@ -6,9 +6,9 @@ import numpy as np
 import pydantic
 import pydantic.generics
 
+from modelkit.core.library import ModelLibrary
 from modelkit.core.model import Model
 from modelkit.core.model_configuration import configure
-from modelkit.core.service import ModelLibrary
 from modelkit.utils.testing import ReferenceJson
 
 

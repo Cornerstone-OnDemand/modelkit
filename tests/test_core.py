@@ -2,18 +2,18 @@ import os
 
 import pytest
 
+from modelkit.core.library import (
+    ConfigurationNotFoundException,
+    ModelLibrary,
+    download_assets,
+    load_model,
+)
 from modelkit.core.model import Asset, Model, NoModelDependenciesInInitError
 from modelkit.core.model_configuration import (
     ModelConfiguration,
     _configurations_from_objects,
     configure,
     list_assets,
-)
-from modelkit.core.service import (
-    ConfigurationNotFoundException,
-    ModelLibrary,
-    download_assets,
-    load_model,
 )
 from modelkit.core.settings import ServiceSettings
 from modelkit.utils import testing

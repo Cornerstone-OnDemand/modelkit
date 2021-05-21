@@ -6,8 +6,8 @@ import time
 import pytest
 import redis
 
+from modelkit.core.library import ModelLibrary
 from modelkit.core.model import Model
-from modelkit.core.service import ModelLibrary
 from tests.conftest import skip_unless
 
 
