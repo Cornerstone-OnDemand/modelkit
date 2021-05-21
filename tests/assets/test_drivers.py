@@ -1,8 +1,6 @@
 import os
 import tempfile
 
-from modelkit.assets.drivers.local import LocalStorageDriver
-from modelkit.assets.settings import DriverSettings
 from tests.conftest import skip_unless
 
 
