@@ -1,10 +1,13 @@
 import os
-import shutil
 import subprocess
-import tempfile
 import uuid
 
 import pytest
+import requests
+import urllib3
+from google.api_core.client_options import ClientOptions
+from google.auth.credentials import AnonymousCredentials
+from google.cloud import storage
 from tenacity import (
     retry,
     retry_if_exception,
@@ -13,61 +16,91 @@ from tenacity import (
 )
 
 from modelkit.assets.manager import AssetsManager
-from modelkit.assets.settings import DriverSettings
+from modelkit.assets.remote import RemoteAssetsStore
 
 test_path = os.path.dirname(os.path.realpath(__file__))
 
 
-@pytest.fixture(scope="function")
-def base_dir():
-    with tempfile.TemporaryDirectory() as base_dir:
-        yield base_dir
-
-
-@pytest.fixture(scope="function")
-def working_dir(base_dir):
-    working_dir = os.path.join(base_dir, "working_dir")
-    os.makedirs(working_dir)
-
-    yield working_dir
-
-
 def _delete_all_objects(mng):
-    for object_name in mng.storage_driver.iterate_objects(
-        mng.bucket, mng.assetsmanager_prefix
+    for object_name in mng.remote_assets_store.driver.iterate_objects(
+        mng.remote_assets_store.prefix
     ):
-        mng.storage_driver.delete_object(mng.bucket, object_name)
+        mng.remote_assets_store.driver.delete_object(object_name)
 
 
 @pytest.fixture(scope="function")
-def local_assetsmanager(base_dir, working_dir):
+def local_assetsmanager(base_dir, working_dir, clean_env):
     bucket_path = os.path.join(base_dir, "local_driver", "bucket")
     os.makedirs(bucket_path)
 
     mng = AssetsManager(
-        driver_settings={
-            "storage_provider": "local",
-            "bucket": bucket_path,
+        assets_dir=working_dir,
+        remote_store={
+            "driver": {
+                "storage_provider": "local",
+                "bucket": bucket_path,
+            }
         },
-        working_dir=working_dir,
     )
     yield mng
     _delete_all_objects(mng)
+
+
+def _get_mock_gcs_client():
+    my_http = requests.Session()
+    my_http.verify = False  # disable SSL validation
+    urllib3.disable_warnings(
+        urllib3.exceptions.InsecureRequestWarning
+    )  # disable https warnings for https insecure certs
+
+    return storage.Client(
+        credentials=AnonymousCredentials(),
+        project="test",
+        _http=my_http,
+        client_options=ClientOptions(api_endpoint="https://127.0.0.1:4443"),
+    )
 
 
 @pytest.fixture(scope="function")
-def gcs_assetsmanager(working_dir):
-    mng = AssetsManager(
-        driver_settings=DriverSettings(
-            storage_provider="gcs",
-            service_account_path=None,
-            bucket="modelkit-test-bucket",
-        ),
-        working_dir=working_dir,
-        assetsmanager_prefix=f"test-assets-{uuid.uuid1().hex}",
+def gcs_assetsmanager(request, working_dir, clean_env):
+    # kill previous fake gcs container (if any)
+    subprocess.call(
+        ["docker", "rm", "-f", "storage-gcs-tests"], stderr=subprocess.DEVNULL
     )
+    # start minio as docker container
+    minio_proc = subprocess.Popen(
+        [
+            "docker",
+            "run",
+            "-p",
+            "4443:4443",
+            "--name",
+            "storage-gcs-tests",
+            "fsouza/fake-gcs-server",
+        ]
+    )
+
+    def finalize():
+        subprocess.call(["docker", "stop", "storage-gcs-tests"])
+        minio_proc.terminate()
+        minio_proc.wait()
+
+    request.addfinalizer(finalize)
+
+    mng = AssetsManager(
+        assets_dir=working_dir,
+    )
+    remote_store = RemoteAssetsStore(
+        assetsmanager_prefix="test-prefix",
+        driver={
+            "storage_provider": "gcs",
+            "settings": {"bucket": "test-bucket", "client": _get_mock_gcs_client()},
+        },
+    )
+    remote_store.driver.client.create_bucket("test-bucket")
+    mng.remote_assets_store = remote_store
+
     yield mng
-    _delete_all_objects(mng)
 
 
 @retry(
@@ -77,30 +110,27 @@ def gcs_assetsmanager(working_dir):
     reraise=True,
 )
 def _start_s3_manager(working_dir):
-    return AssetsManager(
-        driver_settings={
-            "storage_provider": "s3",
-            "aws_default_region": "us-east-1",
-            "bucket": "test-assets",
-            "aws_access_key_id": "minioadmin",
-            "aws_secret_access_key": "minioadmin",
-            "aws_session_token": None,
-            "s3_endpoint": "http://127.0.0.1:9000",
+    mng = AssetsManager(
+        assets_dir=working_dir,
+        remote_store={
+            "driver": {
+                "storage_provider": "s3",
+                "aws_default_region": "us-east-1",
+                "bucket": "test-assets",
+                "aws_access_key_id": "minioadmin",
+                "aws_secret_access_key": "minioadmin",
+                "aws_session_token": None,
+                "s3_endpoint": "http://127.0.0.1:9000",
+            },
+            "assetsmanager_prefix": f"test-assets-{uuid.uuid1().hex}",
         },
-        working_dir=working_dir,
-        assetsmanager_prefix=f"test-assets-{uuid.uuid1().hex}",
     )
+    mng.remote_assets_store.driver.client.create_bucket(Bucket="test-assets")
+    return mng
 
 
 @pytest.fixture(scope="function")
-def s3_assetsmanager(request):
-    base_dir = tempfile.mkdtemp()
-    driver_path = os.path.join(base_dir, "local_driver")
-    working_dir = os.path.join(base_dir, "working_dir")
-    os.makedirs(driver_path)
-    os.makedirs(working_dir)
-    os.makedirs(os.path.join(driver_path, "test-assets"))
-
+def s3_assetsmanager(request, clean_env, working_dir):
     # kill previous minio container (if any)
     subprocess.call(
         ["docker", "rm", "-f", "storage-minio-tests"], stderr=subprocess.DEVNULL
@@ -114,20 +144,13 @@ def s3_assetsmanager(request):
             "9000:9000",
             "--name",
             "storage-minio-tests",
-            "--volume",
-            f"{driver_path}:/data",
             "minio/minio",
             "server",
             "/data",
         ]
     )
 
-    def finalize():
-        subprocess.call(["docker", "stop", "storage-minio-tests"])
-        minio_proc.terminate()
-        minio_proc.wait()
-        shutil.rmtree(base_dir)
+    yield _start_s3_manager(working_dir)
 
-    request.addfinalizer(finalize)
-
-    return _start_s3_manager(working_dir)
+    subprocess.call(["docker", "stop", "storage-minio-tests"])
+    minio_proc.wait()

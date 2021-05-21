@@ -4,6 +4,7 @@ ModelLibrary
 Ask for model using get_model. Handle loading, refresh...
 """
 import collections
+import copy
 import os
 import re
 import time
@@ -11,6 +12,7 @@ from types import ModuleType
 from typing import Any, Dict, List, Mapping, Optional, Type, Union
 
 import redis
+from pydantic import ValidationError
 
 import modelkit.assets
 from modelkit.assets.manager import AssetsManager
@@ -90,8 +92,13 @@ class ModelLibrary:
     @property
     def asset_manager(self):
         if self._asset_manager is None:
-            logger.info("Instantiating AssetsManager", lazy_loading=self._lazy_loading)
-            self._asset_manager = AssetsManager(**self.assetsmanager_settings)
+            try:
+                logger.info(
+                    "Instantiating AssetsManager", lazy_loading=self._lazy_loading
+                )
+                self._asset_manager = AssetsManager(**self.assetsmanager_settings)
+            except ValidationError:
+                logger.info("No assets manager available")
         return self._asset_manager
 
     @property
@@ -103,12 +110,11 @@ class ModelLibrary:
             logger.info(
                 "Instantiating Override AssetsManager", lazy_loading=self._lazy_loading
             )
-            self._override_assets_manager = AssetsManager(
-                **{
-                    **self.assetsmanager_settings,
-                    "assetsmanager_prefix": self.settings.override_assetsmanager_prefix,
-                }
-            )
+            override_settings = copy.deepcopy(self.assetsmanager_settings)
+            override_settings["remote_store"][
+                "assetsmanager_prefix"
+            ] = self.settings.override_assetsmanager_prefix
+            self._override_assets_manager = AssetsManager(**override_settings)
 
         return self._override_assets_manager
 

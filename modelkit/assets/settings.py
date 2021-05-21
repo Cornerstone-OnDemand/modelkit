@@ -3,23 +3,25 @@ import re
 from typing import Optional, Union
 
 import pydantic
-from pydantic import BaseModel, BaseSettings, root_validator, validator
+from pydantic import BaseModel, BaseSettings, ValidationError, root_validator, validator
 
 from modelkit.assets.drivers.gcs import GCSDriverSettings
 from modelkit.assets.drivers.local import LocalDriverSettings
 from modelkit.assets.drivers.s3 import S3DriverSettings
 from modelkit.assets.errors import InvalidAssetSpecError
 
-SUPPORTED_STORAGE_PROVIDERS = {"s3", "s3ssm", "gcs", "local"}
+SUPPORTED_STORAGE_PROVIDERS = {"s3", "gcs", "local"}
 
 
 class DriverSettings(BaseSettings):
-    storage_provider: Optional[str]
+    storage_provider: str
     settings: Optional[Union[GCSDriverSettings, S3DriverSettings, LocalDriverSettings]]
 
     @root_validator(pre=True)
     @classmethod
     def dispatch_settings(cls, fields):
+        if "settings" in fields:
+            return fields
         storage_provider = fields.pop("storage_provider", None) or os.getenv(
             "STORAGE_PROVIDER", None
         )
@@ -29,27 +31,47 @@ class DriverSettings(BaseSettings):
             raise ValueError(f"Unkown storage provider `{storage_provider}`.")
         if storage_provider == "gcs":
             settings = GCSDriverSettings(**fields)
-        if storage_provider in ("s3", "s3ssm"):
+        if storage_provider == "s3":
             settings = S3DriverSettings(**fields)
         if storage_provider == "local":
             settings = LocalDriverSettings(**fields)
         return {"storage_provider": storage_provider, "settings": settings}
 
 
+class RemoteAssetsStoreSettings(BaseSettings):
+    driver: DriverSettings
+    timeout_s: float = pydantic.Field(5 * 60, env="ASSETSMANAGER_TIMEOUT_S")
+    assetsmanager_prefix: str = pydantic.Field("modelkit-assets", env="ASSETS_PREFIX")
+
+    @root_validator(pre=True)
+    @classmethod
+    def dispatch_settings(cls, fields):
+        if "driver" not in fields:
+            try:
+                fields["driver"] = DriverSettings()
+            except ValidationError:
+                pass
+
+        return fields
+
+
 NAME_RE = r"[a-z0-9]([a-z0-9\-\_\.]*[a-z0-9])?"
 
 
 class AssetsManagerSettings(BaseSettings):
-    driver_settings: Optional[DriverSettings]
+    remote_store: Optional[RemoteAssetsStoreSettings]
+    assets_dir: pydantic.DirectoryPath = pydantic.Field(..., env="WORKING_DIR")
 
-    working_dir: pydantic.DirectoryPath = pydantic.Field("", env="WORKING_DIR")
-    timeout_s: float = pydantic.Field(5 * 60, env="ASSETSMANAGER_TIMEOUT_S")
-    assetsmanager_prefix: str = pydantic.Field("modelkit-assets", env="ASSETS_PREFIX")
-
-    @validator("driver_settings", always=True)
+    @root_validator(pre=True)
     @classmethod
-    def default_driver_settings(cls, v):
-        return v or DriverSettings()
+    def dispatch_settings(cls, fields):
+        if "remote_store" not in fields:
+            try:
+                fields["remote_store"] = RemoteAssetsStoreSettings()
+            except ValidationError:
+                pass
+
+        return fields
 
     class Config:
         env_prefix = ""

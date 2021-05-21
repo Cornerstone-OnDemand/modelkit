@@ -1,5 +1,4 @@
 import os
-import tempfile
 
 import pytest
 
@@ -37,7 +36,7 @@ def test_override_asset():
     config = {
         "some_asset": ModelConfiguration(
             model_type=TestModel,
-            asset="tests/test_asset",
+            asset="asset/that/does/not/exist",
             model_dependencies={"dep_model"},
         ),
         "dep_model": ModelConfiguration(model_type=TestDepModel),
@@ -268,20 +267,18 @@ def test_list_assets():
     )
 
 
-@pytest.fixture()
-def assetsmanager_settings():
-    with tempfile.TemporaryDirectory() as base_dir:
-        working_dir = os.path.join(base_dir, "working_dir")
-        os.makedirs(working_dir)
-
-        yield {
-            "driver_settings": {
+@pytest.fixture
+def assetsmanager_settings(working_dir):
+    yield {
+        "remote_store": {
+            "driver": {
                 "storage_provider": "local",
                 "bucket": os.path.join(TEST_DIR, "testdata", "test-bucket"),
             },
             "assetsmanager_prefix": "assets-prefix",
-            "working_dir": working_dir,
-        }
+        },
+        "assets_dir": working_dir,
+    }
 
 
 def test_download_assets_version(assetsmanager_settings):
@@ -336,12 +333,11 @@ def test_download_assets_dependencies(assetsmanager_settings):
     assert assets_info["category/asset:0"]["version"] == "0.1"
 
 
-def test_write_tf_serving_config(assetsmanager_settings):
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        write_config(os.path.join(tmp_dir, "test.config"), {"model0": "/some/path"})
-        ref = testing.ReferenceText(os.path.join(TEST_DIR, "testdata"))
-        with open(os.path.join(tmp_dir, "test.config")) as f:
-            ref.assert_equal("test.config", f.read())
+def test_write_tf_serving_config(base_dir, assetsmanager_settings):
+    write_config(os.path.join(base_dir, "test.config"), {"model0": "/some/path"})
+    ref = testing.ReferenceText(os.path.join(TEST_DIR, "testdata"))
+    with open(os.path.join(base_dir, "test.config")) as f:
+        ref.assert_equal("test.config", f.read())
 
 
 def test_load_model():
@@ -456,14 +452,10 @@ def test_override_prefix(assetsmanager_settings):
     )
 
     prediction = prediction_service.get_model("my_model").predict({})
-    assert prediction.endswith(
-        os.path.join("assets-prefix", "category", "asset", "1.0")
-    )
+    assert prediction.endswith(os.path.join("category", "asset", "1.0"))
 
     prediction = prediction_service.get_model("my_override_model").predict({})
-    assert prediction.endswith(
-        os.path.join("assets-prefix", "category", "override-asset", "0.0")
-    )
+    assert prediction.endswith(os.path.join("category", "override-asset", "0.0"))
 
     prediction_service = ModelLibrary(
         required_models=["my_model", "my_override_model"],
@@ -480,11 +472,7 @@ def test_override_prefix(assetsmanager_settings):
     )
 
     prediction = prediction_service.get_model("my_model").predict({})
-    assert prediction.endswith(
-        os.path.join("assets-prefix", "category", "asset", "1.0")
-    )
+    assert prediction.endswith(os.path.join("category", "asset", "1.0"))
 
     prediction = prediction_service.get_model("my_override_model").predict({})
-    assert prediction.endswith(
-        os.path.join("override-assets-prefix", "category", "override-asset", "1.0")
-    )
+    assert prediction.endswith(os.path.join("category", "override-asset", "1.0"))

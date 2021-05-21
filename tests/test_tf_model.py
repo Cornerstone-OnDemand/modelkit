@@ -1,6 +1,5 @@
 import asyncio
 import os
-import tempfile
 
 import numpy as np
 import pytest
@@ -45,10 +44,11 @@ def test_tf_model_local_path():
     assert np.allclose(v, model.predict({"input_1": v})["lambda"])
 
 
-def test_tf_model(monkeypatch):
+def test_tf_model(monkeypatch, clean_env, working_dir):
     monkeypatch.setenv("ASSETS_BUCKET_NAME", TEST_DIR)
     monkeypatch.setenv("ASSETS_PREFIX", "testdata")
     monkeypatch.setenv("STORAGE_PROVIDER", "local")
+    monkeypatch.setenv("WORKING_DIR", working_dir)
 
     lib = ModelLibrary(
         models=DummyTFModel,
@@ -62,16 +62,13 @@ def test_tf_model(monkeypatch):
 
 
 @pytest.fixture(scope="function")
-def tf_serving(request, monkeypatch):
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        monkeypatch.setenv("WORKING_DIR", tmp_dir)
-        monkeypatch.setenv("ASSETS_BUCKET_NAME", TEST_DIR)
-        monkeypatch.setenv("ASSETS_PREFIX", "testdata")
-        monkeypatch.setenv("STORAGE_PROVIDER", "local")
+def tf_serving(request, monkeypatch, clean_env, working_dir):
+    monkeypatch.setenv("WORKING_DIR", working_dir)
+    monkeypatch.setenv("ASSETS_BUCKET_NAME", TEST_DIR)
+    monkeypatch.setenv("ASSETS_PREFIX", "testdata")
+    monkeypatch.setenv("STORAGE_PROVIDER", "local")
 
-        yield testing.tf_serving_fixture(
-            request, ["dummy_tf_model"], models=DummyTFModel
-        )
+    yield testing.tf_serving_fixture(request, ["dummy_tf_model"], models=DummyTFModel)
 
 
 @skip_unless("ENABLE_TF_SERVING_TEST", "True")

@@ -15,6 +15,7 @@ from modelkit.assets.log import logger
 class GCSDriverSettings(pydantic.BaseSettings):
     bucket: str = pydantic.Field(..., env="ASSETS_BUCKET_NAME")
     service_account_path: Optional[str] = None
+    client: Optional[storage.Client]
 
     class Config:
         extra = "forbid"
@@ -25,22 +26,26 @@ class GCSStorageDriver:
         if not settings:
             settings = GCSDriverSettings()
         self.bucket = settings.bucket
-        if settings.service_account_path:
-            self.client = Client.from_service_account_json(
-                settings.service_account_path
-            )
+
+        if settings.client:
+            self.client = settings.client
         else:
-            self.client = Client()
+            if settings.service_account_path:
+                self.client = Client.from_service_account_json(
+                    settings.service_account_path
+                )
+            else:
+                self.client = Client()
 
     @retry(**RETRY_POLICY)
-    def iterate_objects(self, bucket, prefix=None):
-        bucket = self.client.bucket(bucket)
+    def iterate_objects(self, prefix=None):
+        bucket = self.client.bucket(self.bucket)
         for blob in bucket.list_blobs(prefix=prefix):
             yield blob.name
 
     @retry(**RETRY_POLICY)
-    def upload_object(self, file_path, bucket, object_name):
-        bucket = self.client.bucket(bucket)
+    def upload_object(self, file_path, object_name):
+        bucket = self.client.bucket(self.bucket)
         blob = bucket.blob(object_name)
         storage.blob._DEFAULT_CHUNKSIZE = 2097152  # 2 MB
         storage.blob._MAX_MULTIPART_SIZE = 2097152  # 2 MB
@@ -48,29 +53,29 @@ class GCSStorageDriver:
             blob.upload_from_file(f)
 
     @retry(**RETRY_POLICY)
-    def download_object(self, bucket_name, object_name, destination_path):
-        bucket = self.client.bucket(bucket_name)
+    def download_object(self, object_name, destination_path):
+        bucket = self.client.bucket(self.bucket)
         blob = bucket.blob(object_name)
         try:
             with open(destination_path, "wb") as f:
                 blob.download_to_file(f)
         except NotFound:
             logger.error(
-                "Object not found.", bucket=bucket_name, object_name=object_name
+                "Object not found.", bucket=self.bucket, object_name=object_name
             )
             os.remove(destination_path)
             raise errors.ObjectDoesNotExistError(
-                driver=self, bucket=bucket_name, object_name=object_name
+                driver=self, bucket=self.bucket, object_name=object_name
             )
 
     @retry(**RETRY_POLICY)
-    def delete_object(self, bucket, object_name):
-        bucket = self.client.bucket(bucket)
+    def delete_object(self, object_name):
+        bucket = self.client.bucket(self.bucket)
         blob = bucket.blob(object_name)
         blob.delete()
 
     @retry(**RETRY_POLICY)
-    def exists(self, bucket, object_name):
-        bucket = self.client.bucket(bucket)
+    def exists(self, object_name):
+        bucket = self.client.bucket(self.bucket)
         blob = bucket.blob(object_name)
         return blob.exists()

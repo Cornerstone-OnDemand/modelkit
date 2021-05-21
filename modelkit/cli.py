@@ -26,8 +26,7 @@ def deploy_tf_models(
             )
         elif mode == "local-process":
             model_paths[model_name] = os.path.join(
-                manager.working_dir,
-                manager.assetsmanager_prefix,
+                manager.assets_dir,
                 f"{spec.name}/{spec.major_version}.{spec.minor_version}",
             )
         elif mode == "remote":
@@ -41,9 +40,7 @@ def deploy_tf_models(
     if mode == "local-docker" or mode == "local-process":
         logger.info("Checking that local models are present.")
         download_assets(configuration=configuration, required_models=required_models)
-        target = os.path.join(
-            manager.working_dir, manager.assetsmanager_prefix, f"{config_name}.config"
-        )
+        target = os.path.join(manager.assets_dir, f"{config_name}.config")
     logger.info(
         "Writing TF serving configuration locally.",
         config_name=config_name,

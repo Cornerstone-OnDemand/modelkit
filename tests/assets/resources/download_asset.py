@@ -7,22 +7,26 @@ import click
 root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 sys.path.append(root_dir)
 
+from modelkit.assets.remote import RemoteAssetsStore  # NOQA  # isort:skip
 from modelkit.assets.manager import AssetsManager  # NOQA  # isort:skip
 
 
 @click.command()
-@click.argument("working_dir")
+@click.argument("assets_dir")
 @click.argument("driver_path")
 @click.argument("asset_name")
-def download_asset(working_dir, driver_path, asset_name):
+def download_asset(assets_dir, driver_path, asset_name):
     """
     Download the asset
     """
     am = AssetsManager(
-        working_dir=working_dir,
-        driver_settings={
-            "storage_provider": "local",
-            "bucket": os.path.join(driver_path, "bucket"),
+        assets_dir=assets_dir,
+        remote_store={
+            "driver": {
+                "storage_provider": "local",
+                "bucket": driver_path,
+            },
+            "assetsmanager_prefix": "prefix",
         },
     )
     asset_dict = am.fetch_asset(asset_name, return_info=True)
