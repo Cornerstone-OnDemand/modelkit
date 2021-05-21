@@ -5,9 +5,9 @@ import numpy as np
 import pytest
 
 from modelkit import ModelLibrary
+from modelkit.core.fixtures import tf_serving_fixture
 from modelkit.core.models.tensorflow_model import TensorflowModel
 from modelkit.core.settings import ServiceSettings
-from modelkit.utils import testing
 from tests import TEST_DIR
 from tests.conftest import skip_unless
 
@@ -68,7 +68,7 @@ def tf_serving(request, monkeypatch, clean_env, working_dir):
     monkeypatch.setenv("ASSETS_PREFIX", "testdata")
     monkeypatch.setenv("STORAGE_PROVIDER", "local")
 
-    yield testing.tf_serving_fixture(request, ["dummy_tf_model"], models=DummyTFModel)
+    yield tf_serving_fixture(request, ["dummy_tf_model"], models=DummyTFModel)
 
 
 @skip_unless("ENABLE_TF_SERVING_TEST", "True")
