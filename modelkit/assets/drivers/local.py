@@ -29,7 +29,7 @@ class LocalStorageDriver:
             os.path.join(self.bucket, os.path.join("**", "*")), recursive=True
         ):
             if os.path.isfile(filename):
-                yield os.path.relpath(filename, self.bucket)
+                yield "/".join(os.path.split(os.path.relpath(filename, self.bucket)))
 
     def upload_object(self, file_path, object_name):
         object_path = os.path.join(self.bucket, *object_name.split("/"))

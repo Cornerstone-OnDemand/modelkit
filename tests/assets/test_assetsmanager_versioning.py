@@ -70,7 +70,7 @@ def _perform_mng_test(mng):
     assert fetched_asset_dict["version"] == "1.0"
 
     assert list(mng.remote_assets_store.iterate_assets()) == [
-        (os.path.join("category-test", "some-data"), ["1.0", "0.1", "0.0"])
+        ("category-test/some-data", ["1.0", "0.1", "0.0"])
     ]
 
     # pushing via new works
@@ -87,7 +87,7 @@ def _perform_mng_test(mng):
     assert fetched_asset_dict["version"] == "1.1"
 
     assert list(mng.remote_assets_store.iterate_assets()) == [
-        (os.path.join("category-test", "some-data"), ["1.1", "1.0", "0.1", "0.0"]),
+        ("category-test/some-data", ["1.1", "1.0", "0.1", "0.0"]),
     ]
 
 
