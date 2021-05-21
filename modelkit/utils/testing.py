@@ -9,7 +9,7 @@ from collections.abc import Iterable
 from typing import Any
 
 from modelkit.cli import deploy_tf_models
-from modelkit.utils.tensorflow import connect_tf_serving
+from modelkit.core.models.tensorflow_model import connect_tf_serving
 
 
 def tf_serving_fixture(request, required_models, models=None):
