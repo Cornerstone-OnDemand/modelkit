@@ -9,7 +9,7 @@ import requests
 from modelkit.core.model import Model
 from modelkit.core.types import ItemType, ReturnType
 from modelkit.log import logger
-from modelkit.utils.tensorflow import make_grpc_serving_request, wait_local_serving
+from modelkit.utils.tensorflow import connect_tf_serving, make_grpc_serving_request
 
 try:
     import tensorflow as tf
@@ -67,7 +67,7 @@ class TensorflowModel(Model[ItemType, ReturnType]):
         self.tf_serving_mode = self.service_settings.tf_serving_mode
 
         if self.enable_tf_serving and self.tf_serving_mode:
-            wait_local_serving(
+            connect_tf_serving(
                 self.configuration_key,
                 self.tf_serving_host,
                 self.tf_serving_port,

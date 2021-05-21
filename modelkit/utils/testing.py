@@ -9,7 +9,7 @@ from collections.abc import Iterable
 from typing import Any
 
 from modelkit.cli import deploy_tf_models
-from modelkit.utils.tensorflow import wait_local_serving
+from modelkit.utils.tensorflow import connect_tf_serving
 
 
 def tf_serving_fixture(request, required_models, models=None):
@@ -68,7 +68,7 @@ def tf_serving_fixture(request, required_models, models=None):
             tfserving_proc.terminate()
 
     request.addfinalizer(finalize)
-    wait_local_serving(required_models[0], "localhost", 8500, "grpc")
+    connect_tf_serving(required_models[0], "localhost", 8500, "grpc")
 
 
 def _diff_lines(ref_name, ref_lines, lines):

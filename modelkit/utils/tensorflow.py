@@ -57,22 +57,22 @@ def write_config(destination, models, verbose=False):
 
 
 @retry(**TF_SERVING_RETRY_POLICY)
-def _wait_local_serving(model_asset, host, port, mode):
+def _connect_tf_serving(model_name, host, port, mode):
     if mode == "grpc":
-        return try_local_serving_grpc(model_asset, host, port)
+        return try_local_serving_grpc(model_name, host, port)
     elif mode in {"rest", "rest-async"}:
-        return try_local_serving_restful(model_asset, host, port)
+        return try_local_serving_restful(model_name, host, port)
 
 
-def wait_local_serving(model_asset, host, port, mode):
+def connect_tf_serving(model_name, host, port, mode):
     logger.info(
         "Connecting to tensorflow serving",
         tf_serving_host=host,
         port=port,
-        model_asset=model_asset,
+        model_name=model_name,
         mode=mode,
     )
-    return _wait_local_serving(model_asset, host, port, mode)
+    return _connect_tf_serving(model_name, host, port, mode)
 
 
 def try_local_serving_grpc(model_name, host, port):
@@ -107,7 +107,7 @@ def make_grpc_serving_request(request, stub, model_name, host, port):
         # this number we may assume to reconnect every few seconds in case
         # of high load. In case of low load, we do not really care of load
         # balancing
-        stub = wait_local_serving(model_name, host, port, "grpc")
+        stub = connect_tf_serving(model_name, host, port, "grpc")
     try:
         r = stub.Predict(request, 1)
         return r, stub
