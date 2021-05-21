@@ -3,35 +3,40 @@ import tempfile
 
 from modelkit.assets.drivers.local import LocalStorageDriver
 from modelkit.assets.settings import DriverSettings
+from tests.conftest import skip_unless
 
-test_path = os.path.dirname(os.path.realpath(__file__))
+
+def _perform_driver_test(driver):
+    assert not driver.exists(driver.bucket, "some/object")
+
+    # put an object
+    with tempfile.TemporaryDirectory() as tempd:
+        with open(os.path.join(tempd, "name"), "w") as fsrc:
+            fsrc.write("some contents")
+        driver.upload_object(os.path.join(tempd, "name"), driver.bucket, "some/object")
+    assert driver.exists(driver.bucket, "some/object")
+
+    # download an object
+    with tempfile.TemporaryDirectory() as tempdir:
+        temp_path = os.path.join(tempdir, "test")
+        driver.download_object(driver.bucket, "some/object", temp_path)
+        with open(temp_path) as fdst:
+            assert fdst.read() == "some contents"
+
+    # delete the object
+    driver.delete_object(driver.bucket, "some/object")
+    assert not driver.exists(driver.bucket, "some/object")
 
 
-def test_local_driver_upload_download_delete():
-    with tempfile.TemporaryDirectory() as bucket_path:
-        driver_settings = DriverSettings(storage_provider="local", bucket=bucket_path)
-        local_driver = LocalStorageDriver(driver_settings.settings)
+def test_local_driver(local_assetsmanager):
+    _perform_driver_test(local_assetsmanager.remote_assets_store.driver)
 
-        assert not local_driver.exists(bucket_path, "some/object")
 
-        # put an object
-        with tempfile.TemporaryDirectory() as tempd:
-            with open(os.path.join(tempd, "name"), "w") as fsrc:
-                fsrc.write("some contents")
-            local_driver.upload_object(
-                os.path.join(tempd, "name"), bucket_path, "some/object"
-            )
-        local_driver_file_path = os.path.join(bucket_path, "some", "object")
-        assert os.path.isfile(local_driver_file_path)
-        assert local_driver.exists(bucket_path, "some/object")
+@skip_unless("ENABLE_GCS_TEST", "True")
+def test_gcs_driver(gcs_assetsmanager):
+    _perform_driver_test(gcs_assetsmanager.remote_assets_store.driver)
 
-        # download an object
-        with tempfile.TemporaryDirectory() as tempdir:
-            temp_path = os.path.join(tempdir, "test")
-            local_driver.download_object(bucket_path, "some/object", temp_path)
-            with open(temp_path) as fdst:
-                assert fdst.read() == "some contents"
 
-        # delete the object
-        local_driver.delete_object(bucket_path, "some/object")
-        assert not os.path.isfile(local_driver_file_path)
+@skip_unless("ENABLE_S3_TEST", "True")
+def test_s3_driver(s3_assetsmanager):
+    _perform_driver_test(s3_assetsmanager.remote_assets_store.driver)
