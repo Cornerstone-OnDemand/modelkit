@@ -47,9 +47,7 @@ class RemoteAssetsStore:
         with tempfile.TemporaryDirectory() as tmp_dir:
             versions_object_path = os.path.join(tmp_dir, name + ".version")
             os.makedirs(os.path.dirname(versions_object_path), exist_ok=True)
-            self.driver.download_object(
-                self.bucket, versions_object_name, versions_object_path
-            )
+            self.driver.download_object(versions_object_name, versions_object_path)
             with open(versions_object_path) as f:
                 versions_list = json.load(f)["versions"]
             return versions_list
@@ -61,7 +59,7 @@ class RemoteAssetsStore:
         meta_object_name = self.get_meta_object_name(name, version)
         with tempfile.TemporaryDirectory() as tempdir:
             fdst = os.path.join(tempdir, "meta.tmp")
-            self.driver.download_object(self.bucket, meta_object_name, fdst)
+            self.driver.download_object(meta_object_name, fdst)
             with open(fdst) as f:
                 meta = json.load(f)
             meta["push_date"] = parser.isoparse(meta["push_date"])
@@ -72,7 +70,7 @@ class RemoteAssetsStore:
         Upload a new asset
         """
         versions_object_name = self.get_versions_object_name(name)
-        if self.driver.exists(self.bucket, versions_object_name):
+        if self.driver.exists(versions_object_name):
             raise errors.AssetAlreadyExistsError(name)
         logger.info(
             "Pushing new asset",
@@ -92,7 +90,6 @@ class RemoteAssetsStore:
             if not dry_run:
                 self.driver.upload_object(
                     os.path.join(dversions, "versions.json"),
-                    self.bucket,
                     versions_object_name,
                 )
 
@@ -103,7 +100,7 @@ class RemoteAssetsStore:
         Update an existing asset version
         """
         versions_object_name = self.get_versions_object_name(name)
-        if not self.driver.exists(self.bucket, versions_object_name):
+        if not self.driver.exists(versions_object_name):
             raise errors.AssetDoesNotExistError(name)
         logger.info(
             "Updating asset",
@@ -134,9 +131,7 @@ class RemoteAssetsStore:
                 versions=versions,
             )
             if not dry_run:
-                self.driver.upload_object(
-                    versions_fn, self.bucket, versions_object_name
-                )
+                self.driver.upload_object(versions_fn, versions_object_name)
 
     def push_asset(self, asset_path, name, version, dry_run=False):
         """
@@ -151,7 +146,7 @@ class RemoteAssetsStore:
             logger.info("Pushing asset")
 
             object_name = self.get_object_name(name, version)
-            if self.driver.exists(self.bucket, object_name):
+            if self.driver.exists(object_name):
                 raise Exception(
                     f"`{name}` already exists, cannot"
                     f" overwrite asset for version `{version}`"
@@ -190,9 +185,7 @@ class RemoteAssetsStore:
                         n_parts=len(meta["contents"]),
                     )
                     if not dry_run:
-                        self.driver.upload_object(
-                            path_to_push, self.bucket, remote_object_name
-                        )
+                        self.driver.upload_object(path_to_push, remote_object_name)
                 logger.info(
                     "Pushed multi-part asset file",
                     n_parts=len(meta["contents"]),
@@ -203,7 +196,7 @@ class RemoteAssetsStore:
                     object_name=object_name,
                 )
                 if not dry_run:
-                    self.driver.upload_object(asset_path, self.bucket, object_name)
+                    self.driver.upload_object(asset_path, object_name)
 
             with tempfile.TemporaryDirectory() as tmp_dir:
                 meta_file_path = os.path.join(tmp_dir, "asset.meta")
@@ -217,9 +210,7 @@ class RemoteAssetsStore:
                     meta_object_name=object_name + ".meta",
                 )
                 if not dry_run:
-                    self.driver.upload_object(
-                        meta_file_path, self.bucket, object_name + ".meta"
-                    )
+                    self.driver.upload_object(meta_file_path, object_name + ".meta")
 
     def _fetch_asset(self, name, version, destination):
         """
@@ -253,7 +244,7 @@ class RemoteAssetsStore:
                         n_parts=len(meta["contents"]),
                     )
                     self.driver.download_object(
-                        self.bucket, remote_part_name, current_destination_path
+                        remote_part_name, current_destination_path
                     )
                     size = utils.get_size(current_destination_path)
                     logger.debug(
@@ -273,7 +264,7 @@ class RemoteAssetsStore:
                 logger.info("Downloading remote asset")
                 t0 = time.monotonic()
                 os.makedirs(os.path.dirname(destination_path), exist_ok=True)
-                self.driver.download_object(self.bucket, object_name, destination_path)
+                self.driver.download_object(object_name, destination_path)
                 size = utils.get_size(destination_path)
                 download_time = time.monotonic() - t0
                 logger.info(
@@ -290,7 +281,7 @@ class RemoteAssetsStore:
 
     def iterate_assets(self):
         assets_set = set()
-        for asset_path in self.driver.iterate_objects(self.bucket, self.prefix):
+        for asset_path in self.driver.iterate_objects(self.prefix):
             if asset_path.endswith(".versions"):
                 asset_name = "/".join(
                     asset_path[len(self.prefix) + 1 : -len(".versions")].split("/")

@@ -38,7 +38,6 @@ def _download_object_or_prefix(manager, asset_path, destination_dir):
     asset_path = os.path.join(destination_dir, "myasset")
     try:
         manager.remote_assets_store.driver.download_object(
-            bucket_name=parsed_path["bucket_name"],
             object_name=parsed_path["object_name"],
             destination_path=asset_path,
         )
@@ -47,7 +46,7 @@ def _download_object_or_prefix(manager, asset_path, destination_dir):
         paths = [
             path
             for path in manager.remote_assets_store.driver.iterate_objects(
-                bucket=parsed_path["bucket_name"], prefix=parsed_path["object_name"]
+                prefix=parsed_path["object_name"]
             )
         ]
         if not paths:
@@ -57,7 +56,6 @@ def _download_object_or_prefix(manager, asset_path, destination_dir):
         for path in paths:
             object_name = path.split("/")[-1]
             manager.remote_assets_store.driver.download_object(
-                bucket_name=parsed_path["bucket_name"],
                 object_name=parsed_path["object_name"] + "/" + object_name,
                 destination_path=os.path.join(asset_path, object_name),
             )

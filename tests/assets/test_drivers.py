@@ -7,28 +7,28 @@ from tests.conftest import skip_unless
 
 
 def _perform_driver_test(driver):
-    assert not driver.exists(driver.bucket, "some/object")
+    assert not driver.exists("some/object")
 
     # put an object
     with tempfile.TemporaryDirectory() as tempd:
         with open(os.path.join(tempd, "name"), "w") as fsrc:
             fsrc.write("some contents")
-        driver.upload_object(os.path.join(tempd, "name"), driver.bucket, "some/object")
-    assert driver.exists(driver.bucket, "some/object")
+        driver.upload_object(os.path.join(tempd, "name"), "some/object")
+    assert driver.exists("some/object")
 
     # download an object
     with tempfile.TemporaryDirectory() as tempdir:
         temp_path = os.path.join(tempdir, "test")
-        driver.download_object(driver.bucket, "some/object", temp_path)
+        driver.download_object("some/object", temp_path)
         with open(temp_path) as fdst:
             assert fdst.read() == "some contents"
 
     # iterate objects
-    assert [x for x in driver.iterate_objects(driver.bucket)] == ["some/object"]
+    assert [x for x in driver.iterate_objects()] == ["some/object"]
 
     # delete the object
-    driver.delete_object(driver.bucket, "some/object")
-    assert not driver.exists(driver.bucket, "some/object")
+    driver.delete_object("some/object")
+    assert not driver.exists("some/object")
 
 
 def test_local_driver(local_assetsmanager):

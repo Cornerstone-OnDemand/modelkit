@@ -40,39 +40,39 @@ class S3StorageDriver:
         self.bucket = settings.bucket
 
     @retry(**RETRY_POLICY)
-    def iterate_objects(self, bucket, prefix=None):
+    def iterate_objects(self, prefix=None):
         paginator = self.client.get_paginator("list_objects_v2")
-        pages = paginator.paginate(Bucket=bucket, Prefix=prefix or "")
+        pages = paginator.paginate(Bucket=self.bucket, Prefix=prefix or "")
         for page in pages:
             for obj in page.get("Contents", []):
                 yield obj["Key"]
 
     @retry(**RETRY_POLICY)
-    def upload_object(self, file_path, bucket, object_name):
-        self.client.upload_file(file_path, bucket, object_name)
+    def upload_object(self, file_path, object_name):
+        self.client.upload_file(file_path, self.bucket, object_name)
 
     @retry(**RETRY_POLICY)
-    def download_object(self, bucket_name, object_name, destination_path):
+    def download_object(self, object_name, destination_path):
         try:
             with open(destination_path, "wb") as f:
-                self.client.download_fileobj(bucket_name, object_name, f)
+                self.client.download_fileobj(self.bucket, object_name, f)
         except botocore.exceptions.ClientError:
             logger.error(
-                "Object not found.", bucket=bucket_name, object_name=object_name
+                "Object not found.", bucket=self.bucket, object_name=object_name
             )
             os.remove(destination_path)
             raise errors.ObjectDoesNotExistError(
-                driver=self, bucket=bucket_name, object_name=object_name
+                driver=self, bucket=self.bucket, object_name=object_name
             )
 
     @retry(**RETRY_POLICY)
-    def delete_object(self, bucket, object_name):
-        self.client.delete_object(Bucket=bucket, Key=object_name)
+    def delete_object(self, object_name):
+        self.client.delete_object(Bucket=self.bucket, Key=object_name)
 
     @retry(**RETRY_POLICY)
-    def exists(self, bucket, object_name):
+    def exists(self, object_name):
         try:
-            self.client.head_object(Bucket=bucket, Key=object_name)
+            self.client.head_object(Bucket=self.bucket, Key=object_name)
             return True
         except botocore.exceptions.ClientError:
             return False

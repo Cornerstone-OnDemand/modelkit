@@ -25,11 +25,9 @@ test_path = os.path.dirname(os.path.realpath(__file__))
 
 def _delete_all_objects(mng):
     for object_name in mng.remote_assets_store.driver.iterate_objects(
-        mng.remote_assets_store.bucket, mng.remote_assets_store.prefix
+        mng.remote_assets_store.prefix
     ):
-        mng.remote_assets_store.driver.delete_object(
-            mng.remote_assets_store.bucket, object_name
-        )
+        mng.remote_assets_store.driver.delete_object(object_name)
 
 
 @pytest.fixture(scope="function")
