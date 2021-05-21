@@ -7,12 +7,12 @@ import numpy as np
 import pydantic
 import pydantic.generics
 
-from modelkit.cli import deploy_tf_models
 from modelkit.core.library import ModelLibrary
 from modelkit.core.model import Model
 from modelkit.core.model_configuration import configure
 from modelkit.core.models.tensorflow_model import connect_tf_serving
 from modelkit.testing.reference import ReferenceJson
+from modelkit.utils.tensorflow import deploy_tf_models
 
 
 @dataclasses.dataclass
