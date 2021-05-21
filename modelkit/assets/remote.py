@@ -20,12 +20,6 @@ from modelkit.assets.versioning import (
 from modelkit.logging.context import ContextualizedLogging
 
 
-def meta_file_serializer(obj):
-    if isinstance(obj, datetime.datetime):
-        return obj.isoformat()
-    return obj
-
-
 class RemoteAssetsStore:
     def __init__(self, **settings):
         settings = RemoteAssetsStoreSettings(**settings)
@@ -214,7 +208,7 @@ class RemoteAssetsStore:
             with tempfile.TemporaryDirectory() as tmp_dir:
                 meta_file_path = os.path.join(tmp_dir, "asset.meta")
                 with open(meta_file_path, "w", encoding="utf-8") as fmeta:
-                    json.dump(meta, fmeta, default=meta_file_serializer)
+                    json.dump(meta, fmeta)
 
                 logger.debug(
                     "Pushing meta file",
