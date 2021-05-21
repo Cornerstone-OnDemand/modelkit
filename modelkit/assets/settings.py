@@ -10,7 +10,7 @@ from modelkit.assets.drivers.local import LocalDriverSettings
 from modelkit.assets.drivers.s3 import S3DriverSettings
 from modelkit.assets.errors import InvalidAssetSpecError
 
-SUPPORTED_STORAGE_PROVIDERS = {"s3", "s3ssm", "gcs", "local"}
+SUPPORTED_STORAGE_PROVIDERS = {"s3", "gcs", "local"}
 
 
 class DriverSettings(BaseSettings):
@@ -31,7 +31,7 @@ class DriverSettings(BaseSettings):
             raise ValueError(f"Unkown storage provider `{storage_provider}`.")
         if storage_provider == "gcs":
             settings = GCSDriverSettings(**fields)
-        if storage_provider in ("s3", "s3ssm"):
+        if storage_provider == "s3":
             settings = S3DriverSettings(**fields)
         if storage_provider == "local":
             settings = LocalDriverSettings(**fields)

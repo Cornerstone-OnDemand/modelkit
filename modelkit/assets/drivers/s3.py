@@ -79,10 +79,3 @@ class S3StorageDriver:
 
     def __repr__(self):
         return f"<S3StorageDriver endpoint_url={self.endpoint_url}>"
-
-
-class S3SSMStorageDriver(S3StorageDriver):
-    def __init__(self, settings: S3DriverSettings):
-        super().__init__(settings)
-        ssm_bucket = boto3.client("ssm").get_parameter(Name=settings.bucket)
-        self.bucket = ssm_bucket["Parameter"]["Value"]

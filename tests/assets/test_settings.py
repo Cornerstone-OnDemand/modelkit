@@ -25,7 +25,6 @@ test_path = os.path.dirname(os.path.realpath(__file__))
         ({"storage_provider": "local", "bucket": test_path}, True, LocalDriverSettings),
         ({"storage_provider": "gcs", "bucket": test_path}, True, GCSDriverSettings),
         ({"storage_provider": "s3", "bucket": test_path}, True, S3DriverSettings),
-        ({"storage_provider": "s3ssm", "bucket": test_path}, True, S3DriverSettings),
     ],
 )
 def test_driver_settings(settings_dict, valid, expected_type, clean_env):
