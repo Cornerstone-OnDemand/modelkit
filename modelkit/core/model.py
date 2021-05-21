@@ -183,6 +183,8 @@ class Model(Asset, Generic[ItemType, ReturnType]):
         self._model_cache_key = None
         self._item_model = None
         self._return_model = None
+        self._item_type = None
+        self._return_type = None
         super().__init__(self, *args, **kwargs)
         self.initialize_validation_models()
 
@@ -242,20 +244,22 @@ class Model(Asset, Generic[ItemType, ReturnType]):
             if len(generic_aliases):
                 item_type, return_type = generic_aliases[0].__args__
                 if item_type != ItemType:
+                    self._item_type = Union[List[item_type], item_type]
                     type_name = self.__class__.__name__ + "ItemTypeModel"
                     self._item_model = pydantic.create_model(
                         type_name,
                         #  The order of the Union arguments matter here, in order
                         #  to make sure that lists of items and single items
                         # are correctly validated
-                        data=(Union[List[item_type], item_type], ...),
+                        data=(self._item_type, ...),
                         __base__=InternalDataModel,
                     )
                 if return_type != ReturnType:
                     type_name = self.__class__.__name__ + "ReturnTypeModel"
+                    self._return_type = Union[List[return_type], return_type]
                     self._return_model = pydantic.create_model(
                         type_name,
-                        data=(Union[List[return_type], return_type], ...),
+                        data=(self._return_type, ...),
                         __base__=InternalDataModel,
                     )
         except Exception as exc:
