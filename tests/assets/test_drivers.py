@@ -23,6 +23,9 @@ def _perform_driver_test(driver):
         with open(temp_path) as fdst:
             assert fdst.read() == "some contents"
 
+    # iterate objects
+    assert [x for x in driver.iterate_objects(driver.bucket)] == ["some/object"]
+
     # delete the object
     driver.delete_object(driver.bucket, "some/object")
     assert not driver.exists(driver.bucket, "some/object")
