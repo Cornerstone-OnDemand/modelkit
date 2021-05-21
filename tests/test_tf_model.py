@@ -5,9 +5,9 @@ import numpy as np
 import pytest
 
 from modelkit import ModelLibrary
-from modelkit.core.fixtures import tf_serving_fixture
 from modelkit.core.models.tensorflow_model import TensorflowModel
 from modelkit.core.settings import ServiceSettings
+from modelkit.testing import tf_serving_fixture
 from tests import TEST_DIR
 from tests.conftest import skip_unless
 

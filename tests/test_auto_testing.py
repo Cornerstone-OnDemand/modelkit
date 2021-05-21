@@ -2,9 +2,9 @@ from typing import Dict
 
 import pydantic
 
-from modelkit.core.fixtures import modellibrary_auto_test, modellibrary_fixture
 from modelkit.core.model import Model
 from modelkit.core.types import ModelTestingConfiguration
+from modelkit.testing import modellibrary_auto_test, modellibrary_fixture
 
 
 class ModelItemType(pydantic.BaseModel):

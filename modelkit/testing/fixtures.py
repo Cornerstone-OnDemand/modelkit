@@ -12,7 +12,7 @@ from modelkit.core.library import ModelLibrary
 from modelkit.core.model import Model
 from modelkit.core.model_configuration import configure
 from modelkit.core.models.tensorflow_model import connect_tf_serving
-from modelkit.utils.testing import ReferenceJson
+from modelkit.testing.reference import ReferenceJson
 
 
 @dataclasses.dataclass

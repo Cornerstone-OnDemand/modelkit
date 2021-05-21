@@ -2,6 +2,7 @@ import os
 
 import pytest
 
+from modelkit import testing
 from modelkit.core.library import (
     ConfigurationNotFoundException,
     ModelLibrary,
@@ -16,7 +17,6 @@ from modelkit.core.model_configuration import (
     list_assets,
 )
 from modelkit.core.settings import ServiceSettings
-from modelkit.utils import testing
 from modelkit.utils.tensorflow import write_config
 from tests import TEST_DIR
 

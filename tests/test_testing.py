@@ -6,7 +6,7 @@ import tempfile
 
 import pytest
 
-from modelkit.utils.testing import ReferenceJson, ReferenceText, deep_format_floats
+from modelkit.testing.reference import ReferenceJson, ReferenceText, deep_format_floats
 
 
 def test_referencejson(monkeypatch):
