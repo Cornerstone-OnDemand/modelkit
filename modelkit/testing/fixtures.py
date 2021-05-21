@@ -106,13 +106,13 @@ def modellibrary_fixture(
     frame.f_locals[fixture_name] = fixture_function
 
 
-def tf_serving_fixture(request, required_models, models=None):
+def tf_serving_fixture(request, required_models, deployment="docker", models=None):
     cmd = [
         "--port=8500",
         "--rest_api_port=8501",
     ]
 
-    if "JENKINS_CI" in os.environ:
+    if deployment == "process":
         deploy_tf_models(
             required_models, "local-process", config_name="testing", models=models
         )
