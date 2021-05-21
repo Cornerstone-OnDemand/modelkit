@@ -9,7 +9,7 @@ import requests
 from modelkit.core.model import Model
 from modelkit.core.types import ItemType, ReturnType
 from modelkit.log import logger
-from modelkit.utils.tensorflow import connect_tf_serving, make_grpc_serving_request
+from modelkit.utils.tensorflow import TFServingError, connect_tf_serving
 
 try:
     import tensorflow as tf
@@ -20,10 +20,6 @@ try:
 
 except ModuleNotFoundError:
     logger.info("tensorflow is not installed")
-
-
-class TFServingError(Exception):
-    pass
 
 
 def safe_np_dump(obj):
@@ -67,7 +63,7 @@ class TensorflowModel(Model[ItemType, ReturnType]):
         self.tf_serving_mode = self.service_settings.tf_serving_mode
 
         if self.enable_tf_serving and self.tf_serving_mode:
-            connect_tf_serving(
+            self.grpc_stub = connect_tf_serving(
                 self.configuration_key,
                 self.tf_serving_host,
                 self.tf_serving_port,
@@ -120,13 +116,8 @@ class TensorflowModel(Model[ItemType, ReturnType]):
                 tf.compat.v1.make_tensor_proto(vect, dtype=dtype)
             )
 
-        r, self.grpc_stub = make_grpc_serving_request(
-            request,
-            self.grpc_stub,
-            self.configuration_key,
-            self.tf_serving_host,
-            self.tf_serving_port,
-        )
+        r = self.grpc_stub.Predict(request, 1)
+
         return {
             output_key: np.array(
                 r.outputs[output_key].ListFields()[-1][1],

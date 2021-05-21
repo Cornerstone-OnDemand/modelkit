@@ -1,5 +1,3 @@
-import random
-
 import requests
 
 from modelkit.log import logger
@@ -17,6 +15,10 @@ from tenacity import (
     stop_after_attempt,
     wait_random_exponential,
 )
+
+
+class TFServingError(Exception):
+    pass
 
 
 def log_after_retry(retry_state):
@@ -57,13 +59,6 @@ def write_config(destination, models, verbose=False):
 
 
 @retry(**TF_SERVING_RETRY_POLICY)
-def _connect_tf_serving(model_name, host, port, mode):
-    if mode == "grpc":
-        return try_local_serving_grpc(model_name, host, port)
-    elif mode in {"rest", "rest-async"}:
-        return try_local_serving_restful(model_name, host, port)
-
-
 def connect_tf_serving(model_name, host, port, mode):
     logger.info(
         "Connecting to tensorflow serving",
@@ -72,45 +67,20 @@ def connect_tf_serving(model_name, host, port, mode):
         model_name=model_name,
         mode=mode,
     )
-    return _connect_tf_serving(model_name, host, port, mode)
-
-
-def try_local_serving_grpc(model_name, host, port):
-    channel = grpc.insecure_channel(
-        f"{host}:{port}", [("grpc.lb_policy_name", "round_robin")]
-    )
-    stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
-    r = GetModelMetadataRequest()
-    r.model_spec.name = model_name
-    r.metadata_field.append("signature_def")
-    answ = stub.GetModelMetadata(r, 1)
-    version = answ.model_spec.version.value
-    if version != 1:
-        raise ValueError(f"Bad model version: {version}!=1")
-    return stub
-
-
-def try_local_serving_restful(model_name, host, port):
-    response = requests.get(f"http://{host}:{port}/v1/models/{model_name}")
-    assert response.status_code == 200
-    return response.json()
-
-
-@retry(**TF_SERVING_RETRY_POLICY)
-def make_grpc_serving_request(request, stub, model_name, host, port):
-    if stub is None or random.randint(0, 10000) == 0:
-        # this allow to refresh the connections regularly and thus to take
-        # into account new pods arriving
-        # It gives less control than monitoring request counts or connection
-        # duration, but is a lot easier to introduce
-        # In current benchmark, performing 10k queries takes ~7s, so with
-        # this number we may assume to reconnect every few seconds in case
-        # of high load. In case of low load, we do not really care of load
-        # balancing
-        stub = connect_tf_serving(model_name, host, port, "grpc")
-    try:
-        r = stub.Predict(request, 1)
-        return r, stub
-    except Exception:
-        stub = None
-        raise
+    if mode == "grpc":
+        channel = grpc.insecure_channel(
+            f"{host}:{port}", [("grpc.lb_policy_name", "round_robin")]
+        )
+        stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
+        r = GetModelMetadataRequest()
+        r.model_spec.name = model_name
+        r.metadata_field.append("signature_def")
+        answ = stub.GetModelMetadata(r, 1)
+        version = answ.model_spec.version.value
+        if version != 1:
+            raise TFServingError(f"Bad model version: {version}!=1")
+        return stub
+    elif mode in {"rest", "rest-async"}:
+        response = requests.get(f"http://{host}:{port}/v1/models/{model_name}")
+        if response.status_code != 200:
+            raise TFServingError(f"Error connecting to TF serving")
