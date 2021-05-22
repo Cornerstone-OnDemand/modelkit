@@ -47,7 +47,7 @@ def _configurations_from_objects(m) -> Dict[str, ModelConfiguration]:
             key: ModelConfiguration(**{**config, "model_type": m})
             for key, config in m.CONFIGURATIONS.items()
         }
-    elif isinstance(m, list):
+    elif isinstance(m, (list, tuple)):
         return dict(ChainMap(*(_configurations_from_objects(sub_m) for sub_m in m)))
     elif isinstance(m, ModuleType):
         return {
