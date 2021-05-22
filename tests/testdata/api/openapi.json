@@ -63,7 +63,7 @@
   "paths": {
     "/predict/some_complex_model": {
       "post": {
-        "description": "        More complex        With **a lot** of documentation        ",
+        "description": "        With **a lot** of documentation",
         "operationId": "_endpoint_predict_some_complex_model_post",
         "requestBody": {
           "content": {
@@ -106,12 +106,12 @@
             "description": "Validation Error"
           }
         },
-        "summary": " Endpoint"
+        "summary": "More complex"
       }
     },
     "/predict/some_model": {
       "post": {
-        "description": "        This is a summary        that also has plenty more text        ",
+        "description": "        that also has plenty more text",
         "operationId": "_endpoint_predict_some_model_post",
         "requestBody": {
           "content": {
@@ -154,7 +154,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": " Endpoint"
+        "summary": "This is a summary"
       }
     }
   }

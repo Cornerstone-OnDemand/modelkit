@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Type, Union
 import fastapi
 
 from modelkit.core.service import ModelConfiguration, ModelLibrary, ServiceSettings
+from modelkit.log import logger
 
 # create APIRoute for model
 # create startup event
@@ -70,14 +71,14 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
         )
 
         route_paths = route_paths or {}
-        for model_name in required_models or []:
+        for model_name in self.svc.required_models:
             m = self.svc.get_model(model_name)
             path = route_paths.get(model_name, "/predict/" + model_name)
 
             summary = ""
             description = ""
             if m.__doc__:
-                doclines = m.__doc__.split("\n")
+                doclines = m.__doc__.strip().split("\n")
                 summary = doclines[0]
                 if len(doclines) > 1:
                     description = "".join(doclines[1:])
@@ -89,6 +90,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
                 description=description,
                 summary=summary,
             )
+            logger.info("Added model to service", name=model_name, path=path)
 
     def _make_model_endpoint_fn(self, model_name, item_type):
         def _endpoint(
