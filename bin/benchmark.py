@@ -11,7 +11,7 @@ import networkx as nx
 from memory_profiler import memory_usage
 from networkx.drawing.nx_agraph import write_dot
 from rich.console import Console
-from rich.progress import Progress
+from rich.progress import Progress, track
 from rich.table import Table
 from rich.tree import Tree
 
@@ -147,28 +147,34 @@ def dependencies(models, required_models, all):
 @cli_.command()
 @click.argument("model")
 @click.argument("example")
-@click.option("-n", default=100)
-def time(model, example, n):
+@click.option("--models", "-m", multiple=True)
+@click.option("--n", "-n", default=100)
+def time(model, example, models, n):
     """
     Time n iterations of a model's predict on an example
     """
-    service = ModelLibrary(required_models=[model])
+    service = _configure_from_cli_arguments(models, [model], all)
+
+    console = Console()
 
     t0 = perf_counter()
     model = service.get_model(model)
-    print(f"{f'Loaded model `{model}` in':50} ... {f'{perf_counter()-t0:.2f} s':>10}")
+    console.print(
+        f"{f'Loaded model `{model.configuration_key}` in':50} "
+        f"... {f'{perf_counter()-t0:.2f} s':>10}"
+    )
 
     example_deserialized = json.loads(example)
-    print(f"Calling `predict` {n} times on example:")
-    print(f"{json.dumps(example_deserialized, indent = 2)}")
+    console.print(f"Calling `predict` {n} times on example:")
+    console.print(f"{json.dumps(example_deserialized, indent = 2)}")
 
     times = []
-    for _ in range(n):
+    for _ in track(range(n)):
         t0 = perf_counter()
         model.predict(example_deserialized)
         times.append(perf_counter() - t0)
 
-    print(
+    console.print(
         f"Finished in {sum(times):.1f} s, "
         f"approximately {sum(times)/n*1e3:.2f} ms per call"
     )
@@ -176,7 +182,7 @@ def time(model, example, n):
     t0 = perf_counter()
     model.predict([example_deserialized] * n)
     batch_time = perf_counter() - t0
-    print(
+    console.print(
         f"Finished batching in {batch_time:.1f} s, approximately"
         f" {batch_time/n*1e3:.2f} ms per call"
     )
