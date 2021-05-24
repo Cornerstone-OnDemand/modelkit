@@ -2,20 +2,24 @@
 # flake8: noqa: E402
 import importlib
 import json
+import logging
 import os
 import sys
 from time import perf_counter, sleep
 
 import click
+import humanize
 import networkx as nx
 from memory_profiler import memory_usage
 from networkx.drawing.nx_agraph import write_dot
+from rich.console import Console
+from rich.progress import Progress, SpinnerColumn
+from rich.table import Table
+from rich.tree import Tree
 
 rootdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(rootdir)
 
-import modelkit
-import modelkit.models
 from modelkit import ModelLibrary
 from modelkit.core.model_configuration import configure, list_assets
 
@@ -31,34 +35,47 @@ def load_model(m, service):
 
 
 @cli_.command()
-@click.option("--model", "-m", multiple=True)
+@click.option("--models", "-m", multiple=True)
+@click.option("--required-models", "-r", multiple=True)
 @click.option("--all", is_flag=True)
-def memory(model, all):
+def memory(models, required_models, all):
     """
     Show memory consumption of modelkit models
     """
-    models_configurations = configure()
+    models_configurations = configure(models=models)
     if all:
-        model = list(models_configurations)
-    service = ModelLibrary(required_models=[])
+        required_models = list(models_configurations)
+    service = ModelLibrary(
+        required_models=required_models, configuration=models_configurations
+    )
     grand_total = 0
     stats = {}
-    if model:
-        click.secho(f"Profiling memory for model: {' '.join(model)}")
-        for m in model:
-            deps = models_configurations[m].model_dependencies
-            deps = deps.values() if isinstance(deps, dict) else deps
-            for dependency in list(deps) + [m]:
-                mu = memory_usage((load_model, (dependency, service), {}))
-                stats[dependency] = mu[-1] - mu[0]
-                grand_total += mu[-1] - mu[0]
+    logging.getLogger().setLevel(logging.ERROR)
+    if required_models:
+        with Progress(transient=True) as progress:
+            task = progress.add_task("Profiling memory...", total=len(required_models))
+            for m in required_models:
+                deps = models_configurations[m].model_dependencies
+                deps = deps.values() if isinstance(deps, dict) else deps
+                for dependency in list(deps) + [m]:
+                    mu = memory_usage((load_model, (dependency, service), {}))
+                    stats[dependency] = mu[-1] - mu[0]
+                    grand_total += mu[-1] - mu[0]
+                progress.update(task, advance=1)
 
-        click.secho(f"{'* Models':10}" + "-" * 55)
-        for m, mc in stats.items():
-            click.secho(f"{m:50} ... {f'{mc:.2f} MB':>10}")
+    console = Console()
+    table = Table(show_header=True, header_style="bold")
+    table.add_column("Model")
+    table.add_column("Memory", style="dim")
 
-    click.secho("-" * 65)
-    click.secho(f"{'Total':50} ... {f'{grand_total:.2f} MB':>10}")
+    for k, (m, mc) in enumerate(stats.items()):
+        table.add_row(
+            m,
+            humanize.naturalsize(mc * 10 ** 6, format="%.2f"),
+            end_section=k == len(stats) - 1,
+        )
+    table.add_row("Total", humanize.naturalsize(grand_total * 10 ** 6, format="%.2f"))
+    console.print(table)
 
 
 @cli_.command()
