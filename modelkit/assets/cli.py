@@ -1,4 +1,3 @@
-import collections
 import glob
 import os
 import re
@@ -12,7 +11,6 @@ from rich.table import Table
 from rich.tree import Tree
 
 from modelkit.assets.errors import ObjectDoesNotExistError
-from modelkit.assets.manager import AssetsManager
 from modelkit.assets.remote import RemoteAssetsStore
 from modelkit.assets.settings import AssetSpec, DriverSettings
 from modelkit.assets.versioning import (

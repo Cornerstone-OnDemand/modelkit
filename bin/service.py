@@ -27,10 +27,10 @@ def cli():
 @click.option("--models", type=str, multiple=True)
 @click.option("--host", type=str, default="localhost")
 @click.option("--port", type=int, default=8000)
-def cli(required_models, models, host, port):
+def _cli(required_models, models, host, port):
     app = fastapi.FastAPI()
     router = ModelkitAutoAPIRouter(
-        required_models=required_models or None,
+        required_models=list(required_models) or None,
         models=models,
     )
     app.include_router(router)
