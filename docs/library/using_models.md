@@ -3,22 +3,24 @@
 
 This section describes how to consume `modelkit` models.
 
-### Installing `modelkit`
+The normal way to use `modelkit` models is by instantiating a `ModelLibrary` with a set of models.
 
-Make sure that the environment you plan to use `modelkit` on is setup as per [the guidelines](../configuration.md), and then either:
+```python
+from modelkit import ModelLibrary, Model
 
-- install `modelkit` from `devpi` using `pip install modelkit`
-- install `modelkit` from the repository using `python setup.py install`
+class MyModel(Model):
+    async def _predict_one(self, item):
+        return item
 
-!!! warning
-    Do _not_ install `modelkit` in the same virtual environment you plan on
-    developping `modelkit` with.
 
-### Python package method
+# Create the prediction service
+# This downloads all the assets and instantiates all the `Model`
+# objects that were specified
+service = ModelLibrary(models=MyModel)
 
-Clients use `modelkit` models by instantiating a `ModelLibrary` with a set of models
-picked either amongst models defined in the `modelkit.library.model_configuration` module,
-or by specifying a `modelkitModelConfiguration` at runtime.
+# This is only a dictionary lookup
+model = service.get_model("my_favorite_model")
+```
 
 In each case, the models are then accessed via `ModelLibrary.get("some name")`
  and used with `Model`.
@@ -27,7 +29,6 @@ Here is a typical implementation that uses an modelkit model configured as `my_f
 
 ```python
 from modelkit import ModelLibrary
-import modelkit.models
 
 # Create the prediction service
 # This downloads all the assets and instantiates all the `Model`

@@ -1,26 +1,25 @@
-# Development
+# Assets
 
-An asset is a file or a directory that is stored on a remote or local object store,
-versioned and made available to Python client code
+An asset is a file or a directory that is typically shared andstored on a remote object store (such as GCS or S3).
 
+`modelkit` has tooling to push and retrieve these assets.
+
+- At runtime, the `ModelLibrary` will retrieve the necessary assets from the object store, and store them locally. The paths to these assets is then passed to each `Model` instance which can then load the relevant parts.
+- For developers, since the assets are versioned, they can be persisted locally in an `ASSETS_DIR`, thus they are only ever downloaded once.
 
 ## AssetsManager
 
-An `AssetsManager` instance can be created as follows:
+An `AssetsManager` instance can be explicitly created as follows:
 
 ```python
 from modelkit.assets.manager import AssetsManager
-asset_manager = AssetsManager(**kwargs)
+
+asset_manager = AssetsManager(assets_dir="/path/to/local/dir")
 ```
 
-The options passed to `kwargs` are used to instantiate an `assets.settings.AssetsManagerSettings` object that validates all settings using pydantic, and potentially
-fills in missing parameters using environment variables.
+In this case, assets will be looked up locally under the `assets_dir`.
 
-The `AssetsManager` is instantiated by specifying the storage driver's parameters: the
-preferred way to do this is through [environment variables](environment.md).
-
-It _needs_ to be provided with a working directory in order to download and cache
-assets locally (see [Environment](environment.md) and [Local cache](working_dir.md)).
+`modelkit` expects a particular directory structure in which to find the assets. 
 
 In addition, the `AssetsManager` can be provided with an `storage_prefix` which
 prefixes all stored assets (`modelkit-assets` by default).
@@ -59,26 +58,29 @@ In this case it returns a dictionary with:
 }
 ```
 
-## Asset storage convention
+## Remote asset storage convention
 
 ### Data object
 
-Assets are stored in object stores, referenced as:
+Remote assets are stored in object stores, referenced as:
 
 ```
 [provider]://[bucket]/[assetsmanager-prefix]/[category]/[name]/[version]
 ```
+
+!!! info
+  If the asset consists in a directory, all sub files will be stored as 
+  separate objects with this prefix.
 
 In this "path":
 
 - provider is `s3` or `gcs` or `file` depending on the storage driver
 - `bucket` is the remote container name
 
-The rest of the "path" is technically the _object name_ and consists of
+The rest of the "path" is the remote object's name and consists of
 
 - `assetsmanager-prefix` is a prefix to all assets for a given `AssetsManager`
-- `category` used to distinguish assets coming from different sources
-- `name` describes the asset. Note that the name may contain path separators `/`
+- `name` describes the asset. The name may contain path separators `/` but each file remotely will be stored as a single object.
 - `version` describes the asset version in the form `X.Y`
 
 ### Meta object

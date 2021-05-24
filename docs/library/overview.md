@@ -2,13 +2,13 @@
 
 The main objects in `modelkit` are `Model` and the `ModelLibrary`.
 
-Put simply, a `ModelLibrary` is used to fetch any `Model`
-and keep track of it during execution, the service will fetch any serialized assets, and load the object in memory.
+The `ModelLibrary` is able to instantiate and configure any `Model`
+and keep track of it during execution. 
 
 `Model` objects can then be requested via `ModelLibrary.get`,
  and used to make predictions via `Model`.
 
-The ML logic is written in each `Model`'s `predict` functions, typically inside a submodule of `modelkit.models`.
+The ML logic is written in each `Model`'s `predict` functions, typically inside a module.
 
 ## Running tests
 

@@ -1,3 +1,10 @@
-# modelkit
+<h1 align="center"> modelkit </h1>
+<p align="center">
+  <em>Python framework for production ML systems.</em>
+</p>
+    
+---
 
-Machine learning library
+`modelkit`
+
+Refer to the [documentation](https://clustree.github.io/modelkit/) for more information.

@@ -3,24 +3,27 @@ site_name: 'modelkit documentation'
 site_description: 'Library for machine learning models'
 
 nav:
-  - Home:
-    - Index: 'index.md'
-    - Configuration: 'configuration.md'
-    - CLI: 'cli.md'
-  - Python lib:
+  - Home: 'index.md'
+  - Model development:
     - Overview: 'library/overview.md'
     - Consuming models: 'library/using_models.md'
     - Prediction service: 'library/prediction_service.md'
     - Developing models: 'library/developing_modelkit.md'
-    - Tensorflow models: 'library/tensorflow_models.md'
+    - Organizing models: 'library/organizing.md'
     - Testing: 'library/testing.md'
     - Logging: 'logging.md'
+    - Specific models:
+      - Tensorflow models: 'library/special/tensorflow.md'
+      - Distant Models: 'library/special/distant.md'
+  - Deployment:
+    - Configuration: 'configuration.md'
+    - CLI: 'cli.md'
   - Assets:
     - Introduction: 'assets/index.md'
     - Assets push: 'assets/assets_push.md'
     - Environment: 'assets/environment.md'
     - Development: 'assets/assets.md'
-    - Local cache: 'assets/working_dir.md'
+    - Local cache: 'assets/assets_dir.md'
 
 theme:
   name: 'material'
@@ -39,8 +42,8 @@ plugins:
   - search
   # - git-revision-date-localized
 
-repo_name: 'modelkit/modelkit'
-repo_url: 'https://github.com/modelkit/modelkit'
+repo_name: 'clustree/modelkit'
+repo_url: 'https://github.com/clustree/modelkit'
 extra:
-  repo_icon: 'gitlab'
+  repo_icon: 'github'
 
