@@ -13,7 +13,7 @@ test_path = os.path.dirname(os.path.realpath(__file__))
 def _perform_mng_test(mng):
     # test pushing a file asset
     data_path = os.path.join(test_path, "testdata", "some_data.json")
-    mng.remote_assets_store.push_asset(data_path, "category-test/some-data.ext", "1.0")
+    mng.remote_assets_store.push(data_path, "category-test/some-data.ext", "1.0")
     # check metadata
     meta = mng.remote_assets_store.get_asset_meta("category-test/some-data.ext", "1.0")
     assert not meta["is_directory"]
@@ -31,7 +31,7 @@ def _perform_mng_test(mng):
 
     # test pushing a directory asset
     data_path = os.path.join(test_path, "testdata", "some_data_folder")
-    mng.remote_assets_store.push_asset(data_path, "category-test/some-data-2", "1.0")
+    mng.remote_assets_store.push(data_path, "category-test/some-data-2", "1.0")
 
     # check metadata
     meta = mng.remote_assets_store.get_asset_meta("category-test/some-data-2", "1.0")
@@ -66,7 +66,7 @@ def _perform_mng_test(mng):
 
     # attempt to overwrite the asset
     with pytest.raises(Exception):
-        mng.remote_assets_store.push_asset(
+        mng.remote_assets_store.push(
             os.path.join(data_path, "some_data_in_folder.json"),
             "category-test/some-data.ext",
             "1.0",
@@ -101,7 +101,7 @@ def test_download_object_or_prefix_cli(gcs_assetsmanager, clean_env):
     )
     gcs_asset_path = gcs_asset_dir + "/1.0"
 
-    gcs_assetsmanager.remote_assets_store.push_asset(
+    gcs_assetsmanager.remote_assets_store.push(
         original_asset_path, "category-test/some-data.ext", "1.0"
     )
 

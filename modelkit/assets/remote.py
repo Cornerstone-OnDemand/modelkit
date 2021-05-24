@@ -75,7 +75,7 @@ class RemoteAssetsStore:
             meta["push_date"] = parser.isoparse(meta["push_date"])
         return meta
 
-    def new_asset(self, asset_path, name, dry_run=False):
+    def new(self, asset_path, name, dry_run=False):
         """
         Upload a new asset
         """
@@ -87,7 +87,7 @@ class RemoteAssetsStore:
             name=name,
             asset_path=asset_path,
         )
-        self.push_asset(asset_path, name, "0.0", dry_run=dry_run)
+        self.push(asset_path, name, "0.0", dry_run=dry_run)
 
         with tempfile.TemporaryDirectory() as dversions:
             with open(os.path.join(dversions, "versions.json"), "w") as f:
@@ -103,9 +103,7 @@ class RemoteAssetsStore:
                     versions_object_name,
                 )
 
-    def update_asset(
-        self, asset_path, name, bump_major=False, major=None, dry_run=False
-    ):
+    def update(self, asset_path, name, bump_major=False, major=None, dry_run=False):
         """
         Update an existing asset version
         """
@@ -127,7 +125,7 @@ class RemoteAssetsStore:
         except MajorVersionDoesNotExistError:
             raise errors.AssetMajorVersionDoesNotExistError(name, major)
 
-        self.push_asset(asset_path, name, new_version, dry_run=dry_run)
+        self.push(asset_path, name, new_version, dry_run=dry_run)
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             versions_fn = os.path.join(tmp_dir, "versions.json")
@@ -143,7 +141,7 @@ class RemoteAssetsStore:
             if not dry_run:
                 self.driver.upload_object(versions_fn, versions_object_name)
 
-    def push_asset(self, asset_path, name, version, dry_run=False):
+    def push(self, asset_path, name, version, dry_run=False):
         """
         Push asset
         """
@@ -222,7 +220,7 @@ class RemoteAssetsStore:
                 if not dry_run:
                     self.driver.upload_object(meta_file_path, object_name + ".meta")
 
-    def _fetch_asset(self, name, version, destination):
+    def download(self, name, version, destination):
         """
         Retrieves the asset and returns a dictionary with meta information, asset
         origin (from cache) and local path

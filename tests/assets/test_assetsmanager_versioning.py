@@ -12,41 +12,37 @@ test_path = os.path.dirname(os.path.realpath(__file__))
 def _perform_mng_test(mng):
     # test dry run for new asset
     data_path = os.path.join(test_path, "testdata", "some_data.json")
-    mng.remote_assets_store.new_asset(
-        data_path, "category-test/some-data", dry_run=True
-    )
+    mng.remote_assets_store.new(data_path, "category-test/some-data", dry_run=True)
     with pytest.raises(Exception):
         mng.fetch_asset("category-test/some-data")
 
     # test updating an inexistant asset
     data_path = os.path.join(test_path, "testdata", "some_data.json")
     with pytest.raises(errors.AssetDoesNotExistError):
-        mng.remote_assets_store.update_asset(data_path, "category-test/some-data")
+        mng.remote_assets_store.update(data_path, "category-test/some-data")
 
     # create the asset
-    mng.remote_assets_store.new_asset(data_path, "category-test/some-data")
+    mng.remote_assets_store.new(data_path, "category-test/some-data")
     # check metadata
     mng.remote_assets_store.get_asset_meta("category-test/some-data", "0.0")
 
     # test dry run for update asset
-    mng.remote_assets_store.update_asset(
-        data_path, "category-test/some-data", dry_run=True
-    )
+    mng.remote_assets_store.update(data_path, "category-test/some-data", dry_run=True)
     with pytest.raises(Exception):
         mng.fetch_asset("category-test/some-data:0.1")
 
     # update the asset
-    mng.remote_assets_store.update_asset(data_path, "category-test/some-data")
+    mng.remote_assets_store.update(data_path, "category-test/some-data")
 
     # check that it is present
     mng.remote_assets_store.get_asset_meta("category-test/some-data", "0.1")
 
     # pushing via new fails
     with pytest.raises(errors.AssetAlreadyExistsError):
-        mng.remote_assets_store.new_asset(data_path, "category-test/some-data")
+        mng.remote_assets_store.new(data_path, "category-test/some-data")
 
     # update a major version via update
-    mng.remote_assets_store.update_asset(
+    mng.remote_assets_store.update(
         data_path, "category-test/some-data", bump_major=True
     )
 
@@ -74,9 +70,7 @@ def _perform_mng_test(mng):
     ]
 
     # pushing via new works
-    mng.remote_assets_store.update_asset(
-        data_path, "category-test/some-data", major="1"
-    )
+    mng.remote_assets_store.update(data_path, "category-test/some-data", major="1")
 
     # check that it is present
     mng.remote_assets_store.get_asset_meta("category-test/some-data", "1.1")

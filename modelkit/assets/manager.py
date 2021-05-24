@@ -90,7 +90,7 @@ class AssetsManager:
                         "Fetching distant asset",
                         local_versions=local_versions_list,
                     )
-                    asset_download_info = self.remote_assets_store._fetch_asset(
+                    asset_download_info = self.remote_assets_store.download(
                         spec.name, version, self.assets_dir
                     )
                     asset_dict.update({**asset_download_info, "from_cache": False})

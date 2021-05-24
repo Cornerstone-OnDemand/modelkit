@@ -121,7 +121,7 @@ def new(asset_path, asset_spec, bucket, assetsmanager_prefix, dry_run):
                 asset_path = _download_object_or_prefix(
                     manager, asset_path=asset_path, destination_dir=tmp_dir
                 )
-            manager.new_asset(asset_path, spec.name, dry_run)
+            manager.new(asset_path, spec.name, dry_run)
     else:
         print("Aborting.")
 
@@ -215,7 +215,7 @@ def update(asset_path, asset_spec, bucket, assetsmanager_prefix, bump_major, dry
                 asset_path = _download_object_or_prefix(
                     manager, asset_path=asset_path, destination_dir=tmp_dir
                 )
-            manager.update_asset(
+            manager.update(
                 asset_path,
                 spec.name,
                 bump_major=bump_major,

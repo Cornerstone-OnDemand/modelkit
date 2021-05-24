@@ -42,7 +42,7 @@ class AssetMajorVersionAlreadyExistsError(AssetsManagerError):
     def __init__(self, name, major):
         super().__init__(
             f"Assert major version `{major}` for `{name}` already exists."
-            "Use `update_asset` to push a new minor version of an asset."
+            "Use `update` to push a new minor version of an asset."
         )
 
 
