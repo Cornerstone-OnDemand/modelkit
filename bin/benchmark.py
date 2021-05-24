@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# flake8: noqa: E402
-import importlib
 import json
 import logging
 import os
@@ -13,15 +11,15 @@ import networkx as nx
 from memory_profiler import memory_usage
 from networkx.drawing.nx_agraph import write_dot
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn
+from rich.progress import Progress
 from rich.table import Table
 from rich.tree import Tree
 
 rootdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(rootdir)
 
-from modelkit import ModelLibrary
-from modelkit.core.model_configuration import configure, list_assets
+from modelkit import ModelLibrary  # noqa: E402
+from modelkit.core.model_configuration import configure, list_assets  # noqa: E402
 
 
 @click.group()
@@ -34,6 +32,18 @@ def load_model(m, service):
     sleep(1)
 
 
+def _configure_from_cli_arguments(models, required_models, all):
+    models_configurations = configure(models=models)
+    if all:
+        required_models = list(models_configurations)
+    service = ModelLibrary(
+        required_models=required_models,
+        configuration=models_configurations,
+        settings={"lazy_loading": True},
+    )
+    return service
+
+
 @cli_.command()
 @click.option("--models", "-m", multiple=True)
 @click.option("--required-models", "-r", multiple=True)
@@ -42,20 +52,15 @@ def memory(models, required_models, all):
     """
     Show memory consumption of modelkit models
     """
-    models_configurations = configure(models=models)
-    if all:
-        required_models = list(models_configurations)
-    service = ModelLibrary(
-        required_models=required_models, configuration=models_configurations
-    )
+    service = _configure_from_cli_arguments(models, required_models, all)
     grand_total = 0
     stats = {}
     logging.getLogger().setLevel(logging.ERROR)
-    if required_models:
+    if service.required_models:
         with Progress(transient=True) as progress:
             task = progress.add_task("Profiling memory...", total=len(required_models))
             for m in required_models:
-                deps = models_configurations[m].model_dependencies
+                deps = service.configuration[m].model_dependencies
                 deps = deps.values() if isinstance(deps, dict) else deps
                 for dependency in list(deps) + [m]:
                     mu = memory_usage((load_model, (dependency, service), {}))
@@ -79,24 +84,26 @@ def memory(models, required_models, all):
 
 
 @cli_.command()
-@click.option("--model", "-m", multiple=True)
+@click.option("--models", "-m", multiple=True)
+@click.option("--required-models", "-r", multiple=True)
 @click.option("--all", is_flag=True)
-@click.option("--module", multiple=True, default=["modelkit.models"])
-def assets(model, all, module):
+def assets(models, required_models, all):
     """
     List the assets necessary to run a given set of models
     """
-    models_configurations = configure(
-        [importlib.import_module(model_module) for model_module in module]
-    )
-    if all:
-        model = list(models_configurations)
-    service = ModelLibrary(required_models=[])
-    if model:
-        for asset_spec_string in list_assets(
-            configuration=models_configurations, required_models=model
-        ):
-            click.secho(asset_spec_string)
+    service = _configure_from_cli_arguments(models, required_models, all)
+
+    console = Console()
+    if service.configuration:
+        for m in service.required_models:
+            assets_specs = list_assets(
+                configuration=service.configuration, required_models=[m]
+            )
+            model_tree = Tree(f"[bold]{m}[/bold] ({len(assets_specs)} assets)")
+            if assets_specs:
+                for asset_spec_string in assets_specs:
+                    model_tree.add(asset_spec_string.replace("[", "\["), style="dim")
+            console.print(model_tree)
 
 
 def add_dependencies_to_graph(g, model, configurations):
@@ -122,23 +129,18 @@ def add_dependencies_to_graph(g, model, configurations):
 
 
 @cli_.command()
-@click.option("--model", "-m", multiple=True)
+@click.option("--models", "-m", multiple=True)
+@click.option("--required-models", "-r", multiple=True)
 @click.option("--all", is_flag=True)
-@click.option("--module", multiple=True, default=["modelkit.models"])
-def dependency_graph(model, all, module):
+def dependencies(models, required_models, all):
     """
     Create a DOT file with the dependency graph from a list of assets
     """
-    models_configurations = configure(
-        [importlib.import_module(model_module) for model_module in module]
-    )
-    if all:
-        model = list(models_configurations)
-    service = ModelLibrary(required_models=[])
-    if model:
+    service = _configure_from_cli_arguments(models, required_models, all)
+    if service.configuration:
         dependency_graph = nx.DiGraph(overlap="False")
-        for m in model:
-            add_dependencies_to_graph(dependency_graph, m, models_configurations)
+        for m in service.required_models:
+            add_dependencies_to_graph(dependency_graph, m, service.configuration)
         write_dot(dependency_graph, "dependencies.dot")
 
 
@@ -167,7 +169,8 @@ def time(model, example, n):
         times.append(perf_counter() - t0)
 
     print(
-        f"Finished in {sum(times):.1f} s, approximately {sum(times)/n*1e3:.2f} ms per call"
+        f"Finished in {sum(times):.1f} s, "
+        f"approximately {sum(times)/n*1e3:.2f} ms per call"
     )
 
     t0 = perf_counter()
