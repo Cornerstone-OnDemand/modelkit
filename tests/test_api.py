@@ -12,7 +12,7 @@ from tests import TEST_DIR
 
 
 @pytest.fixture(scope="session")
-def api_no_type():
+def api_no_type(event_loop):
     class SomeSimpleValidatedModel(Model[str, str]):
         """
         This is a summary
