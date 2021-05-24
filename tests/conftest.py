@@ -27,6 +27,7 @@ def clean_env(monkeypatch):
         "ASSETS_BUCKET_NAME",
         "ASSETS_PREFIX",
         "STORAGE_PROVIDER",
+        "LAZY_LOADING",
         "ASSETSMANAGER_PREFIX",
         "ASSETSMANAGER_TIMEOUT_S",
     ]:

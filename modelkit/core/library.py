@@ -248,7 +248,7 @@ class ModelLibrary:
         asset_spec = AssetSpec.from_string(configuration.asset)
 
         # If the model's asset is overriden with environment variables
-        venv = "modelkit_{}_FILE".format(
+        venv = "MODELKIT_{}_FILE".format(
             re.sub(r"[\/\-\.]+", "_", asset_spec.name).upper()
         )
         local_file = os.environ.get(venv)
@@ -262,7 +262,7 @@ class ModelLibrary:
 
         # The assets should be retrieved
         # possibly override version
-        venv = "modelkit_{}_VERSION".format(
+        venv = "MODELKIT_{}_VERSION".format(
             re.sub(r"[\/\-\.]+", "_", asset_spec.name).upper()
         )
         version = os.environ.get(venv)

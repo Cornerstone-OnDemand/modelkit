@@ -376,7 +376,7 @@ def test_lazy_loading_setting(monkeypatch):
     assert settings.lazy_loading
 
 
-def test_environment_asset_load(monkeypatch, assetsmanager_settings):
+def test_environment_asset_load(monkeypatch, assetsmanager_settings, clean_env):
     class TestModel(Model):
         def _deserialize_asset(self):
             assert self.asset_path == "path/to/asset"
@@ -385,7 +385,7 @@ def test_environment_asset_load(monkeypatch, assetsmanager_settings):
         async def _predict_one(self, item, **kwargs):
             return self.data
 
-    monkeypatch.setenv("modelkit_TESTS_TEST_ASSET_FILE", "path/to/asset")
+    monkeypatch.setenv("MODELKIT_TESTS_TEST_ASSET_FILE", "path/to/asset")
 
     prediction_service = ModelLibrary(
         required_models=["some_asset"],
