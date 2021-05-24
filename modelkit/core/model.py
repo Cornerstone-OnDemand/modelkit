@@ -96,10 +96,6 @@ class Asset:
     def _deserialize_asset(self):
         pass
 
-    @staticmethod
-    def fit(*args, **kwargs):
-        raise NotImplementedError()
-
 
 class InternalDataModel(pydantic.BaseModel):
     class Config:

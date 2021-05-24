@@ -17,7 +17,7 @@ Make sure that the environment you plan to use `modelkit` on is setup as per [th
 ### Python package method
 
 Clients use `modelkit` models by instantiating a `ModelLibrary` with a set of models
-picked either amongst models defined in the `modelkit.service.model_configuration` module,
+picked either amongst models defined in the `modelkit.library.model_configuration` module,
 or by specifying a `modelkitModelConfiguration` at runtime.
 
 In each case, the models are then accessed via `ModelLibrary.get_model("some name")`

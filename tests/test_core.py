@@ -2,6 +2,13 @@ import os
 
 import pytest
 
+from modelkit import testing
+from modelkit.core.library import (
+    ConfigurationNotFoundException,
+    ModelLibrary,
+    download_assets,
+    load_model,
+)
 from modelkit.core.model import Asset, Model, NoModelDependenciesInInitError
 from modelkit.core.model_configuration import (
     ModelConfiguration,
@@ -9,14 +16,7 @@ from modelkit.core.model_configuration import (
     configure,
     list_assets,
 )
-from modelkit.core.service import (
-    ConfigurationNotFoundException,
-    ModelLibrary,
-    download_assets,
-    load_model,
-)
 from modelkit.core.settings import ServiceSettings
-from modelkit.utils import testing
 from modelkit.utils.tensorflow import write_config
 from tests import TEST_DIR
 

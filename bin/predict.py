@@ -11,7 +11,7 @@ realpath = os.path.realpath(__file__)
 dir_realpath = os.path.dirname(os.path.dirname(realpath))
 sys.path.append(dir_realpath)
 
-from modelkit.service import load_model
+from modelkit.library import load_model
 from modelkit.utils.serializers import safe_np_dump
 
 

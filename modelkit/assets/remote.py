@@ -8,7 +8,7 @@ import time
 import humanize
 from dateutil import parser, tz
 
-from modelkit.assets import errors, utils
+from modelkit.assets import errors
 from modelkit.assets.drivers import settings_to_driver
 from modelkit.assets.log import logger
 from modelkit.assets.settings import RemoteAssetsStoreSettings
@@ -18,6 +18,16 @@ from modelkit.assets.versioning import (
     sort_versions,
 )
 from modelkit.logging.context import ContextualizedLogging
+
+
+def get_size(dir_path):
+    if os.path.isfile(dir_path):
+        return os.stat(dir_path).st_size
+    return sum(
+        os.stat(f).st_size
+        for f in glob.iglob(os.path.join(dir_path, "**/*"), recursive=True)
+        if os.path.isfile(f)
+    )
 
 
 class RemoteAssetsStore:
@@ -246,7 +256,7 @@ class RemoteAssetsStore:
                     self.driver.download_object(
                         remote_part_name, current_destination_path
                     )
-                    size = utils.get_size(current_destination_path)
+                    size = get_size(current_destination_path)
                     logger.debug(
                         "Downloaded asset part",
                         part_no=part_no,
@@ -254,7 +264,7 @@ class RemoteAssetsStore:
                         size=humanize.naturalsize(size),
                         size_bytes=size,
                     )
-                size = utils.get_size(destination_path)
+                size = get_size(destination_path)
                 logger.info(
                     "Downloaded remote multi-part asset",
                     size=humanize.naturalsize(size),
@@ -265,7 +275,7 @@ class RemoteAssetsStore:
                 t0 = time.monotonic()
                 os.makedirs(os.path.dirname(destination_path), exist_ok=True)
                 self.driver.download_object(object_name, destination_path)
-                size = utils.get_size(destination_path)
+                size = get_size(destination_path)
                 download_time = time.monotonic() - t0
                 logger.info(
                     "Downloaded asset",

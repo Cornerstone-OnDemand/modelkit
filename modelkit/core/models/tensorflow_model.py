@@ -5,25 +5,33 @@ from typing import Any, Dict, List
 import aiohttp
 import numpy as np
 import requests
+from tenacity import (
+    retry,
+    retry_if_exception,
+    stop_after_attempt,
+    wait_random_exponential,
+)
 
 from modelkit.core.model import Model
 from modelkit.core.types import ItemType, ReturnType
 from modelkit.log import logger
-from modelkit.utils.tensorflow import (
-    TFServingError,
-    make_grpc_serving_request,
-    wait_local_serving,
-)
 
 try:
     import tensorflow as tf
     from tensorflow.python.saved_model.signature_constants import (
         DEFAULT_SERVING_SIGNATURE_DEF_KEY,
     )
-    from tensorflow_serving.apis.predict_pb2 import PredictRequest
 
 except ModuleNotFoundError:
     logger.info("tensorflow is not installed")
+
+try:
+    import grpc
+    from tensorflow_serving.apis import prediction_service_pb2_grpc
+    from tensorflow_serving.apis.get_model_metadata_pb2 import GetModelMetadataRequest
+    from tensorflow_serving.apis.predict_pb2 import PredictRequest
+except ModuleNotFoundError:
+    logger.info("Tensorflow serving is not installed")
 
 
 def safe_np_dump(obj):
@@ -67,7 +75,7 @@ class TensorflowModel(Model[ItemType, ReturnType]):
         self.tf_serving_mode = self.service_settings.tf_serving_mode
 
         if self.enable_tf_serving and self.tf_serving_mode:
-            wait_local_serving(
+            self.grpc_stub = connect_tf_serving(
                 self.configuration_key,
                 self.tf_serving_host,
                 self.tf_serving_port,
@@ -120,13 +128,8 @@ class TensorflowModel(Model[ItemType, ReturnType]):
                 tf.compat.v1.make_tensor_proto(vect, dtype=dtype)
             )
 
-        r, self.grpc_stub = make_grpc_serving_request(
-            request,
-            self.grpc_stub,
-            self.configuration_key,
-            self.tf_serving_host,
-            self.tf_serving_port,
-        )
+        r = self.grpc_stub.Predict(request, 1)
+
         return {
             output_key: np.array(
                 r.outputs[output_key].ListFields()[-1][1],
@@ -227,3 +230,57 @@ class TensorflowModel(Model[ItemType, ReturnType]):
             else:
                 results.append(self._generate_empty_prediction())
         return results
+
+
+class TFServingError(Exception):
+    pass
+
+
+def log_after_retry(retry_state):
+    logger.info(
+        "Retrying TF serving connection",
+        fun=retry_state.fn.__name__,
+        attempt_number=retry_state.attempt_number,
+        wait_time=retry_state.outcome_timestamp - retry_state.start_time,
+    )
+
+
+def retriable_error(exception):
+    return isinstance(exception, Exception)
+
+
+TF_SERVING_RETRY_POLICY = {
+    "wait": wait_random_exponential(multiplier=1, min=4, max=10),
+    "stop": stop_after_attempt(5),
+    "retry": retry_if_exception(retriable_error),
+    "after": log_after_retry,
+    "reraise": True,
+}
+
+
+@retry(**TF_SERVING_RETRY_POLICY)
+def connect_tf_serving(model_name, host, port, mode):
+    logger.info(
+        "Connecting to tensorflow serving",
+        tf_serving_host=host,
+        port=port,
+        model_name=model_name,
+        mode=mode,
+    )
+    if mode == "grpc":
+        channel = grpc.insecure_channel(
+            f"{host}:{port}", [("grpc.lb_policy_name", "round_robin")]
+        )
+        stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
+        r = GetModelMetadataRequest()
+        r.model_spec.name = model_name
+        r.metadata_field.append("signature_def")
+        answ = stub.GetModelMetadata(r, 1)
+        version = answ.model_spec.version.value
+        if version != 1:
+            raise TFServingError(f"Bad model version: {version}!=1")
+        return stub
+    elif mode in {"rest", "rest-async"}:
+        response = requests.get(f"http://{host}:{port}/v1/models/{model_name}")
+        if response.status_code != 200:
+            raise TFServingError("Error connecting to TF serving")
