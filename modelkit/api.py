@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Type, Union
 
 import fastapi
 
-from modelkit.core.service import ModelConfiguration, ModelLibrary, ServiceSettings
+from modelkit.core.library import ModelConfiguration, ModelLibrary, ServiceSettings
 from modelkit.log import logger
 
 # create APIRoute for model

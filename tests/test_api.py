@@ -5,9 +5,9 @@ import pydantic
 import pytest
 from starlette.testclient import TestClient
 
+from modelkit import testing
 from modelkit.api import ModelkitAutoAPIRouter
 from modelkit.core.model import Model
-from modelkit.utils import testing
 from tests import TEST_DIR
 
 
