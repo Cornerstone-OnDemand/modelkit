@@ -9,6 +9,7 @@ import prettytable
 
 from modelkit.assets.errors import ObjectDoesNotExistError
 from modelkit.assets.manager import AssetsManager
+from modelkit.assets.remote import RemoteAssetsStore
 from modelkit.assets.settings import AssetSpec, DriverSettings
 from modelkit.assets.versioning import (
     filter_versions,
@@ -83,7 +84,7 @@ def _check_asset_file_number(asset_path):
 @click.argument("asset_path")
 @click.argument("asset_spec")
 @click.option("--bucket", envvar="ASSETS_BUCKET_NAME")
-@click.option("--assetsmanager-prefix", default="modelkit-assets")
+@click.option("--assetsmanager-prefix", envvar="ASSETS_PREFIX")
 @click.option("--dry-run", is_flag=True)
 def new(asset_path, asset_spec, bucket, assetsmanager_prefix, dry_run):
     """
@@ -99,7 +100,7 @@ def new(asset_path, asset_spec, bucket, assetsmanager_prefix, dry_run):
     NB: [asset_name] can contain `/` too.
     """
     _check_asset_file_number(asset_path)
-    manager = AssetsManager(
+    manager = RemoteAssetsStore(
         assetsmanager_prefix=assetsmanager_prefix,
         driver=DriverSettings(bucket=bucket),
     )
@@ -133,7 +134,7 @@ def new(asset_path, asset_spec, bucket, assetsmanager_prefix, dry_run):
     "--bump-major", is_flag=True, help="Push a new major version (1.0, 2.0, etc.)"
 )
 @click.option("--bucket", envvar="ASSETS_BUCKET_NAME")
-@click.option("--assetsmanager-prefix", default="modelkit-assets")
+@click.option("--assetsmanager-prefix", envvar="ASSETS_PREFIX")
 @click.option("--dry-run", is_flag=True)
 def update(asset_path, asset_spec, bucket, assetsmanager_prefix, bump_major, dry_run):
     """
@@ -172,7 +173,7 @@ def update(asset_path, asset_spec, bucket, assetsmanager_prefix, bump_major, dry
     will add a version 0.2
     """
     _check_asset_file_number(asset_path)
-    manager = AssetsManager(
+    manager = RemoteAssetsStore(
         assetsmanager_prefix=assetsmanager_prefix,
         driver=DriverSettings(bucket=bucket),
     )
@@ -188,7 +189,11 @@ def update(asset_path, asset_spec, bucket, assetsmanager_prefix, bump_major, dry
     print(f" - major version = `{spec.major_version}`")
     print(f" - minor version (ignored) = `{spec.minor_version}`")
 
-    versions_list = manager.get_versions_info(spec.name)
+    try:
+        versions_list = manager.get_versions_info(spec.name)
+    except ObjectDoesNotExistError:
+        print("Remote asset not found. Create it first using `new`")
+        sys.exit(1)
 
     major_versions = {parse_version(v)[0] for v in versions_list}
     print(
@@ -227,11 +232,11 @@ def update(asset_path, asset_spec, bucket, assetsmanager_prefix, bump_major, dry
 
 
 @assets.command("list")
-@click.argument("--bucket", envvar="ASSETS_BUCKET_NAME")
-@click.option("--assetsmanager-prefix", default="modelkit-assets")
+@click.option("--bucket", envvar="ASSETS_BUCKET_NAME")
+@click.option("--assetsmanager-prefix", envvar="ASSETS_PREFIX")
 def list(bucket, assetsmanager_prefix):
     """lists all available assets and their versions."""
-    manager = AssetsManager(
+    manager = RemoteAssetsStore(
         assetsmanager_prefix=assetsmanager_prefix,
         driver=DriverSettings(bucket=bucket),
     )
