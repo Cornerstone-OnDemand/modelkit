@@ -8,6 +8,7 @@ numpy
 pydantic
 python-dateutil
 redis
+rich
 structlog
 tenacity
 tqdm

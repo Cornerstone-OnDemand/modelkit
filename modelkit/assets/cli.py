@@ -1,3 +1,4 @@
+import collections
 import glob
 import os
 import re
@@ -5,7 +6,10 @@ import sys
 import tempfile
 
 import click
-import prettytable
+from rich.console import Console
+from rich.progress import Progress, SpinnerColumn
+from rich.table import Table
+from rich.tree import Tree
 
 from modelkit.assets.errors import ObjectDoesNotExistError
 from modelkit.assets.manager import AssetsManager
@@ -240,20 +244,28 @@ def list(bucket, assetsmanager_prefix):
         assetsmanager_prefix=assetsmanager_prefix,
         driver=DriverSettings(bucket=bucket),
     )
-    table = prettytable.PrettyTable()
-    table.field_names = ["Asset name", "Versions"]
 
-    table.align["Asset name"] = "l"
-    table.align["Versions"] = "r"
+    console = Console()
+    tree = Tree("[bold]Assets store[/bold]")
+    tree.add(f"[dim]storage provider[/dim] {manager.driver.__class__.__name__}")
+    tree.add(f"[dim]bucket[/dim] {bucket}")
+    tree.add(f"[dim]prefix[/dim] {assetsmanager_prefix}")
+    console.print(tree)
+
+    table = Table(show_header=True, header_style="bold")
+    table.add_column("Asset name")
+    table.add_column("Versions", style="dim")
 
     n = 0
-    for asset_name, versions_list in manager.iterate_assets():
-        table.add_row((asset_name, " ".join(versions_list)))
-        n += 1
+    n_versions = 0
+    with Progress(
+        SpinnerColumn(), "[progress.description]{task.description}", transient=True
+    ) as progress:
+        progress.add_task("Listing remote assets", start=False)
+        for asset_name, versions_list in manager.iterate_assets():
+            table.add_row(asset_name, " ".join(versions_list))
+            n += 1
+            n_versions += len(versions_list)
 
-    print("Current assets manager:")
-    print(f" - storage provider = `{manager.driver}`")
-    print(f" - bucket = `{bucket}`")
-    print(f" - prefix = `{assetsmanager_prefix}`")
-    print(f"Found {n} assets:")
-    print(table)
+    console.print(table)
+    console.print(f"Found {n} assets ({n_versions} different versions)")
