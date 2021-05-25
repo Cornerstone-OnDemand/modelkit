@@ -54,7 +54,7 @@ class DistantHTTPModel(Model[ItemType, ReturnType]):
         self.aiohttp_session = None
         self.requests_session = None
 
-    def _deserialize_asset(self):
+    def _load(self):
         pass
 
     @retry(**SERVICE_MODEL_RETRY_POLICY)

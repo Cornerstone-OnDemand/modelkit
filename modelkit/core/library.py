@@ -17,7 +17,7 @@ from pydantic import ValidationError
 import modelkit.assets
 from modelkit.assets.manager import AssetsManager
 from modelkit.assets.settings import AssetSpec
-from modelkit.core.model import Model, _create_model_object
+from modelkit.core.model import Model
 from modelkit.core.model_configuration import ModelConfiguration, configure, list_assets
 from modelkit.core.settings import ServiceSettings
 from modelkit.log import logger
@@ -131,7 +131,7 @@ class ModelLibrary:
             if name not in self.models:
                 self._load(name)
             if not self.models[name]._loaded:
-                self.models[name].deserialize_asset()
+                self.models[name].load()
             return self.models[name]
         except KeyError:
             raise KeyError(
@@ -208,17 +208,18 @@ class ModelLibrary:
             **self.required_models.get(model_name, {}),
         }
 
-        self.models[model_name] = _create_model_object(
-            configuration.model_type,
-            service_settings=self.settings,
+        self.models[model_name] = configuration.model_type(
             asset_path=self.assets_info[configuration.asset]["path"]
             if configuration.asset
-            else None,
+            else "",
             model_dependencies=model_dependencies,
-            model_settings=model_settings,
+            service_settings=self.settings,
+            model_settings=model_settings or {},
             configuration_key=model_name,
             redis_cache=self.redis_cache,
         )
+        if not self.settings.lazy_loading:
+            self.models[model_name].load()
 
     def _resolve_assets(self, configuration_key):
         """

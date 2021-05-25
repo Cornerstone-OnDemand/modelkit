@@ -2,10 +2,9 @@ import copy
 import hashlib
 import pickle  # nosec
 import typing
-from typing import Any, Callable, Dict, Generic, List, Optional, Union, overload
+from typing import Any, Callable, Dict, Generic, List, Union, overload
 
 import pydantic
-import redis
 
 import modelkit
 from modelkit.core.settings import ServiceSettings
@@ -22,28 +21,6 @@ def _run_secretly_sync_async_fn(async_fn, *args, **kwargs):
         return exc.value
     else:
         raise RuntimeError("this async function is not secretly synchronous")
-
-
-def _create_model_object(
-    model_type,
-    service_settings: ServiceSettings,
-    asset_path: Optional[str] = None,
-    model_dependencies: Optional[Union[List[str], Dict[str, str]]] = None,
-    model_settings: Optional[Dict[str, Any]] = None,
-    configuration_key: Optional[str] = None,
-    redis_cache: Optional[redis.Redis] = None,
-):
-    m = model_type(
-        asset_path=asset_path or "",
-        model_dependencies=model_dependencies,
-        service_settings=service_settings,
-        model_settings=model_settings or {},
-        configuration_key=configuration_key,
-        redis_cache=redis_cache,
-    )
-    if not service_settings.lazy_loading:
-        m.deserialize_asset()
-    return m
 
 
 class NoModelDependenciesInInitError(BaseException):
@@ -80,7 +57,7 @@ class Asset:
         self._deserializing = False
         self.model_settings = kwargs.pop("model_settings", {})
 
-    def deserialize_asset(self):
+    def load(self):
         """Implement this method in order for the model to load and
         deserialize its asset, whose path is kept int the `asset_path`
         attribute"""
@@ -89,11 +66,11 @@ class Asset:
             self.model_classname
             + (f":{self.configuration_key}" if self.configuration_key else "")
         ):
-            self._deserialize_asset()
+            self._load()
         self._loaded = True
         self._deserializing = False
 
-    def _deserialize_asset(self):
+    def _load(self):
         pass
 
 
@@ -188,12 +165,12 @@ class Model(Asset, Generic[ItemType, ReturnType]):
         super().__init__(self, *args, **kwargs)
         self.initialize_validation_models()
 
-    def deserialize_asset(self):
+    def load(self):
         """For Model instances, there may be a need to also load the dependencies"""
         for m in self._model_dependencies.values():
             if not m._loaded:
-                m.deserialize_asset()
-        Asset.deserialize_asset(self)
+                m.load()
+        Asset.load(self)
 
     @property
     def model_dependencies(self):
@@ -201,7 +178,7 @@ class Model(Asset, Generic[ItemType, ReturnType]):
             raise NoModelDependenciesInInitError(
                 "Model dependencies are not loaded yet!"
                 "If you have to refer to it in the __init__ of the Model,"
-                "move the code to the _deserialize_asset method."
+                "move the code to the _load method."
             )
         return self._model_dependencies
 

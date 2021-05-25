@@ -17,7 +17,7 @@ Some quick `Model` facts:
 
 The prediction logic is implemented in an asynchronous `_predict_one` method that takes a single argument `item`. This represents a single item, which is usually a json serializable dict (with maybe numpy arrays). In fact, Models implement `_predict_one` or `_predict_multiple` (both async) methods, and `Model.predict` appropriately chooses between them and batches.
 
-The asset loading logic is implemented in a `_deserialize_asset` method that is run after the `Model` is instantiated, and can load the asset specified in the `Model`'s configuration. For more on this see Lazy Mode.
+The asset loading logic is implemented in a `_load` method that is run after the `Model` is instantiated, and can load the asset specified in the `Model`'s configuration. For more on this see Lazy Mode.
 
 ### A simple `Model` class
 
@@ -105,11 +105,11 @@ The usefulness of modelkit `Model`s and their configuration is more apparent whe
 
 ### Model assets
 
-A model can implement a `_deserialize_asset` method that loads information from an asset stored on the object store (fetched using `assets`). It may contain files, folders, parameters, optimized data structures, or anything really.
+A model can implement a `_load` method that loads information from an asset stored on the object store (fetched using `assets`). It may contain files, folders, parameters, optimized data structures, or anything really.
 
 The model asset is specified in the `CONFIGURATIONS` with `asset=asset_name:version`, following `storage.AssetsManager` conventions.
 
-When the `_deserialize_asset` method is called, the object has an `asset_path` attribute that points to the path of the asset locally. This is then used to load the relevant information from the asset file(s).
+When the `_load` method is called, the object has an `asset_path` attribute that points to the path of the asset locally. This is then used to load the relevant information from the asset file(s).
 
 ### Model with asset example
 
@@ -131,7 +131,7 @@ class YOLOModel(Model):
     async def _predict_one(self, item: Dict[str, str], **kwargs) -> float:
         return self.data_structure["response"] # returns "YOLO les simpsons"
 
-    def _deserialize_asset(self):
+    def _load(self):
         with bz2.BZ2File(self.asset_path, "rb") as f:
             self.data_structure = pickle.load(f) # loads {"response": "YOLO les simpsons"}
 ```
@@ -263,7 +263,7 @@ y : List[ReturnModel] = m.predict([{"x": 1}, {"x": 2}])
 
 ## `Asset` class
 
-It is sometimes useful for a given asset in memory to serve many different `Model` objects. It is possibly by using the `model_dependencies` to point to a parent `Model` that is the only one to load the asset via `_deserialize_asset`.
+It is sometimes useful for a given asset in memory to serve many different `Model` objects. It is possibly by using the `model_dependencies` to point to a parent `Model` that is the only one to load the asset via `_load`.
 
 In this case, we may not want the parent asset-bearing `Model` object to implement `predict` at all.
 
@@ -273,7 +273,7 @@ This is what an `modelkit.core.model.Asset` is.
     In fact, it is defined the other way around: `Model`s are `Asset`s with a predict function, and thus `Model` inherits from `Asset`.
 
 !!! info
-    There are two ways to use a data asset in a `Model`: either load it directly via its configuration and the `_deserialize_asset`, or package it in an `Asset` and use the deserialized object via model dependencies.
+    There are two ways to use a data asset in a `Model`: either load it directly via its configuration and the `_load`, or package it in an `Asset` and use the deserialized object via model dependencies.
 
 ### Asset file override for debugging
 

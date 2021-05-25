@@ -23,7 +23,7 @@ from tests import TEST_DIR
 
 def test_override_asset():
     class TestModel(Model):
-        def _deserialize_asset(self):
+        def _load(self):
             pass
 
         async def _predict_one(self, item, **kwargs):
@@ -200,13 +200,13 @@ def test_lazy_loading_dependencies():
     class Model0(Asset):
         CONFIGURATIONS = {"model0": {}}
 
-        def _deserialize_asset(self):
+        def _load(self):
             self.some_attribute = "ok"
 
     class Model1(Model):
         CONFIGURATIONS = {"model1": {"model_dependencies": {"model0"}}}
 
-        def _deserialize_asset(self):
+        def _load(self):
             self.some_attribute = self.model_dependencies["model0"].some_attribute
 
         async def _predict_one(self, item):
@@ -223,7 +223,7 @@ def test_dependencies_not_in_init():
     class Model0(Asset):
         CONFIGURATIONS = {"model0": {}}
 
-        def _deserialize_asset(self):
+        def _load(self):
             self.some_attribute = "ok"
 
     class Model1(Model):
@@ -378,7 +378,7 @@ def test_lazy_loading_setting(monkeypatch):
 
 def test_environment_asset_load(monkeypatch, assetsmanager_settings, clean_env):
     class TestModel(Model):
-        def _deserialize_asset(self):
+        def _load(self):
             assert self.asset_path == "path/to/asset"
             self.data = {"some key": "some data"}
 
