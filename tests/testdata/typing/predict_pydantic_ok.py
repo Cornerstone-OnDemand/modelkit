@@ -13,4 +13,4 @@ class SomeValidatedModel(Model[ItemModel, ItemModel]):
 
 
 m = SomeValidatedModel()
-y: ItemModel = m.predict(ItemModel(x=10))
+y: ItemModel = m(ItemModel(x=10))

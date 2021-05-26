@@ -21,7 +21,7 @@ picked either amongst models defined in the `modelkit.library.model_configuratio
 or by specifying a `modelkitModelConfiguration` at runtime.
 
 In each case, the models are then accessed via `ModelLibrary.get("some name")`
- and used with `Model.predict`.
+ and used with `Model`.
 
 Here is a typical implementation that uses an modelkit model configured as `my_favorite_model` somewhere under the `modelkit.models` module.
 
@@ -50,10 +50,10 @@ Predictions can be obtained either for a single item (usually a dict), or a _lis
 via the same predict method:
 
 ```python
-# This runs the Model.predict method
-prediction = model.predict(item)
+# This runs the Model method
+prediction = model(item)
 # or
-prediction = await model.predict_async(item)
+prediction = await model_async(item)
 ```
 
 If `predict` (or `predict_async`) sees a list, it will call `_predict_multiple` and

@@ -15,7 +15,7 @@ Some quick `Model` facts:
 
 `modelkit` models are subclasses of the `modelkit.core.model.Model` class.
 
-The prediction logic is implemented in an asynchronous `_predict_one` method that takes a single argument `item`. This represents a single item, which is usually a json serializable dict (with maybe numpy arrays). In fact, Models implement `_predict_one` or `_predict_multiple` (both async) methods, and `Model.predict` appropriately chooses between them and batches.
+The prediction logic is implemented in an asynchronous `_predict_one` method that takes a single argument `item`. This represents a single item, which is usually a json serializable dict (with maybe numpy arrays). In fact, Models implement `_predict_one` or `_predict_multiple` (both async) methods, and `Model` appropriately chooses between them and batches.
 
 The asset loading logic is implemented in a `_load` method that is run after the `Model` is instantiated, and can load the asset specified in the `Model`'s configuration. For more on this see Lazy Mode.
 
@@ -35,7 +35,7 @@ It can be loaded to make "predictions" as so:
 
 ```python
 m = YOLOModel()
-m.predict({}) # returns "YOLO les simpsons"
+m({}) # returns "YOLO les simpsons"
 ```
 
 ### Model configurations
@@ -92,9 +92,9 @@ from modelkit.core import ModelLibrary
 
 p = ModelLibrary(models=YOLOModel)
 m = p.get("yolo")
-print(m.predict({}))
+print(m({}))
 m2 = p.get("yolo_2")
-print(m2.predict({}))
+print(m2({}))
 ```
 
 It will print both `"YOLO les simpsons"` and `"YOLO pas les simpsons"`.
@@ -160,7 +160,7 @@ And then access these in the `_predict_*` function:
 
 ```python
 async def _predict_one(self, item):
-    cleaned = self.models_dependencies["sentence_piece_cleaner"].predict(item["text"])
+    cleaned = self.models_dependencies["sentence_piece_cleaner"](item["text"])
     ...
 
 ```
@@ -204,7 +204,7 @@ And a set of attributes always present:
 
 ## Model typing
 
-It is also possible to provide types for a `Model` subclass, such that linters and callers know exactly which `item` type is expected, and what the result of a `Model.predict` call look like.
+It is also possible to provide types for a `Model` subclass, such that linters and callers know exactly which `item` type is expected, and what the result of a `Model` call look like.
 
 Types are specified when instantiating the `Model` class:
 
@@ -223,9 +223,9 @@ Consider the above model:
 
 ```
 m = SomeTypedModel()
-x : int = m.predict("ok")
-y : List[int] = m.predict(["ok", "boomer"])
-z : int = m.predict(1) # would lead to a typing error with typecheckers (e.g. mypy)
+x : int = m("ok")
+y : List[int] = m(["ok", "boomer"])
+z : int = m(1) # would lead to a typing error with typecheckers (e.g. mypy)
 ```
 
 ### Runtime type validation
@@ -256,9 +256,9 @@ class SomeValidatedModel(Model[ItemModel, ReturnModel]):
 m = SomeValidatedModel()
 # although we return a dict from the _predict_one method, return value
 # is turned into a `ReturnModel` instance.
-y : ReturnModel = m.predict({"x": 1})
+y : ReturnModel = m({"x": 1})
 # which also works with lists of items
-y : List[ReturnModel] = m.predict([{"x": 1}, {"x": 2}])
+y : List[ReturnModel] = m([{"x": 1}, {"x": 2}])
 ```
 
 ## `Asset` class

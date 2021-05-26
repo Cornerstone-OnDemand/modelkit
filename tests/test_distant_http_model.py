@@ -70,7 +70,7 @@ def test_distant_http_model(run_mocked_service):
     # Test with automatic detection of asynchronous mode
     m = svc.get("some_model")
     assert m._async_mode is None
-    assert ITEM == m.predict(ITEM)
+    assert ITEM == m(ITEM)
     loop.run_until_complete(_check_service_async(m, ITEM))
     loop.run_until_complete(svc.close_connections())
 
@@ -78,13 +78,13 @@ def test_distant_http_model(run_mocked_service):
     m = svc.get("some_model_async")
     assert m._async_mode
     with pytest.raises(RuntimeError):
-        assert ITEM == m.predict(ITEM)
+        assert ITEM == m(ITEM)
     loop.run_until_complete(_check_service_async(m, ITEM))
     loop.run_until_complete(svc.close_connections())
 
     # Test with forced synchronous mode
     m = svc.get("some_model_sync")
     assert m._async_mode is False
-    assert ITEM == m.predict(ITEM)
+    assert ITEM == m(ITEM)
     loop.run_until_complete(_check_service_async(m, ITEM))
     loop.run_until_complete(svc.close_connections())

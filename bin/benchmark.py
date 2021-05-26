@@ -171,7 +171,7 @@ def time(model, example, models, n):
     times = []
     for _ in track(range(n)):
         t0 = perf_counter()
-        model.predict(example_deserialized)
+        model(example_deserialized)
         times.append(perf_counter() - t0)
 
     console.print(
@@ -180,7 +180,7 @@ def time(model, example, models, n):
     )
 
     t0 = perf_counter()
-    model.predict([example_deserialized] * n)
+    model([example_deserialized] * n)
     batch_time = perf_counter() - t0
     console.print(
         f"Finished batching in {batch_time:.1f} s, approximately"

@@ -23,7 +23,7 @@ def test_model_serialization():
     # To be used on Spark, models need to be pickled, so we have a test for that. It's
     # not an insecure use of pickle, which is why we use the `nosec` comment.
     re_m = pickle.loads(pickle.dumps(m))  # nosec
-    assert re_m.predict({"x": 1}).x == 1
+    assert re_m({"x": 1}).x == 1
 
 
 class SomeModelWithoutTypes(Model):
@@ -36,4 +36,4 @@ def test_model_serialization_without_types():
     # To be used on Spark, models need to be pickled, so we have a test for that. It's
     # not an insecure use of pickle, which is why we use the `nosec` comment.
     re_m = pickle.loads(pickle.dumps(m))  # nosec
-    assert re_m.predict({"x": 1}) == {"x": 1}
+    assert re_m({"x": 1}) == {"x": 1}

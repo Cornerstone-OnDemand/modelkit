@@ -41,16 +41,16 @@ def redis_service(request):
 
 async def _do_model_test(model, ITEMS):
     for i in ITEMS:
-        res, from_cache = model.predict(i, _force_compute=True, _return_info=True)
+        res, from_cache = model(i, _force_compute=True, _return_info=True)
         assert i == res
         assert not from_cache
 
     for i in ITEMS:
-        res, from_cache = model.predict(i, _return_info=True)
+        res, from_cache = model(i, _return_info=True)
         assert i == res
         assert from_cache
 
-    res = model.predict(ITEMS, _return_info=True)
+    res = model(ITEMS, _return_info=True)
     assert [x[0] for x in res] == ITEMS
     assert all([x[1] for x in res])
 
@@ -59,13 +59,13 @@ async def _do_model_test(model, ITEMS):
     assert all([x[1] for x in res])
 
     mixed_items = ITEMS + [{"new": "item"}]
-    res = model.predict(mixed_items, _return_info=True)
+    res = model(mixed_items, _return_info=True)
     assert [x[0] for x in res] == mixed_items
     assert all([x[1] for x in res[:-1]])
     assert not res[-1][1]
 
     mixed_items = ITEMS + [{"new": "item"}]
-    res = model.predict(mixed_items, _return_info=True)
+    res = model(mixed_items, _return_info=True)
     assert [x[0] for x in res] == mixed_items
     assert all([x[1] for x in res])
 

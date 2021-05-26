@@ -13,4 +13,4 @@ class SomeBadValidatedModel(Model[ItemModel, ItemModel]):
 
 
 m = SomeBadValidatedModel()
-y: int = m.predict(ItemModel(x=10))  # here mypy expects an ItemModel to be returned
+y: int = m(ItemModel(x=10))  # here mypy expects an ItemModel to be returned

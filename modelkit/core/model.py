@@ -191,14 +191,14 @@ class Model(Asset, Generic[ItemType, ReturnType]):
         return hashlib.sha256(self._model_cache_key + pickled).digest()
 
     @overload
-    def predict(self, items: ItemType) -> ReturnType:
+    def __call__(self, items: ItemType) -> ReturnType:
         ...
 
     @overload
-    def predict(self, items: List[ItemType]) -> List[ReturnType]:
+    def __call__(self, items: List[ItemType]) -> List[ReturnType]:
         ...
 
-    def predict(
+    def __call__(
         self,
         items,
         callback: Callable = None,

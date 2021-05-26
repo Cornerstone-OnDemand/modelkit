@@ -29,7 +29,7 @@ try:
     import grpc
     from tensorflow_serving.apis import prediction_service_pb2_grpc
     from tensorflow_serving.apis.get_metadata_pb2 import GetModelMetadataRequest
-    from tensorflow_serving.apis.predict_pb2 import PredictRequest
+    from tensorflow_serving.apis_pb2 import PredictRequest
 except ModuleNotFoundError:
     logger.info("Tensorflow serving is not installed")
 

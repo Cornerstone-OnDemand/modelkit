@@ -9,5 +9,5 @@ class OKModel(Model[int, int]):
 
 
 m = OKModel()
-y: int = m.predict(1)
-y2: List[int] = m.predict([1])
+y: int = m(1)
+y2: List[int] = m([1])

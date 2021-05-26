@@ -6,7 +6,7 @@ import pytest
 
 from modelkit import ModelLibrary
 from modelkit.core.models.tensorflow_model import TensorflowModel
-from modelkit.core.settings import ServiceSettings
+from modelkit.core.settings import LibrarySettings
 from modelkit.testing import tf_serving_fixture
 from tests import TEST_DIR
 from tests.conftest import skip_unless
@@ -41,7 +41,7 @@ def test_tf_model_local_path():
         output_shapes={"lambda": (3, 2, 1)},
     )
     v = np.zeros((3, 2, 1), dtype=np.float32)
-    assert np.allclose(v, model.predict({"input_1": v})["lambda"])
+    assert np.allclose(v, model({"input_1": v})["lambda"])
 
 
 def test_tf_model(monkeypatch, clean_env, working_dir):
@@ -52,13 +52,13 @@ def test_tf_model(monkeypatch, clean_env, working_dir):
 
     lib = ModelLibrary(
         models=DummyTFModel,
-        settings=ServiceSettings(
+        settings=LibrarySettings(
             enable_tf_serving=False,
         ),
     )
     model = lib.get("dummy_tf_model")
     v = np.zeros((3, 2, 1), dtype=np.float32)
-    assert np.allclose(v, model.predict({"input_1": v})["lambda"])
+    assert np.allclose(v, model({"input_1": v})["lambda"])
 
 
 @pytest.fixture(scope="function")
@@ -77,7 +77,7 @@ def test_iso_serving_mode(tf_serving):
     # Get the prediction service running TF with gRPC serving
     svc_serving_grpc = ModelLibrary(
         required_models=[model_name],
-        settings=ServiceSettings(
+        settings=LibrarySettings(
             enable_tf_serving=True,
             tf_serving_port=8500,
             tf_serving_mode="grpc",
@@ -89,7 +89,7 @@ def test_iso_serving_mode(tf_serving):
 
     svc_serving_rest = ModelLibrary(
         required_models=[model_name],
-        settings=ServiceSettings(
+        settings=LibrarySettings(
             enable_tf_serving=True,
             tf_serving_port=8501,
             tf_serving_mode="rest",
@@ -102,7 +102,7 @@ def test_iso_serving_mode(tf_serving):
     # Get the prediction service running TF as a library
     svc_tflib = ModelLibrary(
         required_models=[model_name],
-        settings=ServiceSettings(enable_tf_serving=False),
+        settings=LibrarySettings(enable_tf_serving=False),
         models=DummyTFModel,
     )
 
@@ -164,17 +164,17 @@ def _compare_models(model0, model1, items, tolerance=1e-2):
     try:
         # Compare two models on single_predictions
         for item in items:
-            res_model0 = model0.predict(item)
+            res_model0 = model0(item)
             res_model0_per_item.append(res_model0)
-            res_model1 = model1.predict(item)
+            res_model1 = model1(item)
             assert compare_result(res_model0, res_model1, tolerance)
     except AssertionError as e:
         raise AssertionError(f"Models differ on single items\n{e.args[0]}")
 
     try:
         # Compare two models in batches
-        res_model0_items = model0.predict(items)
-        res_model1_items = model1.predict(items)
+        res_model0_items = model0(items)
+        res_model1_items = model1(items)
         for k in range(len(items)):
             res_model0 = res_model0_items[k]
             res_model1 = res_model1_items[k]
@@ -199,7 +199,7 @@ def test_iso_async(tf_serving):
     # Get the prediction service running TF with REST serving
     svc = ModelLibrary(
         required_models=["dummy_tf_model"],
-        settings=ServiceSettings(
+        settings=LibrarySettings(
             enable_tf_serving=True,
             tf_serving_port=8501,
             tf_serving_mode="rest",
@@ -212,7 +212,7 @@ def test_iso_async(tf_serving):
     # TODO: allow setting mode at predict time
     async_svc = ModelLibrary(
         required_models=["dummy_tf_model"],
-        settings=ServiceSettings(
+        settings=LibrarySettings(
             enable_tf_serving=True,
             tf_serving_port=8501,
             tf_serving_mode="rest-async",
@@ -239,7 +239,7 @@ async def _compare_models_async(model, model_async, items, tolerance=1e-2):
     try:
         # Compare two models on single_predictions
         for item in items:
-            res_model0 = model.predict(item)
+            res_model0 = model(item)
             res_model0_per_item.append(res_model0)
             res_model1 = await model_async.predict_async(item)
             assert compare_result(res_model0, res_model1, tolerance)
@@ -248,7 +248,7 @@ async def _compare_models_async(model, model_async, items, tolerance=1e-2):
 
     try:
         # Compare two models in batches
-        res_model0_items = model.predict(items)
+        res_model0_items = model(items)
         res_model1_items = await model_async.predict_async(items)
         for k in range(len(items)):
             res_model0 = res_model0_items[k]

@@ -7,4 +7,4 @@ class BadModel(Model[int, int]):
 
 
 m = BadModel()
-y = m.predict("some string")
+y = m("some string")

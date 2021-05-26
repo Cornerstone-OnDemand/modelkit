@@ -22,7 +22,7 @@ def cli(model_name):
     while True:
         r = click.prompt(f"[{model_name}]>")
         if r:
-            res = p.predict(json.loads(r))
+            res = p(json.loads(r))
             click.secho(json.dumps(res, indent=2, default=safe_np_dump))
 
 

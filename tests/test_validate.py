@@ -21,15 +21,15 @@ def test_validate_item_spec_pydantic():
     valid_test_item = {"x": 10}
 
     m = SomeValidatedModel()
-    assert m.predict(valid_test_item) == valid_test_item
+    assert m(valid_test_item) == valid_test_item
 
     with pytest.raises(ItemValidationException):
-        m.predict({"ok": 1})
+        m({"ok": 1})
 
     with pytest.raises(ItemValidationException):
-        m.predict({"x": "something", "blabli": 10})
+        m({"x": "something", "blabli": 10})
 
-    assert m.predict([valid_test_item] * 2) == [valid_test_item] * 2
+    assert m([valid_test_item] * 2) == [valid_test_item] * 2
 
 
 def test_validate_item_spec_pydantic_default():
@@ -46,15 +46,15 @@ def test_validate_item_spec_pydantic_default():
             return {"result": item.x + len(item.y)}
 
     m = TypedModel()
-    res = m.predict({"x": 10, "y": "okokokokok"})
+    res = m({"x": 10, "y": "okokokokok"})
     assert res.result == 20
     assert res.something_else == "ok"
-    res = m.predict({"x": 10})
+    res = m({"x": 10})
     assert res.result == 12
     assert res.something_else == "ok"
 
     with pytest.raises(ItemValidationException):
-        m.predict({})
+        m({})
 
 
 def test_validate_item_spec_typing():
@@ -65,18 +65,18 @@ def test_validate_item_spec_typing():
     valid_test_item = {"x": 10}
 
     m = SomeValidatedModel()
-    assert m.predict(valid_test_item) == valid_test_item
+    assert m(valid_test_item) == valid_test_item
 
     with pytest.raises(ItemValidationException):
-        m.predict(["ok"])
+        m(["ok"])
 
     with pytest.raises(ItemValidationException):
-        m.predict("x")
+        m("x")
 
     with pytest.raises(ItemValidationException):
-        m.predict([1, 2, 1])
+        m([1, 2, 1])
 
-    assert m.predict([valid_test_item] * 2) == [valid_test_item] * 2
+    assert m([valid_test_item] * 2) == [valid_test_item] * 2
 
 
 def test_validate_return_spec():
@@ -88,11 +88,11 @@ def test_validate_return_spec():
             return item
 
     m = SomeValidatedModel()
-    ret = m.predict({"x": 10})
+    ret = m({"x": 10})
     assert ret.x == 10
 
     with pytest.raises(ReturnValueValidationException):
-        m.predict({"x": "something", "blabli": 10})
+        m({"x": "something", "blabli": 10})
 
 
 def test_validate_list_items():
@@ -110,9 +110,9 @@ def test_validate_list_items():
             return item
 
     m = SomeValidatedModel()
-    m.predict([{"x": 10, "y": "ko"}] * 10)
+    m([{"x": 10, "y": "ko"}] * 10)
     assert m.counter == 10
-    m.predict({"x": 10, "y": "ko"})
+    m({"x": 10, "y": "ko"})
     assert m.counter == 11
 
 
@@ -122,5 +122,5 @@ def test_validate_none():
             return item
 
     m = SomeValidatedModel()
-    assert m.predict({"x": 10}) == {"x": 10}
-    assert m.predict(1) == 1
+    assert m({"x": 10}) == {"x": 10}
+    assert m(1) == 1

@@ -53,11 +53,11 @@ def test_override_asset():
         configuration=config,
     )
     model = prediction_service.get("some_asset")
-    assert "/the/path" == model.predict({})
+    assert "/the/path" == model({})
 
     # Dependent models are loaded properly
     model = prediction_service.get("dep_model")
-    assert "dep" == model.predict({})
+    assert "dep" == model({})
 
     # Finally, it is possible to also specify
     # an asset for the dependent model
@@ -73,7 +73,7 @@ def test_override_asset():
     )
     # Dependent models are loaded properly
     model = prediction_service.get("dep_model")
-    assert "dep/the/dep/path" == model.predict({})
+    assert "dep/the/dep/path" == model({})
 
 
 def test_prediction_service_inexistent_model():
@@ -214,7 +214,7 @@ def test_lazy_loading_dependencies():
 
     p = ModelLibrary(models=[Model1, Model0], settings={"lazy_loading": True})
     m = p.get("model1")
-    assert m.predict({}) == "ok"
+    assert m({}) == "ok"
     assert m.model_dependencies["model0"].some_attribute == "ok"
     assert m.some_attribute == "ok"
 
@@ -348,7 +348,7 @@ def test_load_model():
             return item
 
     m = load_model("model", models=SomeModel)
-    assert m.predict({"ok": "boomer"}) == {"ok": "boomer"}
+    assert m({"ok": "boomer"}) == {"ok": "boomer"}
 
 
 def test_required_models():
@@ -398,7 +398,7 @@ def test_environment_asset_load(monkeypatch, assetsmanager_settings, clean_env):
     )
     model = prediction_service.get("some_asset")
 
-    predicted = model.predict({})
+    predicted = model({})
     assert predicted == {"some key": "some data"}
 
 
@@ -426,11 +426,11 @@ def test_rename_dependencies():
         }
 
         async def _predict_one(self, item):
-            return self.model_dependencies["ok"].predict(item)
+            return self.model_dependencies["ok"](item)
 
     svc = ModelLibrary(models=[SomeModel, SomeModel2, FinalModel])
-    assert svc.get("model_no_rename").predict({}) == "ok"
-    assert svc.get("model_rename").predict({}) == "boomer"
+    assert svc.get("model_no_rename")({}) == "ok"
+    assert svc.get("model_rename")({}) == "boomer"
 
 
 def test_override_prefix(assetsmanager_settings):
@@ -451,10 +451,10 @@ def test_override_prefix(assetsmanager_settings):
         assetsmanager_settings=assetsmanager_settings,
     )
 
-    prediction = prediction_service.get("my_model").predict({})
+    prediction = prediction_service.get("my_model")({})
     assert prediction.endswith(os.path.join("category", "asset", "1.0"))
 
-    prediction = prediction_service.get("my_override_model").predict({})
+    prediction = prediction_service.get("my_override_model")({})
     assert prediction.endswith(os.path.join("category", "override-asset", "0.0"))
 
     prediction_service = ModelLibrary(
@@ -471,8 +471,8 @@ def test_override_prefix(assetsmanager_settings):
         assetsmanager_settings=assetsmanager_settings,
     )
 
-    prediction = prediction_service.get("my_model").predict({})
+    prediction = prediction_service.get("my_model")({})
     assert prediction.endswith(os.path.join("category", "asset", "1.0"))
 
-    prediction = prediction_service.get("my_override_model").predict({})
+    prediction = prediction_service.get("my_override_model")({})
     assert prediction.endswith(os.path.join("category", "override-asset", "1.0"))

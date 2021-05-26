@@ -97,6 +97,6 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
             item: item_type = fastapi.Body(...),
             model=fastapi.Depends(lambda: self.svc.get(model_name)),
         ):  # noqa: B008
-            return model.predict(item)
+            return model(item)
 
         return _endpoint
