@@ -20,7 +20,7 @@ Clients use `modelkit` models by instantiating a `ModelLibrary` with a set of mo
 picked either amongst models defined in the `modelkit.library.model_configuration` module,
 or by specifying a `modelkitModelConfiguration` at runtime.
 
-In each case, the models are then accessed via `ModelLibrary.get_model("some name")`
+In each case, the models are then accessed via `ModelLibrary.get("some name")`
  and used with `Model.predict`.
 
 Here is a typical implementation that uses an modelkit model configured as `my_favorite_model` somewhere under the `modelkit.models` module.
@@ -35,7 +35,7 @@ import modelkit.models
 service = ModelLibrary(models=modelkit.models)
 
 # This is only a dictionary lookup
-model = service.get_model("my_favorite_model")
+model = service.get("my_favorite_model")
 ```
 
 !!! info "Shortcuts"

@@ -52,11 +52,11 @@ def test_override_asset():
         required_models={"some_asset": {"asset_path": "/the/path"}},
         configuration=config,
     )
-    model = prediction_service.get_model("some_asset")
+    model = prediction_service.get("some_asset")
     assert "/the/path" == model.predict({})
 
     # Dependent models are loaded properly
-    model = prediction_service.get_model("dep_model")
+    model = prediction_service.get("dep_model")
     assert "dep" == model.predict({})
 
     # Finally, it is possible to also specify
@@ -72,7 +72,7 @@ def test_override_asset():
         configuration=config,
     )
     # Dependent models are loaded properly
-    model = prediction_service.get_model("dep_model")
+    model = prediction_service.get("dep_model")
     assert "dep/the/dep/path" == model.predict({})
 
 
@@ -92,9 +92,9 @@ def test_prediction_service_inexistent_model():
         required_models=["model_that_does_not_exist"], settings={"lazy_loading": True}
     )
     with pytest.raises(ConfigurationNotFoundException):
-        p.get_model("model_that_does_not_exist")
+        p.get("model_that_does_not_exist")
     with pytest.raises(ConfigurationNotFoundException):
-        p.get_model("other_model_that_does_not_exist")
+        p.get("other_model_that_does_not_exist")
 
 
 def test__configurations_from_objects():
@@ -180,7 +180,7 @@ def test_modellibrary_required_models():
         CONFIGURATIONS = {"yolo": {}, "les simpsons": {}}
 
     p = ModelLibrary(models=SomeModel)
-    m = p.get_model("yolo")
+    m = p.get("yolo")
     assert m
     assert m.configuration_key == "yolo"
     assert m.model_classname == "SomeModel"
@@ -213,7 +213,7 @@ def test_lazy_loading_dependencies():
             return self.some_attribute
 
     p = ModelLibrary(models=[Model1, Model0], settings={"lazy_loading": True})
-    m = p.get_model("model1")
+    m = p.get("model1")
     assert m.predict({}) == "ok"
     assert m.model_dependencies["model0"].some_attribute == "ok"
     assert m.some_attribute == "ok"
@@ -396,7 +396,7 @@ def test_environment_asset_load(monkeypatch, assetsmanager_settings, clean_env):
         },
         assetsmanager_settings=assetsmanager_settings,
     )
-    model = prediction_service.get_model("some_asset")
+    model = prediction_service.get("some_asset")
 
     predicted = model.predict({})
     assert predicted == {"some key": "some data"}
@@ -429,8 +429,8 @@ def test_rename_dependencies():
             return self.model_dependencies["ok"].predict(item)
 
     svc = ModelLibrary(models=[SomeModel, SomeModel2, FinalModel])
-    assert svc.get_model("model_no_rename").predict({}) == "ok"
-    assert svc.get_model("model_rename").predict({}) == "boomer"
+    assert svc.get("model_no_rename").predict({}) == "ok"
+    assert svc.get("model_rename").predict({}) == "boomer"
 
 
 def test_override_prefix(assetsmanager_settings):
@@ -451,10 +451,10 @@ def test_override_prefix(assetsmanager_settings):
         assetsmanager_settings=assetsmanager_settings,
     )
 
-    prediction = prediction_service.get_model("my_model").predict({})
+    prediction = prediction_service.get("my_model").predict({})
     assert prediction.endswith(os.path.join("category", "asset", "1.0"))
 
-    prediction = prediction_service.get_model("my_override_model").predict({})
+    prediction = prediction_service.get("my_override_model").predict({})
     assert prediction.endswith(os.path.join("category", "override-asset", "0.0"))
 
     prediction_service = ModelLibrary(
@@ -471,8 +471,8 @@ def test_override_prefix(assetsmanager_settings):
         assetsmanager_settings=assetsmanager_settings,
     )
 
-    prediction = prediction_service.get_model("my_model").predict({})
+    prediction = prediction_service.get("my_model").predict({})
     assert prediction.endswith(os.path.join("category", "asset", "1.0"))
 
-    prediction = prediction_service.get_model("my_override_model").predict({})
+    prediction = prediction_service.get("my_override_model").predict({})
     assert prediction.endswith(os.path.join("category", "override-asset", "1.0"))

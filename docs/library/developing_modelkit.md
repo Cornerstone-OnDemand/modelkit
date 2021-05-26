@@ -67,7 +67,7 @@ from modelkit.core import ModelLibrary
 import my_module.my_models
 
 p = ModelLibrary(models=my_module.my_models)
-m = p.get_model("yolo")
+m = p.get("yolo")
 ```
 
 ### Model settings
@@ -91,9 +91,9 @@ Now, there are two versions of the model available, `yolo` and `yolo_2`:
 from modelkit.core import ModelLibrary
 
 p = ModelLibrary(models=YOLOModel)
-m = p.get_model("yolo")
+m = p.get("yolo")
 print(m.predict({}))
-m2 = p.get_model("yolo_2")
+m2 = p.get("yolo_2")
 print(m2.predict({}))
 ```
 

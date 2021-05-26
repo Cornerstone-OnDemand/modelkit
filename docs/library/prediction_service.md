@@ -39,7 +39,7 @@ Specifically:
 
 - When the `ModelLibrary` is instantiated nothing really happens: the `Model`
 object is instantiated without deserializing the asset.
-- When `ModelLibrary.get_model` is called the first time, the `Model`'s asset is
+- When `ModelLibrary.get` is called the first time, the `Model`'s asset is
 downloaded (via `ModelLibrary._load`) to a local directory and deserialized.
 
 It is also possible to explicitly ask the `ModelLibrary` to load all `required_models` at

@@ -1,7 +1,7 @@
 """
 ModelLibrary
 
-Ask for model using get_model. Handle loading, refresh...
+Ask for model using get. Handle loading, refresh...
 """
 import collections
 import copy
@@ -118,7 +118,7 @@ class ModelLibrary:
 
         return self._override_assets_manager
 
-    def get_model(self, name):
+    def get(self, name):
         """
         Get a model by name
 
@@ -318,7 +318,7 @@ class ModelLibrary:
         for model_type in model_types:
             for model_key, item, result in model_type._iterate_test_cases():
                 if model_key in self._models:
-                    yield self.get_model(model_key), item, result
+                    yield self.get(model_key), item, result
 
 
 def load_model(
@@ -339,7 +339,7 @@ def load_model(
         configuration=configuration,
         settings={"lazy_loading": True},
     )
-    return svc.get_model(model_name)
+    return svc.get(model_name)
 
 
 def download_assets(

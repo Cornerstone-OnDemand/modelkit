@@ -55,16 +55,14 @@ def modellibrary_auto_test(
         svc = request.getfixturevalue(fixture_name)
         if isinstance(result, JSONTestResult):
             ref = ReferenceJson(os.path.join(test_dir, os.path.dirname(result.fn)))
-            pred = svc.get_model(model_key).predict(item)
+            pred = svc.get(model_key).predict(item)
             if isinstance(pred, pydantic.BaseModel):
                 pred = pred.dict()
             ref.assert_equal(os.path.basename(result.fn), pred)
         elif isinstance(result, np.ndarray):
-            assert np.array_equal(
-                svc.get_model(model_key).predict(item, **kwargs), result
-            )
+            assert np.array_equal(svc.get(model_key).predict(item, **kwargs), result)
         else:
-            assert svc.get_model(model_key).predict(item, **kwargs) == result
+            assert svc.get(model_key).predict(item, **kwargs) == result
 
     # in order for the above functions to be collected by pytest, add them
     # to the caller's local variables under their desired names

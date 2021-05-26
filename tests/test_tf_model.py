@@ -56,7 +56,7 @@ def test_tf_model(monkeypatch, clean_env, working_dir):
             enable_tf_serving=False,
         ),
     )
-    model = lib.get_model("dummy_tf_model")
+    model = lib.get("dummy_tf_model")
     v = np.zeros((3, 2, 1), dtype=np.float32)
     assert np.allclose(v, model.predict({"input_1": v})["lambda"])
 
@@ -85,7 +85,7 @@ def test_iso_serving_mode(tf_serving):
         ),
         models=DummyTFModel,
     )
-    model_grpc = svc_serving_grpc.get_model(model_name)
+    model_grpc = svc_serving_grpc.get(model_name)
 
     svc_serving_rest = ModelLibrary(
         required_models=[model_name],
@@ -97,7 +97,7 @@ def test_iso_serving_mode(tf_serving):
         ),
         models=DummyTFModel,
     )
-    model_rest = svc_serving_rest.get_model(model_name)
+    model_rest = svc_serving_rest.get(model_name)
 
     # Get the prediction service running TF as a library
     svc_tflib = ModelLibrary(
@@ -106,7 +106,7 @@ def test_iso_serving_mode(tf_serving):
         models=DummyTFModel,
     )
 
-    model_tflib = svc_tflib.get_model(model_name)
+    model_tflib = svc_tflib.get(model_name)
     _compare_models(model_tflib, model_grpc, TEST_ITEMS)
 
     _compare_models(model_rest, model_grpc, TEST_ITEMS)
@@ -207,7 +207,7 @@ def test_iso_async(tf_serving):
         ),
         models=DummyTFModel,
     )
-    m_jt2s = svc.get_model("dummy_tf_model")
+    m_jt2s = svc.get("dummy_tf_model")
 
     # TODO: allow setting mode at predict time
     async_svc = ModelLibrary(
@@ -220,7 +220,7 @@ def test_iso_async(tf_serving):
         ),
         models=DummyTFModel,
     )
-    async_m_jt2s = async_svc.get_model("dummy_tf_model")
+    async_m_jt2s = async_svc.get("dummy_tf_model")
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(_compare_models_async(m_jt2s, async_m_jt2s, TEST_ITEMS))

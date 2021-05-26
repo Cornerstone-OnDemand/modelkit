@@ -49,7 +49,7 @@ Each test is instantiated with an item value and a result value, the automatic t
 @pytest.mark.parametrize("model_key, item, result", [case for case in Model.TEST_CASES])
 def test_function(model_key, item, result, testing_prediction_service):
     svc = testing_prediction_service.getfixturevalue(fixture_name)
-    assert svc.get_model(model_key).predict(item) == result
+    assert svc.get(model_key).predict(item) == result
 
 ```
 

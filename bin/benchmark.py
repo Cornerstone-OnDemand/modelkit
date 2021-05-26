@@ -158,7 +158,7 @@ def time(model, example, models, n):
     console = Console()
 
     t0 = perf_counter()
-    model = service.get_model(model)
+    model = service.get(model)
     console.print(
         f"{f'Loaded model `{model.configuration_key}` in':50} "
         f"... {f'{perf_counter()-t0:.2f} s':>10}"

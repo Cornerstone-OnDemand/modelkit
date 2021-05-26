@@ -72,7 +72,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
 
         route_paths = route_paths or {}
         for model_name in self.svc.required_models:
-            m = self.svc.get_model(model_name)
+            m = self.svc.get(model_name)
             path = route_paths.get(model_name, "/predict/" + model_name)
 
             summary = ""
@@ -95,7 +95,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
     def _make_model_endpoint_fn(self, model_name, item_type):
         def _endpoint(
             item: item_type = fastapi.Body(...),
-            model=fastapi.Depends(lambda: self.svc.get_model(model_name)),
+            model=fastapi.Depends(lambda: self.svc.get(model_name)),
         ):  # noqa: B008
             return model.predict(item)
 

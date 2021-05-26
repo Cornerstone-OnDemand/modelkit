@@ -91,8 +91,8 @@ def test_redis_cache(redis_service):
         settings={"enable_redis_cache": True},
     )
 
-    m = svc.get_model("model")
-    m_multi = svc.get_model("model_multiple")
+    m = svc.get("model")
+    m_multi = svc.get("model_multiple")
 
     ITEMS = [{"ok": {"boomer": 1}}, {"ok": {"boomer": [2, 2, 3]}}]
 

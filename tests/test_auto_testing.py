@@ -78,5 +78,5 @@ modellibrary_auto_test(
 
 # The fixture with the ModelLibrary can be used elsewhere as usual
 def test_testing_prediction_service(testing_prediction_service):
-    m = testing_prediction_service.get_model("some_model")
+    m = testing_prediction_service.get("some_model")
     assert m.predict({"x": 1}).x == 1
