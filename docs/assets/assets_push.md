@@ -13,7 +13,7 @@ There are two separate actions one can take to affect the remotely stored assets
 ## Maintaining assets programmatically
 
 First, instantiate an `AssetsManager` pointing to the desired `bucket`, possibly changing
-the `assetsmanager_prefix`, storage method, etc.:
+the `storage_prefix`, storage method, etc.:
 
 ```python
 from modelkit.assets.manager import AssetsManager

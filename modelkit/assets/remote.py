@@ -38,7 +38,7 @@ class RemoteAssetsStore:
         if self.driver:
             self.bucket = self.driver.bucket
             self.timeout = settings.timeout_s
-            self.prefix = settings.assetsmanager_prefix
+            self.prefix = settings.storage_prefix
 
     def get_object_name(self, name, version):
         return "/".join((self.prefix, name, version))

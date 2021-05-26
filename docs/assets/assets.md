@@ -22,7 +22,7 @@ preferred way to do this is through [environment variables](environment.md).
 It _needs_ to be provided with a working directory in order to download and cache
 assets locally (see [Environment](environment.md) and [Local cache](working_dir.md)).
 
-In addition, the `AssetsManager` can be provided with an `assetsmanager_prefix` which
+In addition, the `AssetsManager` can be provided with an `storage_prefix` which
 prefixes all stored assets (`modelkit-assets` by default).
 
 ### Fetching assets

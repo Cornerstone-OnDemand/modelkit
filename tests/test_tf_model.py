@@ -46,7 +46,7 @@ def test_tf_model_local_path():
 
 def test_tf_model(monkeypatch, clean_env, working_dir):
     monkeypatch.setenv("ASSETS_BUCKET_NAME", TEST_DIR)
-    monkeypatch.setenv("ASSETS_PREFIX", "testdata")
+    monkeypatch.setenv("STORAGE_PREFIX", "testdata")
     monkeypatch.setenv("STORAGE_PROVIDER", "local")
     monkeypatch.setenv("WORKING_DIR", working_dir)
 
@@ -65,7 +65,7 @@ def test_tf_model(monkeypatch, clean_env, working_dir):
 def tf_serving(request, monkeypatch, clean_env, working_dir):
     monkeypatch.setenv("WORKING_DIR", working_dir)
     monkeypatch.setenv("ASSETS_BUCKET_NAME", TEST_DIR)
-    monkeypatch.setenv("ASSETS_PREFIX", "testdata")
+    monkeypatch.setenv("STORAGE_PREFIX", "testdata")
     monkeypatch.setenv("STORAGE_PROVIDER", "local")
 
     yield tf_serving_fixture(request, ["dummy_tf_model"], models=DummyTFModel)

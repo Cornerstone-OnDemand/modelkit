@@ -86,9 +86,9 @@ def _check_asset_file_number(asset_path):
 @click.argument("asset_path")
 @click.argument("asset_spec")
 @click.option("--bucket", envvar="ASSETS_BUCKET_NAME")
-@click.option("--assetsmanager-prefix", envvar="ASSETS_PREFIX")
+@click.option("--assetsmanager-prefix", envvar="STORAGE_PREFIX")
 @click.option("--dry-run", is_flag=True)
-def new(asset_path, asset_spec, bucket, assetsmanager_prefix, dry_run):
+def new(asset_path, asset_spec, bucket, storage_prefix, dry_run):
     """
     Create a new asset ASSET_SPEC with ASSET_PATH file. Will fail if asset exists
     (in this case use `update`)
@@ -103,13 +103,13 @@ def new(asset_path, asset_spec, bucket, assetsmanager_prefix, dry_run):
     """
     _check_asset_file_number(asset_path)
     manager = RemoteAssetsStore(
-        assetsmanager_prefix=assetsmanager_prefix,
+        storage_prefix=storage_prefix,
         driver=DriverSettings(bucket=bucket),
     )
     print("Current assets manager:")
     print(f" - storage provider = `{manager.driver}`")
     print(f" - bucket = `{bucket}`")
-    print(f" - prefix = `{assetsmanager_prefix}`")
+    print(f" - prefix = `{storage_prefix}`")
 
     print(f"Current asset: `{asset_spec}`")
     spec = AssetSpec.from_string(asset_spec)
@@ -136,9 +136,9 @@ def new(asset_path, asset_spec, bucket, assetsmanager_prefix, dry_run):
     "--bump-major", is_flag=True, help="Push a new major version (1.0, 2.0, etc.)"
 )
 @click.option("--bucket", envvar="ASSETS_BUCKET_NAME")
-@click.option("--assetsmanager-prefix", envvar="ASSETS_PREFIX")
+@click.option("--assetsmanager-prefix", envvar="STORAGE_PREFIX")
 @click.option("--dry-run", is_flag=True)
-def update(asset_path, asset_spec, bucket, assetsmanager_prefix, bump_major, dry_run):
+def update(asset_path, asset_spec, bucket, storage_prefix, bump_major, dry_run):
     """
     Update an existing asset ASSET_SPEC with ASSET_PATH file.
 
@@ -176,14 +176,14 @@ def update(asset_path, asset_spec, bucket, assetsmanager_prefix, bump_major, dry
     """
     _check_asset_file_number(asset_path)
     manager = RemoteAssetsStore(
-        assetsmanager_prefix=assetsmanager_prefix,
+        storage_prefix=storage_prefix,
         driver=DriverSettings(bucket=bucket),
     )
 
     print("Current assets manager:")
     print(f" - storage provider = `{manager.driver}`")
     print(f" - bucket = `{bucket}`")
-    print(f" - prefix = `{assetsmanager_prefix}`")
+    print(f" - prefix = `{storage_prefix}`")
 
     print(f"Current asset: `{asset_spec}`")
     spec = AssetSpec.from_string(asset_spec)
@@ -235,11 +235,11 @@ def update(asset_path, asset_spec, bucket, assetsmanager_prefix, bump_major, dry
 
 @assets.command("list")
 @click.option("--bucket", envvar="ASSETS_BUCKET_NAME")
-@click.option("--assetsmanager-prefix", envvar="ASSETS_PREFIX")
-def list(bucket, assetsmanager_prefix):
+@click.option("--assetsmanager-prefix", envvar="STORAGE_PREFIX")
+def list(bucket, storage_prefix):
     """lists all available assets and their versions."""
     manager = RemoteAssetsStore(
-        assetsmanager_prefix=assetsmanager_prefix,
+        storage_prefix=storage_prefix,
         driver=DriverSettings(bucket=bucket),
     )
 
@@ -247,7 +247,7 @@ def list(bucket, assetsmanager_prefix):
     tree = Tree("[bold]Assets store[/bold]")
     tree.add(f"[dim]storage provider[/dim] {manager.driver.__class__.__name__}")
     tree.add(f"[dim]bucket[/dim] {bucket}")
-    tree.add(f"[dim]prefix[/dim] {assetsmanager_prefix}")
+    tree.add(f"[dim]prefix[/dim] {storage_prefix}")
     console.print(tree)
 
     table = Table(show_header=True, header_style="bold")

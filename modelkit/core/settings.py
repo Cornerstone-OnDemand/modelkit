@@ -17,8 +17,8 @@ class ServiceSettings(pydantic.BaseSettings):
     cache_host: str = pydantic.Field("localhost", env="CACHE_HOST")
     cache_port: int = pydantic.Field(6379, env="CACHE_PORT")
 
-    override_assetsmanager_prefix: Optional[str] = pydantic.Field(
-        None, env="OVERRIDE_ASSETS_PREFIX"
+    override_storage_prefix: Optional[str] = pydantic.Field(
+        None, env="OVERRIDE_STORAGE_PREFIX"
     )
 
     @pydantic.validator("tf_serving_port")

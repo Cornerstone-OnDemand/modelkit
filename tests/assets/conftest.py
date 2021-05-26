@@ -91,7 +91,7 @@ def gcs_assetsmanager(request, working_dir, clean_env):
         assets_dir=working_dir,
     )
     remote_store = RemoteAssetsStore(
-        assetsmanager_prefix="test-prefix",
+        storage_prefix="test-prefix",
         driver={
             "storage_provider": "gcs",
             "settings": {"bucket": "test-bucket", "client": _get_mock_gcs_client()},
@@ -122,7 +122,7 @@ def _start_s3_manager(working_dir):
                 "aws_session_token": None,
                 "s3_endpoint": "http://127.0.0.1:9000",
             },
-            "assetsmanager_prefix": f"test-assets-{uuid.uuid1().hex}",
+            "storage_prefix": f"test-assets-{uuid.uuid1().hex}",
         },
     )
     mng.remote_assets_store.driver.client.create_bucket(Bucket="test-assets")

@@ -23,7 +23,7 @@ for example with TF serving
 - `enable_tf_serving`, `tf_serving_timeout_s`, `tf_serving_port`, `tf_serving_host`: Set
 parameters related to the serving of TF models (see [here](tensorflow_models.md)).
 - `assetsmanager_settings`: Parameters passed to the `assets.manager.AssetsManager`
-- `override_assetsmanager_prefix`: Specify a side prefix from which the prediction service will try to download assets before falling back to classic assetsmanager_prefix.
+- `override_storage_prefix`: Specify a side prefix from which the prediction service will try to download assets before falling back to classic storage_prefix.
  It is used to test new assets without having to push them in the main assets prefix (do not use in production).
 
 ## Lazy loading

@@ -120,7 +120,7 @@ def tf_serving_fixture(request, required_models, deployment="docker", models=Non
             [
                 "tensorflow_model_server",
                 "--model_config_file="
-                f"{os.environ['WORKING_DIR']}/{os.environ['ASSETS_PREFIX']}/"
+                f"{os.environ['WORKING_DIR']}/{os.environ['STORAGE_PREFIX']}/"
                 "testing.config",
             ]
             + cmd

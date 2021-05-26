@@ -275,7 +275,7 @@ def assetsmanager_settings(working_dir):
                 "storage_provider": "local",
                 "bucket": os.path.join(TEST_DIR, "testdata", "test-bucket"),
             },
-            "assetsmanager_prefix": "assets-prefix",
+            "storage_prefix": "assets-prefix",
         },
         "assets_dir": working_dir,
     }
@@ -467,7 +467,7 @@ def test_override_prefix(assetsmanager_settings):
                 model_type=TestModel, asset="category/override-asset"
             ),
         },
-        settings={"override_assetsmanager_prefix": "override-assets-prefix"},
+        settings={"override_storage_prefix": "override-assets-prefix"},
         assetsmanager_settings=assetsmanager_settings,
     )
 

@@ -26,7 +26,7 @@ def download_asset(assets_dir, driver_path, asset_name):
                 "storage_provider": "local",
                 "bucket": driver_path,
             },
-            "assetsmanager_prefix": "prefix",
+            "storage_prefix": "prefix",
         },
     )
     asset_dict = am.fetch_asset(asset_name, return_info=True)

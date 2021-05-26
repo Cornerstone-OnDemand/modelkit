@@ -80,7 +80,7 @@ def test_local_manager_with_fetch(clean_env, working_dir):
                 "storage_provider": "local",
                 "bucket": os.path.join(TEST_DIR, "testdata", "test-bucket"),
             },
-            "assetsmanager_prefix": "assets-prefix",
+            "storage_prefix": "assets-prefix",
         },
     )
 

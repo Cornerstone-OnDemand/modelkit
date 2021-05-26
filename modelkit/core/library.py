@@ -103,7 +103,7 @@ class ModelLibrary:
 
     @property
     def override_assets_manager(self):
-        if not self.settings.override_assetsmanager_prefix:
+        if not self.settings.override_storage_prefix:
             return None
 
         if self._override_assets_manager is None:
@@ -112,8 +112,8 @@ class ModelLibrary:
             )
             override_settings = copy.deepcopy(self.assetsmanager_settings)
             override_settings["remote_store"][
-                "assetsmanager_prefix"
-            ] = self.settings.override_assetsmanager_prefix
+                "storage_prefix"
+            ] = self.settings.override_storage_prefix
             self._override_assets_manager = AssetsManager(**override_settings)
 
         return self._override_assets_manager

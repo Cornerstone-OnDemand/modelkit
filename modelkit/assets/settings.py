@@ -41,7 +41,7 @@ class DriverSettings(BaseSettings):
 class RemoteAssetsStoreSettings(BaseSettings):
     driver: DriverSettings
     timeout_s: float = pydantic.Field(5 * 60, env="ASSETSMANAGER_TIMEOUT_S")
-    assetsmanager_prefix: str = pydantic.Field("modelkit-assets", env="ASSETS_PREFIX")
+    storage_prefix: str = pydantic.Field("modelkit-assets", env="STORAGE_PREFIX")
 
     @root_validator(pre=True)
     @classmethod

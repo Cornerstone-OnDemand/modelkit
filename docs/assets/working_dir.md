@@ -11,14 +11,14 @@ the version read from the remote directory.
 
 ## Fetching assets
 
-The caching directory is found at `working_dir/assetsmanager_prefix`, where both values
+The caching directory is found at `working_dir/storage_prefix`, where both values
 can be fed to the `AssetsManager` at initialization. 
 
 The directory structure is as follows:
 
 ```
 working_dir
-└── assetsmanager_prefix
+└── storage_prefix
 |   ├── .cache
 |   │   ├── category0
 |   │   │   ├── name0
@@ -33,12 +33,12 @@ working_dir
 |   │   ├── name0-0.0[.ext]
 |   │   ├── name1-0.0
 |   │   |   ...
-├── [other assetsmanager_prefix]
+├── [other storage_prefix]
 |    ...
 ```
 
 The working dir is separated between different folders named after each `AssetsManager`'s
-`assetsmanager_prefix`. Each contains a `.cache` directory with:
+`storage_prefix`. Each contains a `.cache` directory with:
   *  the `*.meta` JSON files that are used to compare the local version with
 the remote version and decide whether to re-download assets
   *  the `*.tmp` files: downloaded asset archives, present only before being moved

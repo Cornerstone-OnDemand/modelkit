@@ -79,7 +79,7 @@ def test_lock_assetsmanager(capsys, working_dir):
             "storage_provider": "local",
             "bucket": driver_path,
         },
-        assetsmanager_prefix="prefix",
+        storage_prefix="prefix",
     )
     data_path = os.path.join(TEST_DIR, "assets", "testdata", "some_data_folder")
     mng.new(data_path, "category-test/some-data.ext")
