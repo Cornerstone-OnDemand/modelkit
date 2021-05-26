@@ -376,7 +376,7 @@ def test_lazy_loading_setting(monkeypatch):
     assert settings.lazy_loading
 
 
-def test_environment_asset_load(monkeypatch, assetsmanager_settings, clean_env):
+def test_environment_asset_load(monkeypatch, assetsmanager_settings):
     class TestModel(Model):
         def _load(self):
             assert self.asset_path == "path/to/asset"

@@ -19,8 +19,7 @@ def working_dir(base_dir):
     yield working_dir
 
 
-@pytest.fixture
-def clean_env(monkeypatch):
+def clean_env():
     for env_var in [
         "ASSETS_DIR",
         "WORKING_DIR",
@@ -31,24 +30,11 @@ def clean_env(monkeypatch):
         "ASSETSMANAGER_PREFIX",
         "ASSETSMANAGER_TIMEOUT_S",
     ]:
-        monkeypatch.delenv(env_var, raising=False)
+        os.environ.pop(env_var, None)
 
 
-def pytest_addoption(parser):
-    parser.addoption("--skipslow", action="store_true", help="skip slow tests")
-
-
-def pytest_collection_modifyitems(config, items):
-    if not config.getoption("--skipslow"):
-        return
-    skip_slow = pytest.mark.skip(reason="need --skipslow option to run")
-    for item in items:
-        if "slow" in item.keywords:
-            item.add_marker(skip_slow)
-
-
-def pytest_configure(config):
-    config.addinivalue_line("markers", "slow: mark test as slow to run")
+def pytest_sessionstart(session):
+    clean_env()
 
 
 @pytest.fixture(scope="session")

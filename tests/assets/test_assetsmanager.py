@@ -92,7 +92,7 @@ def test_s3_assetsmanager(s3_assetsmanager):
 
 
 @skip_unless("ENABLE_GCS_TEST", "True")
-def test_download_object_or_prefix_cli(gcs_assetsmanager, clean_env):
+def test_download_object_or_prefix_cli(gcs_assetsmanager):
     original_asset_path = os.path.join(test_path, "testdata", "some_data.json")
     gcs_asset_dir = (
         f"gs://{gcs_assetsmanager.remote_assets_store.bucket}/"

@@ -33,7 +33,7 @@ TEST_ITEMS = [
 ]
 
 
-def test_tf_model_local_path(clean_env):
+def test_tf_model_local_path():
     model = DummyTFModel(
         asset_path=os.path.join(TEST_DIR, "testdata", "dummy_tf_model", "0.0"),
         output_dtypes={"lambda": np.float32},
@@ -44,7 +44,7 @@ def test_tf_model_local_path(clean_env):
     assert np.allclose(v, model({"input_1": v})["lambda"])
 
 
-def test_tf_model(monkeypatch, clean_env, working_dir):
+def test_tf_model(monkeypatch, working_dir):
     monkeypatch.setenv("ASSETS_BUCKET_NAME", TEST_DIR)
     monkeypatch.setenv("STORAGE_PREFIX", "testdata")
     monkeypatch.setenv("STORAGE_PROVIDER", "local")
@@ -58,7 +58,7 @@ def test_tf_model(monkeypatch, clean_env, working_dir):
 
 
 @pytest.fixture(scope="function")
-def tf_serving(request, monkeypatch, clean_env, working_dir):
+def tf_serving(request, monkeypatch, working_dir):
     monkeypatch.setenv("WORKING_DIR", working_dir)
     monkeypatch.setenv("ASSETS_BUCKET_NAME", TEST_DIR)
     monkeypatch.setenv("STORAGE_PREFIX", "testdata")

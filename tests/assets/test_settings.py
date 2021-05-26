@@ -27,7 +27,7 @@ test_path = os.path.dirname(os.path.realpath(__file__))
         ({"storage_provider": "s3", "bucket": test_path}, True, S3DriverSettings),
     ],
 )
-def test_driver_settings(settings_dict, valid, expected_type, clean_env):
+def test_driver_settings(settings_dict, valid, expected_type):
     if valid:
         driver_settings = DriverSettings(**settings_dict)
         assert isinstance(driver_settings.settings, expected_type)
@@ -87,7 +87,7 @@ def test_driver_settings(settings_dict, valid, expected_type, clean_env):
         ({"remote_store": {"driver": {"storage_provider": "local"}}}, False),
     ],
 )
-def test_assetsmanager_settings(monkeypatch, clean_env, settings_dict, valid):
+def test_assetsmanager_settings(monkeypatch, settings_dict, valid):
     if valid:
         assetsmanager_settings = AssetsManagerSettings(**settings_dict)
         assert isinstance(assetsmanager_settings, AssetsManagerSettings)
@@ -119,7 +119,7 @@ def test_assetsmanager_settings(monkeypatch, clean_env, settings_dict, valid):
         ),
     ],
 )
-def test_remote_assets_store_settings(monkeypatch, clean_env, settings_dict, valid):
+def test_remote_assets_store_settings(monkeypatch, settings_dict, valid):
     if valid:
         assetsmanager_settings = RemoteAssetsStoreSettings(**settings_dict)
         assert isinstance(assetsmanager_settings, RemoteAssetsStoreSettings)
@@ -128,7 +128,7 @@ def test_remote_assets_store_settings(monkeypatch, clean_env, settings_dict, val
             RemoteAssetsStoreSettings(**settings_dict)
 
 
-def test_assetsmanager_minimal(monkeypatch, clean_env, working_dir):
+def test_assetsmanager_minimal(monkeypatch, working_dir):
     monkeypatch.setenv("WORKING_DIR", working_dir)
     monkeypatch.setenv("ASSETS_BUCKET_NAME", "some-bucket")
     monkeypatch.setenv("STORAGE_PROVIDER", "gcs")
@@ -140,7 +140,7 @@ def test_assetsmanager_minimal(monkeypatch, clean_env, working_dir):
     assert settings.assets_dir == Path(working_dir)
 
 
-def test_assetsmanager_minimal_provider(monkeypatch, clean_env, working_dir):
+def test_assetsmanager_minimal_provider(monkeypatch, working_dir):
     monkeypatch.setenv("WORKING_DIR", working_dir)
     monkeypatch.setenv("STORAGE_PROVIDER", "local")
 
@@ -155,7 +155,7 @@ def test_assetsmanager_minimal_provider(monkeypatch, clean_env, working_dir):
     assert settings.assets_dir == Path(working_dir)
 
 
-def test_assetsmanager_minimal_prefix(monkeypatch, clean_env, working_dir):
+def test_assetsmanager_minimal_prefix(monkeypatch, working_dir):
     monkeypatch.setenv("WORKING_DIR", working_dir)
     monkeypatch.setenv("ASSETS_BUCKET_NAME", "some-bucket")
     monkeypatch.setenv("STORAGE_PREFIX", "a-prefix")

@@ -7,7 +7,7 @@ from modelkit.assets.manager import AssetsManager
 from tests import TEST_DIR
 
 
-def test_local_manager_no_versions(clean_env, working_dir):
+def test_local_manager_no_versions(working_dir):
     # This test makes sure that the AssetsManager is able to retrieve files
     # refered to by their paths relative to the working_dir
     os.makedirs(os.path.join(working_dir, "something", "else"))
@@ -34,7 +34,7 @@ def test_local_manager_no_versions(clean_env, working_dir):
         res = manager.fetch_asset("something.txt:0", return_info=True)
 
 
-def test_local_manager_with_versions(clean_env, working_dir):
+def test_local_manager_with_versions(working_dir):
     os.makedirs(os.path.join(working_dir, "something", "0.0"))
     os.makedirs(os.path.join(working_dir, "something", "0.1"))
     os.makedirs(os.path.join(working_dir, "something", "1.1", "subpart"))
@@ -68,7 +68,7 @@ def test_local_manager_with_versions(clean_env, working_dir):
     assert res["path"] == os.path.join(working_dir, "something", "1.1")
 
 
-def test_local_manager_with_fetch(clean_env, working_dir):
+def test_local_manager_with_fetch(working_dir):
     os.makedirs(os.path.join(working_dir, "category", "asset"))
     with open(os.path.join(working_dir, "category", "asset", "0.0"), "w") as f:
         f.write("OK")

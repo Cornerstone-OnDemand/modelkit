@@ -29,7 +29,7 @@ def _delete_all_objects(mng):
 
 
 @pytest.fixture(scope="function")
-def local_assetsmanager(base_dir, working_dir, clean_env):
+def local_assetsmanager(base_dir, working_dir):
     bucket_path = os.path.join(base_dir, "local_driver", "bucket")
     os.makedirs(bucket_path)
 
@@ -62,7 +62,7 @@ def _get_mock_gcs_client():
 
 
 @pytest.fixture(scope="function")
-def gcs_assetsmanager(request, working_dir, clean_env):
+def gcs_assetsmanager(request, working_dir):
     # kill previous fake gcs container (if any)
     subprocess.call(
         ["docker", "rm", "-f", "storage-gcs-tests"], stderr=subprocess.DEVNULL
@@ -130,7 +130,7 @@ def _start_s3_manager(working_dir):
 
 
 @pytest.fixture(scope="function")
-def s3_assetsmanager(request, clean_env, working_dir):
+def s3_assetsmanager(request, working_dir):
     # kill previous minio container (if any)
     subprocess.call(
         ["docker", "rm", "-f", "storage-minio-tests"], stderr=subprocess.DEVNULL
