@@ -8,7 +8,6 @@ class TFServingSettings(pydantic.BaseSettings):
     mode: str = pydantic.Field("rest", env="TF_SERVING_MODE")
     host: str = pydantic.Field("localhost", env="TF_SERVING_HOST")
     port: int = pydantic.Field(None, env="TF_SERVING_PORT")
-    timeout_s: int = pydantic.Field(60, env="TF_SERVING_TIMEOUT_S")
 
     @pydantic.validator("port")
     @classmethod

@@ -245,8 +245,8 @@ def retriable_error(exception):
 
 
 TF_SERVING_RETRY_POLICY = {
-    "wait": wait_random_exponential(multiplier=1, min=4, max=10),
-    "stop": stop_after_attempt(5),
+    "wait": wait_random_exponential(multiplier=1, min=4, max=20),
+    "stop": stop_after_attempt(10),
     "retry": retry_if_exception(retriable_error),
     "after": log_after_retry,
     "reraise": True,
