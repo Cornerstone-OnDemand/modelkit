@@ -88,7 +88,7 @@ def test_redis_cache(redis_service):
 
     svc = ModelLibrary(
         models=[SomeModel, SomeModelMultiple],
-        settings={"enable_redis_cache": True},
+        settings={"redis": {"enable": True}},
     )
 
     m = svc.get("model")

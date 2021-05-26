@@ -33,7 +33,7 @@ TEST_ITEMS = [
 ]
 
 
-def test_tf_model_local_path():
+def test_tf_model_local_path(clean_env):
     model = DummyTFModel(
         asset_path=os.path.join(TEST_DIR, "testdata", "dummy_tf_model", "0.0"),
         output_dtypes={"lambda": np.float32},
@@ -50,12 +50,8 @@ def test_tf_model(monkeypatch, clean_env, working_dir):
     monkeypatch.setenv("STORAGE_PROVIDER", "local")
     monkeypatch.setenv("WORKING_DIR", working_dir)
 
-    lib = ModelLibrary(
-        models=DummyTFModel,
-        settings=LibrarySettings(
-            enable_tf_serving=False,
-        ),
-    )
+    lib = ModelLibrary(models=DummyTFModel)
+    assert not lib.settings.tf_serving.enable
     model = lib.get("dummy_tf_model")
     v = np.zeros((3, 2, 1), dtype=np.float32)
     assert np.allclose(v, model({"input_1": v})["lambda"])
@@ -78,10 +74,12 @@ def test_iso_serving_mode(tf_serving):
     svc_serving_grpc = ModelLibrary(
         required_models=[model_name],
         settings=LibrarySettings(
-            enable_tf_serving=True,
-            tf_serving_port=8500,
-            tf_serving_mode="grpc",
-            tf_serving_host="localhost",
+            tf_serving={
+                "enable": True,
+                "port": 8500,
+                "mode": "grpc",
+                "host": "localhost",
+            }
         ),
         models=DummyTFModel,
     )
@@ -90,10 +88,12 @@ def test_iso_serving_mode(tf_serving):
     svc_serving_rest = ModelLibrary(
         required_models=[model_name],
         settings=LibrarySettings(
-            enable_tf_serving=True,
-            tf_serving_port=8501,
-            tf_serving_mode="rest",
-            tf_serving_host="localhost",
+            tf_serving={
+                "enable": True,
+                "port": 8501,
+                "mode": "rest",
+                "host": "localhost",
+            }
         ),
         models=DummyTFModel,
     )
@@ -102,10 +102,10 @@ def test_iso_serving_mode(tf_serving):
     # Get the prediction service running TF as a library
     svc_tflib = ModelLibrary(
         required_models=[model_name],
-        settings=LibrarySettings(enable_tf_serving=False),
+        settings=LibrarySettings(),
         models=DummyTFModel,
     )
-
+    assert not svc_tflib.settings.tf_serving.enable
     model_tflib = svc_tflib.get(model_name)
     _compare_models(model_tflib, model_grpc, TEST_ITEMS)
 
@@ -200,10 +200,12 @@ def test_iso_async(tf_serving):
     svc = ModelLibrary(
         required_models=["dummy_tf_model"],
         settings=LibrarySettings(
-            enable_tf_serving=True,
-            tf_serving_port=8501,
-            tf_serving_mode="rest",
-            tf_serving_host="localhost",
+            tf_serving={
+                "enable": True,
+                "port": 8501,
+                "mode": "rest",
+                "host": "localhost",
+            }
         ),
         models=DummyTFModel,
     )
@@ -213,10 +215,12 @@ def test_iso_async(tf_serving):
     async_svc = ModelLibrary(
         required_models=["dummy_tf_model"],
         settings=LibrarySettings(
-            enable_tf_serving=True,
-            tf_serving_port=8501,
-            tf_serving_mode="rest-async",
-            tf_serving_host="localhost",
+            tf_serving={
+                "enable": True,
+                "port": 8501,
+                "mode": "rest-async",
+                "host": "localhost",
+            }
         ),
         models=DummyTFModel,
     )
