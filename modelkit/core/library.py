@@ -19,7 +19,7 @@ from modelkit.assets.manager import AssetsManager
 from modelkit.assets.settings import AssetSpec
 from modelkit.core.model import Model
 from modelkit.core.model_configuration import ModelConfiguration, configure, list_assets
-from modelkit.core.settings import ServiceSettings
+from modelkit.core.settings import LibrarySettings
 from modelkit.log import logger
 from modelkit.utils.redis import RedisCacheException, check_redis
 
@@ -31,7 +31,7 @@ class ConfigurationNotFoundException(Exception):
 class ModelLibrary:
     def __init__(
         self,
-        settings: Optional[Union[Dict, ServiceSettings]] = None,
+        settings: Optional[Union[Dict, LibrarySettings]] = None,
         assetsmanager_settings: Optional[dict] = None,
         configuration: Optional[
             Dict[str, Union[Dict[str, Any], ModelConfiguration]]
@@ -50,8 +50,8 @@ class ModelLibrary:
         :param assetsmanager_settings: settings passed to the AssetsManager
         """
         if isinstance(settings, dict):
-            settings = ServiceSettings(**settings)
-        self.settings = settings or ServiceSettings()
+            settings = LibrarySettings(**settings)
+        self.settings = settings or LibrarySettings()
         self.assetsmanager_settings = assetsmanager_settings or {}
         self._override_assets_manager = None
         self._lazy_loading = self.settings.lazy_loading

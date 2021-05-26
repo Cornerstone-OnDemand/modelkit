@@ -16,7 +16,7 @@ from modelkit.core.model_configuration import (
     configure,
     list_assets,
 )
-from modelkit.core.settings import ServiceSettings
+from modelkit.core.settings import LibrarySettings
 from modelkit.utils.tensorflow import write_config
 from tests import TEST_DIR
 
@@ -369,10 +369,10 @@ def test_required_models():
 
 def test_lazy_loading_setting(monkeypatch):
     monkeypatch.delenv("LAZY_LOADING", raising=False)
-    settings = ServiceSettings()
+    settings = LibrarySettings()
     assert not settings.lazy_loading
     monkeypatch.setenv("LAZY_LOADING", "True")
-    settings = ServiceSettings()
+    settings = LibrarySettings()
     assert settings.lazy_loading
 
 

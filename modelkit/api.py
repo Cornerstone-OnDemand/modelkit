@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Type, Union
 
 import fastapi
 
-from modelkit.core.library import ModelConfiguration, ModelLibrary, ServiceSettings
+from modelkit.core.library import LibrarySettings, ModelConfiguration, ModelLibrary
 from modelkit.log import logger
 
 # create APIRoute for model
@@ -14,7 +14,7 @@ class ModelkitAPIRouter(fastapi.APIRouter):
     def __init__(
         self,
         # PredictionService arguments
-        settings: Optional[Union[Dict, ServiceSettings]] = None,
+        settings: Optional[Union[Dict, LibrarySettings]] = None,
         assetsmanager_settings: Optional[dict] = None,
         configuration: Optional[
             Dict[str, Union[Dict[str, Any], ModelConfiguration]]
@@ -50,7 +50,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
         self,
         # PredictionService arguments
         required_models: Optional[List[str]] = None,
-        settings: Optional[Union[Dict, ServiceSettings]] = None,
+        settings: Optional[Union[Dict, LibrarySettings]] = None,
         assetsmanager_settings: Optional[dict] = None,
         configuration: Optional[
             Dict[str, Union[Dict[str, Any], ModelConfiguration]]

@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, Generic, List, Union, overload
 import pydantic
 
 import modelkit
-from modelkit.core.settings import ServiceSettings
+from modelkit.core.settings import LibrarySettings
 from modelkit.core.types import ItemType, ModelTestingConfiguration, ReturnType
 from modelkit.log import logger
 from modelkit.utils.memory import log_memory_increment
@@ -48,7 +48,7 @@ class Asset:
         :param kwargs:
         """
         self.configuration_key = kwargs.get("configuration_key")
-        self.service_settings = kwargs.get("service_settings") or ServiceSettings()
+        self.service_settings = kwargs.get("service_settings") or LibrarySettings()
         self.batch_size = kwargs.pop("batch_size", 64)
         self.model_classname = self.__class__.__name__
         self.asset_path = kwargs.pop("asset_path", "")

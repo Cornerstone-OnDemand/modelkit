@@ -313,4 +313,4 @@ When `predict[_async]` is called, an asynchronous request is made to the `http:/
 
 This model supports asynchronous and synchronous requests to the distance model (using either `requests` or `aiohttp`). If the model setting `async_mode` is unset, each predict call will determine whether it is called in an asychronous environment and choose the best option. If it is set, then all calls will use the same strategy.
 
-In addition, it is possible to set this behavior at the level of the `ModelLibrary` by either setting the `async_mode` setting in the `ServiceSettings` or by setting the environment variable `modelkit_ASYNC_MODE`.
+In addition, it is possible to set this behavior at the level of the `ModelLibrary` by either setting the `async_mode` setting in the `LibrarySettings` or by setting the environment variable `modelkit_ASYNC_MODE`.

@@ -49,7 +49,7 @@ once by calling `ModelLibrary.preload`.
 
 It is possible to use a redis caching mechanism to cache all calls to predict
 for a `ModelLibrary` using the `enable_redis_cache`, `cache_host`, and
-`cache_port` settings of the `ServiceSettings`. This has to be enabled for each model
+`cache_port` settings of the `LibrarySettings`. This has to be enabled for each model
 by setting the `cache_predictions` model setting to `True`.
 
 The caching works on individual items, before making a prediction with the methods
