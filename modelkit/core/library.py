@@ -69,21 +69,21 @@ class ModelLibrary:
             self.required_models = {r: {} for r in self.required_models}
 
         self.redis_cache = None
-        if self.settings.enable_redis_cache:
+        if self.settings.redis.enable:
             try:
                 self.redis_cache = check_redis(
-                    self.settings.cache_host, self.settings.cache_port
+                    self.settings.redis.host, self.settings.redis.port
                 )
             except (AssertionError, redis.ConnectionError):
                 logger.error(
                     "Cannot ping redis instance",
-                    cache_host=self.settings.cache_host,
-                    port=self.settings.cache_port,
+                    cache_host=self.settings.redis.host,
+                    port=self.settings.redis.port,
                 )
                 raise RedisCacheException(
                     "Cannot ping redis instance"
-                    f"[cache_host={self.settings.cache_host}, "
-                    f"port={self.settings.cache_port}]"
+                    f"[cache_host={self.settings.redis.host}, "
+                    f"port={self.settings.redis.port}]"
                 )
 
         if not self._lazy_loading:

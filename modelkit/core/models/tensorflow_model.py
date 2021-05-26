@@ -28,8 +28,8 @@ except ModuleNotFoundError:
 try:
     import grpc
     from tensorflow_serving.apis import prediction_service_pb2_grpc
-    from tensorflow_serving.apis.get_metadata_pb2 import GetModelMetadataRequest
-    from tensorflow_serving.apis_pb2 import PredictRequest
+    from tensorflow_serving.apis.get_model_metadata_pb2 import GetModelMetadataRequest
+    from tensorflow_serving.apis.predict_pb2 import PredictRequest
 except ModuleNotFoundError:
     logger.info("Tensorflow serving is not installed")
 
@@ -68,18 +68,12 @@ class TensorflowModel(Model[ItemType, ReturnType]):
         self.session = None
         self.output_names = None
 
-        # TF serving parameters
-        self.enable_tf_serving = self.service_settings.enable_tf_serving
-        self.tf_serving_host = self.service_settings.tf_serving_host
-        self.tf_serving_port = self.service_settings.tf_serving_port
-        self.tf_serving_mode = self.service_settings.tf_serving_mode
-
-        if self.enable_tf_serving and self.tf_serving_mode:
+        if self.service_settings.tf_serving.enable:
             self.grpc_stub = connect_tf_serving(
                 self.configuration_key,
-                self.tf_serving_host,
-                self.tf_serving_port,
-                self.tf_serving_mode,
+                self.service_settings.tf_serving.host,
+                self.service_settings.tf_serving.port,
+                self.service_settings.tf_serving.mode,
             )
         else:
             saved_model = tf.saved_model.load(os.path.join(self.asset_path, "1"))
@@ -108,15 +102,14 @@ class TensorflowModel(Model[ItemType, ReturnType]):
         It takes a dictionary of numpy arrays of shape (Nitems, ?) and returns a
          dictionary for the same shape, indexed by self.output_keys
         """
-        if self.enable_tf_serving and self.tf_serving_mode == "grpc":
-            results = self._tensorflow_predict_grpc(vects, dtype=grpc_dtype)
-        elif self.enable_tf_serving and self.tf_serving_mode == "rest":
-            results = self._tensorflow_predict_rest(vects)
-        elif self.enable_tf_serving and self.tf_serving_mode == "rest-async":
-            results = await self._tensorflow_predict_rest_async(vects)
-        else:
-            results = self._tensorflow_predict_local(vects)
-        return results
+        if self.service_settings.tf_serving.enable:
+            if self.service_settings.tf_serving.mode == "grpc":
+                return self._tensorflow_predict_grpc(vects, dtype=grpc_dtype)
+            if self.service_settings.tf_serving.mode == "rest":
+                return self._tensorflow_predict_rest(vects)
+            if self.service_settings.tf_serving.mode == "rest-async":
+                return await self._tensorflow_predict_rest_async(vects)
+        return self._tensorflow_predict_local(vects)
 
     def _tensorflow_predict_grpc(
         self, vects: Dict[str, np.ndarray], dtype=None
@@ -144,7 +137,8 @@ class TensorflowModel(Model[ItemType, ReturnType]):
         if not self.requests_session:
             self.requests_session = requests.Session()
         response = self.requests_session.post(
-            f"http://{self.tf_serving_host}:{self.tf_serving_port}"
+            f"http://{self.service_settings.tf_serving.host}:"
+            f"{self.service_settings.tf_serving.port}"
             f"/v1/models/{self.configuration_key}:predict",
             data=json.dumps({"inputs": vects}, default=safe_np_dump),
         )
@@ -172,7 +166,8 @@ class TensorflowModel(Model[ItemType, ReturnType]):
             # aiohttp wants us to initialize the session in an event loop
             self.aiohttp_session = aiohttp.ClientSession()
         async with self.aiohttp_session.post(
-            f"http://{self.tf_serving_host}:{self.tf_serving_port}"
+            f"http://{self.service_settings.tf_serving.host}:"
+            f"{self.service_settings.tf_serving.port}"
             f"/v1/models/{self.configuration_key}:predict",
             data=json.dumps({"inputs": vects}, default=safe_np_dump),
         ) as response:
