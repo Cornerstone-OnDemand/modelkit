@@ -4,8 +4,8 @@ site_description: 'Library for machine learning models'
 
 nav:
   - Home: 'index.md'
-  - Model development:
-    - Overview: 'library/overview.md'
+  - Tutorial:
+    - Models: 'library/overview.md'
     - Consuming models: 'library/using_models.md'
     - Prediction service: 'library/prediction_service.md'
     - Developing models: 'library/developing_modelkit.md'
