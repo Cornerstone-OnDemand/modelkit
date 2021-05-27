@@ -157,7 +157,7 @@ class ModelLibrary:
             self._resolve_assets(model_name)
             self._load_model(model_name)
         logger.info(
-            "Model loaded",
+            "Model and dependencies loaded",
             name=model_name,
             time=humanize.naturaldelta(m.time, minimum_unit="microseconds"),
             time_s=m.time,
