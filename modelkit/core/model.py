@@ -58,6 +58,8 @@ class Asset:
         self._loaded = False
         self._deserializing = False
         self.model_settings = kwargs.pop("model_settings", {})
+        self.load_time = None
+        self.load_memory_increment = None
 
     def load(self):
         """Implement this method in order for the model to load and
@@ -68,7 +70,7 @@ class Asset:
             self._load()
 
         logger.debug(
-            "Asset deserialized",
+            "Model loaded",
             model_name=self.configuration_key,
             time=humanize.naturaldelta(m.time, minimum_unit="microseconds"),
             time_s=m.time,
@@ -77,6 +79,8 @@ class Asset:
         )
         self._loaded = True
         self._deserializing = False
+        self.load_time = m.time
+        self.load_memory_increment = m.increment
 
     def _load(self):
         pass
@@ -427,11 +431,24 @@ class Model(Asset, Generic[ItemType, ReturnType]):
                 f" {pretty_print_type(self.item_type)}"
             )
 
+        if self.load_time:
+            sub_t = t.add(
+                "load time: "
+                + humanize.naturaldelta(self.load_time, minimum_unit="microseconds")
+            )
+
+        if self.load_memory_increment is not None:
+            sub_t = t.add(
+                f"load memory: {humanize.naturalsize(self.load_memory_increment)}"
+            )
+
         for var in vars(self):
             if var.startswith("_") or var in [
                 "service_settings",
                 "item_type",
                 "return_type",
+                "load_time",
+                "load_memory_increment",
             ]:
                 continue
             try:

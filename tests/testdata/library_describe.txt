@@ -31,18 +31,24 @@ Models
 │   │                                                                           
 │   │           With **a lot** of documentation                                 
 │   ├── signature: ItemModel -> ItemModel                                       
+│   ├── load time: 0 microseconds                                               
+│   ├── load memory: 0 Bytes                                                    
 │   ├── configuration_key : str = 'some_complex_model_a'                        
 │   ├── batch_size : int = 64                                                   
 │   ├── asset_path : str = ''                                                   
 │   ├── redis_cache : NoneType = None                                           
 │   ├── model_settings : dict = {}                                              
 │   └── some_object : A = A instance                                            
+│       ├── x : int = 1                                                         
+│       └── y : int = 2                                                         
 └── some_model_a : SomeSimpleValidatedModelA = SomeSimpleValidatedModelA        
     instance                                                                    
     ├── doc: This is a summary                                                  
     │                                                                           
     │           that also has plenty more text                                  
     ├── signature: str -> str                                                   
+    ├── load time: 0 microseconds                                               
+    ├── load memory: 0 Bytes                                                    
     ├── configuration_key : str = 'some_model_a'                                
     ├── batch_size : int = 64                                                   
     ├── asset_path : str = ''                                                   

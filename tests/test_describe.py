@@ -29,8 +29,9 @@ def test_describe():
         sorted: str
 
     class A:
-        x = 1
-        y = 2
+        def __init__(self):
+            self.x = 1
+            self.y = 2
 
     class SomeComplexValidatedModelA(Model[ItemModel, ResultModel]):
         """
