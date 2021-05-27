@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, Generic, List, Union, overload
 
 import humanize
 import pydantic
+from rich.markup import escape
 from rich.tree import Tree
 
 import modelkit
@@ -422,41 +423,56 @@ class Model(Asset, Generic[ItemType, ReturnType]):
         if not t:
             t = Tree("")
 
-        if self.__doc__:
-            t.add(f"doc: [dim]{self.__doc__.strip()}[/dim]")
-
-        if self.item_type and self.return_type:
+        if self.configuration_key:
             sub_t = t.add(
-                f"signature: {pretty_print_type(self.item_type)} ->"
+                f"[deep_sky_blue1]configuration[/deep_sky_blue1]: "
+                f"[orange3]{self.configuration_key}"
+            )
+
+        if self.__doc__:
+            t.add(f"[deep_sky_blue1]doc[/deep_sky_blue1]: {self.__doc__.strip()}")
+
+        if (
+            hasattr(self, "item_type")
+            and hasattr(self, "return_type")
+            and self.item_type
+            and self.return_type
+        ):
+            sub_t = t.add(
+                f"[deep_sky_blue1]signature[/deep_sky_blue1]: "
+                f"{pretty_print_type(self.item_type)} ->"
                 f" {pretty_print_type(self.item_type)}"
             )
 
         if self.load_time:
             sub_t = t.add(
-                "load time: "
+                "[deep_sky_blue1]load time[/deep_sky_blue1]: [orange3]"
                 + humanize.naturaldelta(self.load_time, minimum_unit="microseconds")
             )
 
         if self.load_memory_increment is not None:
             sub_t = t.add(
-                f"load memory: {humanize.naturalsize(self.load_memory_increment)}"
+                f"[deep_sky_blue1]load memory[/deep_sky_blue1]: "
+                f"[orange3]{humanize.naturalsize(self.load_memory_increment)}"
+            )
+        if self.model_dependencies:
+            dep_t = t.add("[deep_sky_blue1]dependencies")
+            for m in self.model_dependencies:
+                dep_t.add("[orange3]" + escape(m))
+
+        if self.asset_path:
+            sub_t = t.add(
+                f"[deep_sky_blue1]asset path[/deep_sky_blue1]: "
+                f"[orange3]{self.asset_path}"
             )
 
-        for var in vars(self):
-            if var.startswith("_") or var in [
-                "service_settings",
-                "item_type",
-                "return_type",
-                "load_time",
-                "load_memory_increment",
-            ]:
-                continue
-            try:
-                sub_t = t.add(
-                    f"[deep_sky_blue1]{var}[/deep_sky_blue1] [dim]:"
-                    f" {pretty_print_type(type(getattr(self, var)).__name__)}[/dim]"
-                )
-                describe(getattr(self, var), t=sub_t)
-            except TypeError:
-                pass
+        if self.batch_size:
+            sub_t = t.add(
+                f"[deep_sky_blue1]batch size[/deep_sky_blue1]: "
+                f"[orange3]{self.batch_size}"
+            )
+        if self.model_settings:
+            sub_t = t.add("[deep_sky_blue1]model settings[/deep_sky_blue1]")
+            describe(self.model_settings, t=sub_t)
+
         return t

@@ -36,7 +36,7 @@ def describe(obj, t=None):
         if obj:
             for field_name, field in obj.items():
                 sub_t = t.add(
-                    f"[deep_sky_blue1]{field_name}[/deep_sky_blue1] [dim]: "
+                    f"[deep_sky_blue1]{escape(field_name)}[/deep_sky_blue1] [dim]: "
                     f"{pretty_print_type(type(field).__name__)}[/dim]"
                 )
                 describe(field, t=sub_t)
@@ -45,7 +45,7 @@ def describe(obj, t=None):
     elif isinstance(obj, type):
         t.label += f" = [orange3]{escape(str(obj.__name__))}[/orange3] type"
     elif isinstance(obj, (str, int, float, bool)):
-        t.label += f" = [orange3]{repr(obj)}[/orange3]"
+        t.label += f" = [orange3]{escape(repr(obj))}[/orange3]"
     elif obj is None:
         t.label += " = [orange3]None[/orange3]"
     elif isinstance(obj, object):
@@ -57,13 +57,14 @@ def describe(obj, t=None):
         except AttributeError:
             try:
                 for var in vars(obj):
+                    if var.startswith("_"):
+                        continue
                     try:
                         sub_t = t.add(
                             f"[deep_sky_blue1]{var}[/deep_sky_blue1] [dim]: "
                             f"{pretty_print_type(type(getattr(obj, var)).__name__)}"
-                            "[/dim]"
+                            f"[/dim] = {escape(repr(getattr(obj, var)))}"
                         )
-                        describe(getattr(obj, var), t=sub_t)
                     except TypeError:
                         pass
             except TypeError:

@@ -62,6 +62,6 @@ class LocalAssetVersionDoesNotExistError(AssetsManagerError):
 class LocalAssetDoesNotExistError(AssetsManagerError):
     def __init__(self, name, major, minor, local_versions):
         super().__init__(
-            f"Asset version `{major}.{minor}` for `{name}` does not exist locally."
+            f"Asset version `{major}.{minor}` for `{name}` does not exist locally. "
             f"Available asset versions: " + ", ".join(local_versions)
         )
