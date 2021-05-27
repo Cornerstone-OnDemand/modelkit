@@ -183,7 +183,7 @@ def test_modellibrary_required_models():
     m = p.get("yolo")
     assert m
     assert m.configuration_key == "yolo"
-    assert m.model_classname == "SomeModel"
+    assert m.__class__.__name__ == "SomeModel"
     assert m.model_settings == {}
     assert m.asset_path == ""
     assert m.batch_size == 64

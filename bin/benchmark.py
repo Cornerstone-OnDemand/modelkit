@@ -32,14 +32,14 @@ def load_model(m, service):
     sleep(1)
 
 
-def _configure_from_cli_arguments(models, required_models, all):
+def _configure_from_cli_arguments(models, required_models, all, settings):
     models_configurations = configure(models=models)
     if all:
         required_models = list(models_configurations)
     service = ModelLibrary(
         required_models=required_models,
         configuration=models_configurations,
-        settings={"lazy_loading": True},
+        settings=settings,
     )
     return service
 
@@ -52,7 +52,9 @@ def memory(models, required_models, all):
     """
     Show memory consumption of modelkit models
     """
-    service = _configure_from_cli_arguments(models, required_models, all)
+    service = _configure_from_cli_arguments(
+        models, required_models, all, {"lazy_loading": True}
+    )
     grand_total = 0
     stats = {}
     logging.getLogger().setLevel(logging.ERROR)
@@ -91,7 +93,9 @@ def assets(models, required_models, all):
     """
     List the assets necessary to run a given set of models
     """
-    service = _configure_from_cli_arguments(models, required_models, all)
+    service = _configure_from_cli_arguments(
+        models, required_models, all, {"lazy_loading": True}
+    )
 
     console = Console()
     if service.configuration:
@@ -136,12 +140,23 @@ def dependencies(models, required_models, all):
     """
     Create a DOT file with the dependency graph from a list of assets
     """
-    service = _configure_from_cli_arguments(models, required_models, all)
+    service = _configure_from_cli_arguments(
+        models, required_models, all, {"lazy_loading": True}
+    )
     if service.configuration:
         dependency_graph = nx.DiGraph(overlap="False")
         for m in service.required_models:
             add_dependencies_to_graph(dependency_graph, m, service.configuration)
         write_dot(dependency_graph, "dependencies.dot")
+
+
+@cli_.command()
+@click.option("--models", "-m", multiple=True)
+@click.option("--required-models", "-r", multiple=True)
+@click.option("--all", is_flag=True)
+def describe(models, required_models, all):
+    service = _configure_from_cli_arguments(models, required_models, all, {})
+    service.describe()
 
 
 @cli_.command()
@@ -153,7 +168,9 @@ def time(model, example, models, n):
     """
     Time n iterations of a model's predict on an example
     """
-    service = _configure_from_cli_arguments(models, [model], all)
+    service = _configure_from_cli_arguments(
+        models, [model], all, {"lazy_loading": True}
+    )
 
     console = Console()
 

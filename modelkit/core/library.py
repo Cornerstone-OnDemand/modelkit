@@ -13,6 +13,8 @@ from typing import Any, Dict, List, Mapping, Optional, Type, Union
 
 import redis
 from pydantic import ValidationError
+from rich.console import Console
+from rich.tree import Tree
 
 import modelkit.assets
 from modelkit.assets.manager import AssetsManager
@@ -21,6 +23,7 @@ from modelkit.core.model import Model
 from modelkit.core.model_configuration import ModelConfiguration, configure, list_assets
 from modelkit.core.settings import LibrarySettings
 from modelkit.log import logger
+from modelkit.utils.pretty import describe
 from modelkit.utils.redis import RedisCacheException, check_redis
 
 
@@ -319,6 +322,26 @@ class ModelLibrary:
             for model_key, item, result in model_type._iterate_test_cases():
                 if model_key in self._models:
                     yield self.get(model_key), item, result
+
+    def describe(self, console=None):
+        if not console:
+            console = Console()
+        t = Tree("[bold]Settings")
+        console.print(describe(self.settings, t=t))
+        t = Tree("[bold]Configuration")
+        console.print(describe(self.configuration, t=t))
+        t = Tree("[bold]Assets")
+        if not self.assets_info:
+            t.add("[dim][italic]No assets loaded")
+        else:
+            describe(self.assets_info, t=t)
+        console.print(t)
+        t = Tree("[bold]Models")
+        if not self.models:
+            t.add("[dim][italic]No models loaded")
+        else:
+            describe(self.models, t=t)
+        console.print(t)
 
 
 def load_model(

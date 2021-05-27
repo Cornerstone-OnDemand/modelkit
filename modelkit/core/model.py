@@ -5,12 +5,14 @@ import typing
 from typing import Any, Callable, Dict, Generic, List, Union, overload
 
 import pydantic
+from rich.tree import Tree
 
 import modelkit
 from modelkit.core.settings import LibrarySettings
 from modelkit.core.types import ItemType, ModelTestingConfiguration, ReturnType
 from modelkit.log import logger
 from modelkit.utils.memory import log_memory_increment
+from modelkit.utils.pretty import describe, pretty_print_type
 
 
 def _run_secretly_sync_async_fn(async_fn, *args, **kwargs):
@@ -50,7 +52,6 @@ class Asset:
         self.configuration_key = kwargs.get("configuration_key")
         self.service_settings = kwargs.get("service_settings") or LibrarySettings()
         self.batch_size = kwargs.pop("batch_size", 64)
-        self.model_classname = self.__class__.__name__
         self.asset_path = kwargs.pop("asset_path", "")
         self.redis_cache = kwargs.pop("redis_cache", None)
         self._loaded = False
@@ -221,6 +222,7 @@ class Model(Asset, Generic[ItemType, ReturnType]):
             if len(generic_aliases):
                 item_type, return_type = generic_aliases[0].__args__
                 if item_type != ItemType:
+                    self.item_type = item_type
                     self._item_type = Union[List[item_type], item_type]
                     type_name = self.__class__.__name__ + "ItemTypeModel"
                     self._item_model = pydantic.create_model(
@@ -232,6 +234,7 @@ class Model(Asset, Generic[ItemType, ReturnType]):
                         __base__=InternalDataModel,
                     )
                 if return_type != ReturnType:
+                    self.return_type = return_type
                     type_name = self.__class__.__name__ + "ReturnTypeModel"
                     self._return_type = Union[List[return_type], return_type]
                     self._return_model = pydantic.create_model(
@@ -403,3 +406,33 @@ class Model(Asset, Generic[ItemType, ReturnType]):
         for model_key in model_keys:
             for case in test_cases.cases:
                 yield model_key, case.item, case.result, case.keyword_args
+
+    def describe(self, t=None):
+        if not t:
+            t = Tree("")
+
+        if self.__doc__:
+            t.add(f"doc: [dim]{self.__doc__.strip()}[/dim]")
+
+        if self.item_type and self.return_type:
+            sub_t = t.add(
+                f"signature: {pretty_print_type(self.item_type)} ->"
+                f" {pretty_print_type(self.item_type)}"
+            )
+
+        for var in vars(self):
+            if var.startswith("_") or var in [
+                "service_settings",
+                "item_type",
+                "return_type",
+            ]:
+                continue
+            try:
+                sub_t = t.add(
+                    f"[deep_sky_blue1]{var}[/deep_sky_blue1] [dim]:"
+                    f" {pretty_print_type(type(getattr(self, var)).__name__)}[/dim]"
+                )
+                describe(getattr(self, var), t=sub_t)
+            except TypeError:
+                pass
+        return t

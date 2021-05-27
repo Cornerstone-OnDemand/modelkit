@@ -1,0 +1,50 @@
+Settings                                                                        
+├── lazy_loading : bool = False                                                 
+├── async_mode : bool = None                                                    
+├── override_storage_prefix : str = None                                        
+├── tf_serving : TFServingSettings                                              
+│   ├── enable : bool = False                                                   
+│   ├── mode : str = 'rest'                                                     
+│   ├── host : str = 'localhost'                                                
+│   └── port : int = 8501                                                       
+└── redis : RedisSettings                                                       
+    ├── enable : bool = False                                                   
+    ├── host : str = 'localhost'                                                
+    └── port : int = 6379                                                       
+Configuration                                                                   
+├── some_complex_model_a : ModelConfiguration                                   
+│   ├── model_type : Type[Asset] = SomeComplexValidatedModelA type              
+│   ├── asset : str = None                                                      
+│   ├── model_settings : Dict[str,typing.Any] = {}                              
+│   └── model_dependencies : Dict[str,str] = {}                                 
+└── some_model_a : ModelConfiguration                                           
+    ├── model_type : Type[Asset] = SomeSimpleValidatedModelA type               
+    ├── asset : str = None                                                      
+    ├── model_settings : Dict[str,typing.Any] = {}                              
+    └── model_dependencies : Dict[str,str] = {}                                 
+Assets                                                                          
+└── No assets loaded                                                            
+Models                                                                          
+├── some_complex_model_a : SomeComplexValidatedModelA =                         
+│   SomeComplexValidatedModelA instance                                         
+│   ├── doc: More complex                                                       
+│   │                                                                           
+│   │           With **a lot** of documentation                                 
+│   ├── signature: ItemModel -> ItemModel                                       
+│   ├── configuration_key : str = 'some_complex_model_a'                        
+│   ├── batch_size : int = 64                                                   
+│   ├── asset_path : str = ''                                                   
+│   ├── redis_cache : NoneType = None                                           
+│   ├── model_settings : dict = {}                                              
+│   └── some_object : A = A instance                                            
+└── some_model_a : SomeSimpleValidatedModelA = SomeSimpleValidatedModelA        
+    instance                                                                    
+    ├── doc: This is a summary                                                  
+    │                                                                           
+    │           that also has plenty more text                                  
+    ├── signature: str -> str                                                   
+    ├── configuration_key : str = 'some_model_a'                                
+    ├── batch_size : int = 64                                                   
+    ├── asset_path : str = ''                                                   
+    ├── redis_cache : NoneType = None                                           
+    └── model_settings : dict = {}                                              
