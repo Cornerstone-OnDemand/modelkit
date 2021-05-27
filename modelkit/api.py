@@ -2,8 +2,10 @@ from types import ModuleType
 from typing import Any, Dict, List, Optional, Type, Union
 
 import fastapi
+from rich.console import Console
 
 from modelkit.core.library import LibrarySettings, ModelConfiguration, ModelLibrary
+from modelkit.core.model import Model
 from modelkit.log import logger
 
 # create APIRoute for model
@@ -73,6 +75,8 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
         route_paths = route_paths or {}
         for model_name in self.svc.required_models:
             m = self.svc.get(model_name)
+            if not isinstance(m, Model):
+                continue
             path = route_paths.get(model_name, "/predict/" + model_name)
 
             summary = ""
@@ -83,16 +87,37 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
                 if len(doclines) > 1:
                     description = "".join(doclines[1:])
 
-            self.add_api_route(
-                path,
-                self._make_model_endpoint_fn(model_name, m._item_type),
-                methods=["POST"],
-                description=description,
-                summary=summary,
-            )
-            logger.info("Added model to service", name=model_name, path=path)
+            console = Console(no_color=True)
+            with console.capture() as capture:
+                t = m.describe()
+                console.print(t)
+            description += "\n\n```" + str(capture.get()) + "```"
+
+            logger.info("Adding model", name=model_name)
+            try:
+                self.add_api_route(
+                    path,
+                    self._make_model_endpoint_fn(
+                        model_name, m._item_type if hasattr(m, "_item_type") else None
+                    ),
+                    methods=["POST"],
+                    description=description,
+                    summary=summary,
+                    tags=[str(type(m).__module__)],
+                )
+                logger.info("Added model to service", name=model_name, path=path)
+            except fastapi.exceptions.FastAPIError as exc:
+                logger.error(
+                    "Could not add model to service", name=model_name, path=exc
+                )
 
     def _make_model_endpoint_fn(self, model_name, item_type):
+        item_type = item_type or Any
+        try:
+            item_type.schema()
+        except (ValueError, AttributeError):
+            item_type = Any
+
         def _endpoint(
             item: item_type = fastapi.Body(...),
             model=fastapi.Depends(lambda: self.svc.get(model_name)),

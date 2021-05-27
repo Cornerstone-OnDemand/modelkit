@@ -14,19 +14,6 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
-      "ItemModel": {
-        "properties": {
-          "string": {
-            "title": "String",
-            "type": "string"
-          }
-        },
-        "required": [
-          "string"
-        ],
-        "title": "ItemModel",
-        "type": "object"
-      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -61,25 +48,54 @@
   },
   "openapi": "3.0.2",
   "paths": {
+    "/predict/no_supported_model": {
+      "post": {
+        "description": "\n\n```                                                                                \n├── configuration: no_supported_model                                           \n├── signature: ndarray -> ndarray                                               \n├── load time: 0 microseconds                                                   \n├── load memory: 0 Bytes                                                        \n└── batch size: 64                                                              \n```",
+        "operationId": "_endpoint_predict_no_supported_model_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "title": "Item"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": " Endpoint",
+        "tags": [
+          "tests.test_api"
+        ]
+      }
+    },
     "/predict/some_complex_model": {
       "post": {
-        "description": "        With **a lot** of documentation",
+        "description": "        With **a lot** of documentation\n\n```                                                                                \n├── configuration: some_complex_model                                           \n├── doc: More complex                                                           \n│                                                                               \n│           With **a lot** of documentation                                     \n├── signature: ItemModel -> ItemModel                                           \n├── load time: 0 microseconds                                                   \n├── load memory: 0 Bytes                                                        \n└── batch size: 64                                                              \n```",
         "operationId": "_endpoint_predict_some_complex_model_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "$ref": "#/components/schemas/ItemModel"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "$ref": "#/components/schemas/ItemModel"
-                  }
-                ],
                 "title": "Item"
               }
             }
@@ -106,28 +122,20 @@
             "description": "Validation Error"
           }
         },
-        "summary": "More complex"
+        "summary": "More complex",
+        "tags": [
+          "tests.test_api"
+        ]
       }
     },
     "/predict/some_model": {
       "post": {
-        "description": "        that also has plenty more text",
+        "description": "        that also has plenty more text\n\n```                                                                                \n├── configuration: some_model                                                   \n├── doc: This is a summary                                                      \n│                                                                               \n│           that also has plenty more text                                      \n├── signature: str -> str                                                       \n├── load time: 0 microseconds                                                   \n├── load memory: 0 Bytes                                                        \n└── batch size: 64                                                              \n```",
         "operationId": "_endpoint_predict_some_model_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
                 "title": "Item"
               }
             }
@@ -154,7 +162,50 @@
             "description": "Validation Error"
           }
         },
-        "summary": "This is a summary"
+        "summary": "This is a summary",
+        "tags": [
+          "tests.test_api"
+        ]
+      }
+    },
+    "/predict/unvalidated_model": {
+      "post": {
+        "description": "\n\n```                                                                                \n├── configuration: unvalidated_model                                            \n├── load time: 0 microseconds                                                   \n├── load memory: 0 Bytes                                                        \n└── batch size: 64                                                              \n```",
+        "operationId": "_endpoint_predict_unvalidated_model_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "title": "Item"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": " Endpoint",
+        "tags": [
+          "tests.test_api"
+        ]
       }
     }
   }
