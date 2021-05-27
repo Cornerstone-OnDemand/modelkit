@@ -27,10 +27,10 @@ def test_local_manager_no_versions(working_dir):
     res = manager.fetch_asset("something.txt", return_info=True)
     assert res["path"] == os.path.join(working_dir, "something.txt")
 
-    with pytest.raises(errors.LocalAssetVersionDoesNotExistError):
+    with pytest.raises(errors.LocalAssetDoesNotExistError):
         res = manager.fetch_asset("something.txt:0.1", return_info=True)
 
-    with pytest.raises(errors.LocalAssetVersionDoesNotExistError):
+    with pytest.raises(errors.LocalAssetDoesNotExistError):
         res = manager.fetch_asset("something.txt:0", return_info=True)
 
 

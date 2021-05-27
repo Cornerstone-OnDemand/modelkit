@@ -57,8 +57,11 @@ class AssetsManager:
 
         if not spec.major_version or not spec.minor_version:
             if not all_versions_list:
-                raise errors.LocalAssetVersionDoesNotExistError(
-                    name=spec.name, major=spec.major_version, minor=spec.minor_version
+                raise errors.LocalAssetDoesNotExistError(
+                    name=spec.name,
+                    major=spec.major_version,
+                    minor=spec.minor_version,
+                    local_versions=local_versions_list,
                 )
 
             # at least one version info is missing, fetch the latest
@@ -95,10 +98,11 @@ class AssetsManager:
                     )
                     asset_dict.update({**asset_download_info, "from_cache": False})
                 else:
-                    raise errors.LocalAssetVersionDoesNotExistError(
+                    raise errors.LocalAssetDoesNotExistError(
                         name=spec.name,
                         major=spec.major_version,
                         minor=spec.minor_version,
+                        local_versions=local_versions_list,
                     )
             if spec.sub_part:
                 local_sub_part = os.path.join(

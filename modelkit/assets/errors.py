@@ -54,6 +54,14 @@ class InvalidAssetSpecError(AssetsManagerError):
 class LocalAssetVersionDoesNotExistError(AssetsManagerError):
     def __init__(self, name, major, minor):
         super().__init__(
-            f"Assert major version `{major}.{minor}` for `{name}` does not exist."
+            f"Asset major version `{major}.{minor}` for `{name}` does not exist."
             "Use `push_new_asset` to push a new major version of an asset."
+        )
+
+
+class LocalAssetDoesNotExistError(AssetsManagerError):
+    def __init__(self, name, major, minor, local_versions):
+        super().__init__(
+            f"Asset version `{major}.{minor}` for `{name}` does not exist locally."
+            f"Available asset versions: " + ", ".join(local_versions)
         )
