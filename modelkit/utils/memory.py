@@ -1,9 +1,5 @@
-import contextlib
 import platform
-
-import humanize
-
-from modelkit.log import logger
+import time
 
 # 'resource' isn't supported on Windows
 try:
@@ -12,31 +8,20 @@ except ModuleNotFoundError:
     pass
 
 
-@contextlib.contextmanager
-def log_memory_increment(model_name):
-    if platform.system() == "Windows":
-        yield
-        return
+class PerformanceTracker:
+    def __init__(self) -> None:
+        self.increment = None
 
-    pre_maxrss_bytes = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    yield
-    post_maxrss_bytes = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    memory_increment = post_maxrss_bytes - pre_maxrss_bytes
-    logger.debug(
-        "Asset deserialized",
-        model_name=model_name,
-        memory=humanize.naturalsize(memory_increment),
-        memory_bytes=memory_increment,
-    )
+    def __enter__(self):
+        self.start_time = time.perf_counter()
+        if platform.system() == "Windows":
+            return self
+        self.pre_maxrss_bytes = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        return self
 
-
-def log_memory_usage():
-    if platform.system() == "Windows":
-        return
-
-    maxrss_bytes = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    logger.info(
-        "Max memory usage after startup event",
-        memory=humanize.naturalsize(maxrss_bytes),
-        memory_bytes=maxrss_bytes,
-    )
+    def __exit__(self, *args):
+        self.time = time.perf_counter() - self.start_time
+        if platform.system() == "Windows":
+            return
+        post_maxrss_bytes = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        self.increment = post_maxrss_bytes - self.pre_maxrss_bytes

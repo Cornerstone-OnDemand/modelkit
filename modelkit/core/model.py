@@ -4,6 +4,7 @@ import pickle  # nosec
 import typing
 from typing import Any, Callable, Dict, Generic, List, Union, overload
 
+import humanize
 import pydantic
 from rich.tree import Tree
 
@@ -11,7 +12,7 @@ import modelkit
 from modelkit.core.settings import LibrarySettings
 from modelkit.core.types import ItemType, ModelTestingConfiguration, ReturnType
 from modelkit.log import logger
-from modelkit.utils.memory import log_memory_increment
+from modelkit.utils.memory import PerformanceTracker
 from modelkit.utils.pretty import describe, pretty_print_type
 
 
@@ -63,11 +64,17 @@ class Asset:
         deserialize its asset, whose path is kept int the `asset_path`
         attribute"""
         self._deserializing = True
-        with log_memory_increment(
-            self.model_classname
-            + (f":{self.configuration_key}" if self.configuration_key else "")
-        ):
+        with PerformanceTracker() as m:
             self._load()
+
+        logger.debug(
+            "Asset deserialized",
+            model_name=self.configuration_key,
+            time=humanize.naturaldelta(m.time, minimum_unit="microseconds"),
+            time_s=m.time,
+            memory=humanize.naturalsize(m.increment),
+            memory_bytes=m.increment,
+        )
         self._loaded = True
         self._deserializing = False
 

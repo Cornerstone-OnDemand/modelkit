@@ -7,10 +7,10 @@ import collections
 import copy
 import os
 import re
-import time
 from types import ModuleType
 from typing import Any, Dict, List, Mapping, Optional, Type, Union
 
+import humanize
 import redis
 from pydantic import ValidationError
 from rich.console import Console
@@ -23,6 +23,7 @@ from modelkit.core.model import Model
 from modelkit.core.model_configuration import ModelConfiguration, configure, list_assets
 from modelkit.core.settings import LibrarySettings
 from modelkit.log import logger
+from modelkit.utils.memory import PerformanceTracker
 from modelkit.utils.pretty import describe
 from modelkit.utils.redis import RedisCacheException, check_redis
 
@@ -151,14 +152,17 @@ class ModelLibrary:
         This function loads a configured model by name.
         """
 
-        start = time.monotonic()
-        self._check_configurations(model_name)
-        self._resolve_assets(model_name)
-        self._load_model(model_name)
+        with PerformanceTracker() as m:
+            self._check_configurations(model_name)
+            self._resolve_assets(model_name)
+            self._load_model(model_name)
         logger.info(
-            "model loaded",
+            "Model loaded",
             name=model_name,
-            duration_ms=int(round((time.monotonic() - start) * 1000)),
+            time=humanize.naturaldelta(m.time, minimum_unit="microseconds"),
+            time_s=m.time,
+            memory=humanize.naturalsize(m.increment),
+            memory_bytes=m.increment,
         )
 
     def _check_configurations(self, configuration_key):
