@@ -1,7 +1,5 @@
 import os
 
-import boto3
-import botocore
 import pydantic
 from pydantic import BaseSettings
 from tenacity import retry
@@ -9,6 +7,12 @@ from tenacity import retry
 from modelkit.assets import errors
 from modelkit.assets.drivers.retry import RETRY_POLICY
 from modelkit.assets.log import logger
+
+try:
+    import boto3
+    import botocore
+except ImportError:
+    logger.debug("S3 is not available " "(install modelkit[s3] or boto3)")
 
 
 class S3DriverSettings(BaseSettings):

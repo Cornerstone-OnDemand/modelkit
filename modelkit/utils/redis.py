@@ -1,4 +1,3 @@
-import redis
 from tenacity import (
     retry,
     retry_if_exception,
@@ -7,6 +6,11 @@ from tenacity import (
 )
 
 from modelkit.log import logger
+
+try:
+    import redis
+except ImportError:
+    logger.debug("Redis is not available " "(install modelkit[redis] or redis)")
 
 
 class RedisCacheException(Exception):

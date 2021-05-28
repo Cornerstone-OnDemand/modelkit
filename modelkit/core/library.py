@@ -11,7 +11,6 @@ from types import ModuleType
 from typing import Any, Dict, List, Mapping, Optional, Type, Union
 
 import humanize
-import redis
 from pydantic import ValidationError
 from rich.console import Console
 from rich.tree import Tree
@@ -26,6 +25,11 @@ from modelkit.log import logger
 from modelkit.utils.memory import PerformanceTracker
 from modelkit.utils.pretty import describe
 from modelkit.utils.redis import RedisCacheException, check_redis
+
+try:
+    import redis
+except ImportError:
+    logger.debug("Redis is not available " "(install modelkit[redis] or redis)")
 
 
 class ConfigurationNotFoundException(Exception):
