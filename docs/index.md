@@ -3,7 +3,8 @@
 The key features are:
 
 - **type-safe** Models' inputs and outputs can be validated by [pydantic](https://pydantic-docs.helpmanual.io/)
-- **composable** Models are *composable*: they can depend on other models. A reasonable code base structuring model is enforced.
+- **composable** Models are *composable*: they can depend on other models. 
+- **organized** Store and share your models as regular Python packages.
 - **extensible** Models can rely on arbitrary supporting configurations files called *assets* hosted on local or cloud object stores
 - **testable** Models carry their own unit test cases, and unit testing fixtures are available for [pytest](https://docs.pytest.org/en/6.2.x/)
 - **fast to code** Models can be served in a single CLI call using [fastapi](https://fastapi.tiangolo.com/)
