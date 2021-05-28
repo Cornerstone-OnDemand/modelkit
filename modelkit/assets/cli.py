@@ -22,7 +22,7 @@ from modelkit.assets.versioning import (
 
 
 @click.group()
-def assets():
+def assets_cli():
     pass
 
 
@@ -82,7 +82,7 @@ def _check_asset_file_number(asset_path):
         sys.exit()
 
 
-@assets.command("new")
+@assets_cli.command("new")
 @click.argument("asset_path")
 @click.argument("asset_spec")
 @click.option("--bucket", envvar="ASSETS_BUCKET_NAME")
@@ -129,7 +129,7 @@ def new(asset_path, asset_spec, bucket, storage_prefix, dry_run):
         print("Aborting.")
 
 
-@assets.command("update")
+@assets_cli.command("update")
 @click.argument("asset_path")
 @click.argument("asset_spec")
 @click.option(
@@ -233,7 +233,7 @@ def update(asset_path, asset_spec, bucket, storage_prefix, bump_major, dry_run):
         print("Aborting.")
 
 
-@assets.command("list")
+@assets_cli.command("list")
 @click.option("--bucket", envvar="ASSETS_BUCKET_NAME")
 @click.option("--assetsmanager-prefix", envvar="STORAGE_PREFIX")
 def list(bucket, storage_prefix):

@@ -1,13 +1,12 @@
-#!/usr/bin/env python3
 import json
 import logging
-import os
-import sys
 from time import perf_counter, sleep
 
 import click
+import fastapi
 import humanize
 import networkx as nx
+import uvicorn
 from memory_profiler import memory_usage
 from networkx.drawing.nx_agraph import write_dot
 from rich.console import Console
@@ -15,21 +14,15 @@ from rich.progress import Progress, track
 from rich.table import Table
 from rich.tree import Tree
 
-rootdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
-sys.path.append(rootdir)
-
-from modelkit import ModelLibrary  # noqa: E402
-from modelkit.core.model_configuration import configure, list_assets  # noqa: E402
+from modelkit import ModelLibrary
+from modelkit.api import ModelkitAutoAPIRouter
+from modelkit.core.model_configuration import configure, list_assets
+from modelkit.core.models.tensorflow_model import safe_np_dump
 
 
 @click.group()
-def cli_():
+def modelkit_cli():
     pass
-
-
-def load_model(m, service):
-    service._load(m)
-    sleep(1)
 
 
 def _configure_from_cli_arguments(models, required_models, all, settings):
@@ -44,7 +37,7 @@ def _configure_from_cli_arguments(models, required_models, all, settings):
     return service
 
 
-@cli_.command()
+@modelkit_cli.command()
 @click.option("--models", "-m", multiple=True)
 @click.option("--required-models", "-r", multiple=True)
 @click.option("--all", is_flag=True)
@@ -52,6 +45,11 @@ def memory(models, required_models, all):
     """
     Show memory consumption of modelkit models
     """
+
+    def _load_model(m, service):
+        service._load(m)
+        sleep(1)
+
     service = _configure_from_cli_arguments(
         models, required_models, all, {"lazy_loading": True}
     )
@@ -65,7 +63,7 @@ def memory(models, required_models, all):
                 deps = service.configuration[m].model_dependencies
                 deps = deps.values() if isinstance(deps, dict) else deps
                 for dependency in list(deps) + [m]:
-                    mu = memory_usage((load_model, (dependency, service), {}))
+                    mu = memory_usage((_load_model, (dependency, service), {}))
                     stats[dependency] = mu[-1] - mu[0]
                     grand_total += mu[-1] - mu[0]
                 progress.update(task, advance=1)
@@ -85,7 +83,7 @@ def memory(models, required_models, all):
     console.print(table)
 
 
-@cli_.command()
+@modelkit_cli.command()
 @click.option("--models", "-m", multiple=True)
 @click.option("--required-models", "-r", multiple=True)
 @click.option("--all", is_flag=True)
@@ -132,7 +130,7 @@ def add_dependencies_to_graph(g, model, configurations):
         add_dependencies_to_graph(g, dependent_model, configurations)
 
 
-@cli_.command()
+@modelkit_cli.command()
 @click.option("--models", "-m", multiple=True)
 @click.option("--required-models", "-r", multiple=True)
 @click.option("--all", is_flag=True)
@@ -150,16 +148,19 @@ def dependencies(models, required_models, all):
         write_dot(dependency_graph, "dependencies.dot")
 
 
-@cli_.command()
+@modelkit_cli.command()
 @click.option("--models", "-m", multiple=True)
 @click.option("--required-models", "-r", multiple=True)
 @click.option("--all", is_flag=True)
 def describe(models, required_models, all):
+    """
+    Describe a complete library (settings, models and assets)
+    """
     service = _configure_from_cli_arguments(models, required_models, all, {})
     service.describe()
 
 
-@cli_.command()
+@modelkit_cli.command()
 @click.argument("model")
 @click.argument("example")
 @click.option("--models", "-m", multiple=True)
@@ -205,5 +206,35 @@ def time(model, example, models, n):
     )
 
 
-if __name__ == "__main__":
-    cli_()
+@modelkit_cli.command("serve")
+@click.option("--required-models", type=str, multiple=True)
+@click.option("--models", type=str, multiple=True)
+@click.option("--host", type=str, default="localhost")
+@click.option("--port", type=int, default=8000)
+def serve(required_models, models, host, port):
+    """
+    Run an HTTP server with specified models using FastAPI
+    """
+    app = fastapi.FastAPI()
+    router = ModelkitAutoAPIRouter(
+        required_models=list(required_models) or None,
+        models=models,
+    )
+    app.include_router(router)
+    uvicorn.run(app, host=host, port=port)
+
+
+@modelkit_cli.command("predict")
+@click.argument("model_name", type=str)
+@click.option("--models", "-m", multiple=True)
+def predict(model_name, models):
+    """
+    Make predictions from the CLI for a given model
+    """
+    svc = _configure_from_cli_arguments(models, [model_name], False, {})
+    model = svc.get(model_name)
+    while True:
+        r = click.prompt(f"[{model_name}]>")
+        if r:
+            res = model(json.loads(r))
+            click.secho(json.dumps(res, indent=2, default=safe_np_dump))
