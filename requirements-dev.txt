@@ -10,6 +10,7 @@ fastapi
 black
 flake8
 isort
+nox
 # cli
 memory-profiler
 networkx
