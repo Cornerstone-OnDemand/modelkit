@@ -21,8 +21,11 @@ from modelkit.assets.versioning import (
 )
 
 
-@click.group()
+@click.group("assets")
 def assets_cli():
+    """
+    Assets management commands
+    """
     pass
 
 
@@ -86,12 +89,15 @@ def _check_asset_file_number(asset_path):
 @click.argument("asset_path")
 @click.argument("asset_spec")
 @click.option("--bucket", envvar="ASSETS_BUCKET_NAME")
-@click.option("--assetsmanager-prefix", envvar="STORAGE_PREFIX")
+@click.option("--storage-prefix", envvar="STORAGE_PREFIX")
 @click.option("--dry-run", is_flag=True)
 def new(asset_path, asset_spec, bucket, storage_prefix, dry_run):
     """
-    Create a new asset ASSET_SPEC with ASSET_PATH file. Will fail if asset exists
-    (in this case use `update`)
+    Create a new asset.
+
+    Create a new asset ASSET_SPEC with ASSET_PATH file.
+
+    Will fail if asset exists (in this case use `update`).
 
     ASSET_PATH is the path to the file. The file can be local or on GCS
     (starting with gs://)
@@ -136,10 +142,12 @@ def new(asset_path, asset_spec, bucket, storage_prefix, dry_run):
     "--bump-major", is_flag=True, help="Push a new major version (1.0, 2.0, etc.)"
 )
 @click.option("--bucket", envvar="ASSETS_BUCKET_NAME")
-@click.option("--assetsmanager-prefix", envvar="STORAGE_PREFIX")
+@click.option("--storage-prefix", envvar="STORAGE_PREFIX")
 @click.option("--dry-run", is_flag=True)
 def update(asset_path, asset_spec, bucket, storage_prefix, bump_major, dry_run):
     """
+    Update an existing asset.
+
     Update an existing asset ASSET_SPEC with ASSET_PATH file.
 
     By default will upload a new minor version.
@@ -235,7 +243,7 @@ def update(asset_path, asset_spec, bucket, storage_prefix, bump_major, dry_run):
 
 @assets_cli.command("list")
 @click.option("--bucket", envvar="ASSETS_BUCKET_NAME")
-@click.option("--assetsmanager-prefix", envvar="STORAGE_PREFIX")
+@click.option("--storage-prefix", envvar="STORAGE_PREFIX")
 def list(bucket, storage_prefix):
     """lists all available assets and their versions."""
     manager = RemoteAssetsStore(

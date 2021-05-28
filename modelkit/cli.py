@@ -1,5 +1,7 @@
 import json
 import logging
+import os
+import sys
 from time import perf_counter, sleep
 
 import click
@@ -16,13 +18,18 @@ from rich.tree import Tree
 
 from modelkit import ModelLibrary
 from modelkit.api import ModelkitAutoAPIRouter
+from modelkit.assets.cli import assets_cli
 from modelkit.core.model_configuration import configure, list_assets
 from modelkit.core.models.tensorflow_model import safe_np_dump
 
 
 @click.group()
 def modelkit_cli():
+    sys.path.append(os.getcwd())
     pass
+
+
+modelkit_cli.add_command(assets_cli)
 
 
 def _configure_from_cli_arguments(models, required_models, all, settings):
@@ -43,7 +50,7 @@ def _configure_from_cli_arguments(models, required_models, all, settings):
 @click.option("--all", is_flag=True)
 def memory(models, required_models, all):
     """
-    Show memory consumption of modelkit models
+    Show memory consumption of modelkit models.
     """
 
     def _load_model(m, service):
@@ -83,13 +90,15 @@ def memory(models, required_models, all):
     console.print(table)
 
 
-@modelkit_cli.command()
+@modelkit_cli.command("list-assets")
 @click.option("--models", "-m", multiple=True)
 @click.option("--required-models", "-r", multiple=True)
 @click.option("--all", is_flag=True)
-def assets(models, required_models, all):
+def list_assets_cli(models, required_models, all):
     """
-    List the assets necessary to run a given set of models
+    List necessary assets.
+
+    List the assets necessary to run a given set of models.
     """
     service = _configure_from_cli_arguments(
         models, required_models, all, {"lazy_loading": True}
@@ -134,9 +143,12 @@ def add_dependencies_to_graph(g, model, configurations):
 @click.option("--models", "-m", multiple=True)
 @click.option("--required-models", "-r", multiple=True)
 @click.option("--all", is_flag=True)
-def dependencies(models, required_models, all):
+def dependencies_graph(models, required_models, all):
     """
-    Create a DOT file with the dependency graph from a list of assets
+    Create a  dependency graph for a library.
+
+    Create a DOT file with the assets and model dependency graph
+    from a list of models.
     """
     service = _configure_from_cli_arguments(
         models, required_models, all, {"lazy_loading": True}
@@ -154,7 +166,9 @@ def dependencies(models, required_models, all):
 @click.option("--all", is_flag=True)
 def describe(models, required_models, all):
     """
-    Describe a complete library (settings, models and assets)
+    Describe a library.
+
+    Show settings, models and assets for a given library.
     """
     service = _configure_from_cli_arguments(models, required_models, all, {})
     service.describe()
@@ -167,7 +181,9 @@ def describe(models, required_models, all):
 @click.option("--n", "-n", default=100)
 def time(model, example, models, n):
     """
-    Time n iterations of a model's predict on an example
+    Benchmark a model on an example.
+
+    Time n iterations of a model's call on an example.
     """
     service = _configure_from_cli_arguments(
         models, [model], all, {"lazy_loading": True}
@@ -213,6 +229,8 @@ def time(model, example, models, n):
 @click.option("--port", type=int, default=8000)
 def serve(required_models, models, host, port):
     """
+    Run a library as a service.
+
     Run an HTTP server with specified models using FastAPI
     """
     app = fastapi.FastAPI()
@@ -229,7 +247,7 @@ def serve(required_models, models, host, port):
 @click.option("--models", "-m", multiple=True)
 def predict(model_name, models):
     """
-    Make predictions from the CLI for a given model
+    Make predictions for a given model.
     """
     svc = _configure_from_cli_arguments(models, [model_name], False, {})
     model = svc.get(model_name)
