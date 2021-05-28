@@ -75,7 +75,9 @@ class Asset:
             model_name=self.configuration_key,
             time=humanize.naturaldelta(m.time, minimum_unit="microseconds"),
             time_s=m.time,
-            memory=humanize.naturalsize(m.increment),
+            memory=humanize.naturalsize(m.increment)
+            if m.increment is not None
+            else None,
             memory_bytes=m.increment,
         )
         self._loaded = True
