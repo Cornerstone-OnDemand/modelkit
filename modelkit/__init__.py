@@ -7,4 +7,4 @@ from modelkit.core.library import ModelLibrary, load_model  # NOQA
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
-__version__ = "0.1"
+__version__ = "0.0.0"

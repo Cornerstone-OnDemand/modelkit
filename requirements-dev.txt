@@ -17,7 +17,7 @@ networkx
 # logs + 🌈 = 😎
 colorama
 # releases
-towncrier
+bump2version
 # optional
 grpcio
 tensorflow
