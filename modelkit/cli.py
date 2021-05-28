@@ -45,7 +45,7 @@ def _configure_from_cli_arguments(models, required_models, all, settings):
 
 
 @modelkit_cli.command()
-@click.option("--models", "-m", multiple=True)
+@click.argument("models", type=str, nargs=-1, required=True)
 @click.option("--required-models", "-r", multiple=True)
 @click.option("--all", is_flag=True)
 def memory(models, required_models, all):
@@ -91,7 +91,7 @@ def memory(models, required_models, all):
 
 
 @modelkit_cli.command("list-assets")
-@click.option("--models", "-m", multiple=True)
+@click.argument("models", type=str, nargs=-1, required=True)
 @click.option("--required-models", "-r", multiple=True)
 @click.option("--all", is_flag=True)
 def list_assets_cli(models, required_models, all):
@@ -140,7 +140,7 @@ def add_dependencies_to_graph(g, model, configurations):
 
 
 @modelkit_cli.command()
-@click.option("--models", "-m", multiple=True)
+@click.argument("models", type=str, nargs=-1, required=True)
 @click.option("--required-models", "-r", multiple=True)
 @click.option("--all", is_flag=True)
 def dependencies_graph(models, required_models, all):
@@ -161,7 +161,7 @@ def dependencies_graph(models, required_models, all):
 
 
 @modelkit_cli.command()
-@click.option("--models", "-m", multiple=True)
+@click.argument("models", type=str, nargs=-1, required=True)
 @click.option("--required-models", "-r", multiple=True)
 @click.option("--all", is_flag=True)
 def describe(models, required_models, all):
@@ -177,7 +177,7 @@ def describe(models, required_models, all):
 @modelkit_cli.command()
 @click.argument("model")
 @click.argument("example")
-@click.option("--models", "-m", multiple=True)
+@click.argument("models", type=str, nargs=-1, required=True)
 @click.option("--n", "-n", default=100)
 def time(model, example, models, n):
     """
@@ -224,7 +224,7 @@ def time(model, example, models, n):
 
 @modelkit_cli.command("serve")
 @click.option("--required-models", type=str, multiple=True)
-@click.option("--models", type=str, multiple=True)
+@click.argument("models", type=str, nargs=-1, required=True)
 @click.option("--host", type=str, default="localhost")
 @click.option("--port", type=int, default=8000)
 def serve(required_models, models, host, port):
@@ -244,7 +244,7 @@ def serve(required_models, models, host, port):
 
 @modelkit_cli.command("predict")
 @click.argument("model_name", type=str)
-@click.option("--models", "-m", multiple=True)
+@click.argument("models", type=str, nargs=-1, required=True)
 def predict(model_name, models):
     """
     Make predictions for a given model.
