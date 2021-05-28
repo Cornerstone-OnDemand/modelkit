@@ -1,4 +1,5 @@
 import os
+import platform
 
 import fastapi
 import numpy as np
@@ -115,4 +116,8 @@ def test_api_doc(api_no_type):
     res = api_no_type.get(
         "/openapi.json",
     )
-    r.assert_equal("openapi.json", res.json())
+    if platform.system() != "Windows":
+        # Output is different on Windows platforms since
+        # modelkit.utils.memory cannot track memory increment
+        # and write it
+        r.assert_equal("openapi.json", res.json())

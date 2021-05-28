@@ -1,4 +1,5 @@
 import os
+import platform
 
 import pydantic
 from rich.console import Console
@@ -57,5 +58,9 @@ def test_describe():
     with console.capture() as capture:
         library.describe(console=console)
 
-    r = ReferenceText(os.path.join(TEST_DIR, "testdata"))
-    r.assert_equal("library_describe.txt", capture.get())
+    if platform.system() != "Windows":
+        # Output is different on Windows platforms since
+        # modelkit.utils.memory cannot track memory increment
+        # and write it
+        r = ReferenceText(os.path.join(TEST_DIR, "testdata"))
+        r.assert_equal("library_describe.txt", capture.get())
