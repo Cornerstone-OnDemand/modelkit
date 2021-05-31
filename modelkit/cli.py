@@ -177,7 +177,7 @@ def describe(models, required_models, all):
 @modelkit_cli.command()
 @click.argument("model")
 @click.argument("example")
-@click.argument("models", type=str, nargs=-1, required=True)
+@click.option("--models", type=str, required=True)
 @click.option("--n", "-n", default=100)
 def time(model, example, models, n):
     """
