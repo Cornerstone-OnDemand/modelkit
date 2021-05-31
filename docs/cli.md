@@ -54,3 +54,26 @@ This is useful in order to inspect the swagger.
 !!! warning
     Note that models whose payloads are not serializable will
     not be exposed, this is true in particular of numpy arrays
+
+## Assets management
+
+To list all assets:
+```bash
+$ modelkit assets list
+```
+
+To create a new asset:
+```bash
+$ modelkit assets new /path/to/asset asset_category/asset_name
+```
+
+To update an asset's minor version:
+
+```bash
+$ modelkit assets update /path/to/asset asset_category/asset_name
+```
+
+To push a new major version:
+```bash
+$ modelkit assets update /path/to/asset asset_category/asset_name --bump-major
+```

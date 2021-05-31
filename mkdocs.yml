@@ -6,18 +6,17 @@ nav:
   - Home: 'index.md'
   - Tutorial:
     - Models: 'library/overview.md'
-    - Consuming models: 'library/using_models.md'
-    - Prediction service: 'library/model_library.md'
     - Developing models: 'library/developing_modelkit.md'
     - Organizing models: 'library/organizing.md'
+    - Consuming models: 'library/using_models.md'
+    - Prediction service: 'library/model_library.md'
     - Testing: 'library/testing.md'
-    - Logging: 'logging.md'
     - Specific models:
       - Tensorflow models: 'library/special/tensorflow.md'
       - Distant Models: 'library/special/distant.md'
-  - Deployment:
+  - Configuration:
     - Configuration: 'configuration.md'
-    - CLI: 'cli.md'
+  - CLI: 'cli.md'
   - Assets:
     - Introduction: 'assets/index.md'
     - Assets push: 'assets/assets_push.md'

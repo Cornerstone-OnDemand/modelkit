@@ -13,13 +13,13 @@ class MyModel(Model):
         return item
 
 
-# Create the prediction service
+# Create the model library
 # This downloads all the assets and instantiates all the `Model`
 # objects that were specified
-service = ModelLibrary(models=MyModel)
+library = ModelLibrary(models=MyModel)
 
 # This is only a dictionary lookup
-model = service.get_model("my_favorite_model")
+model = library.get_model("my_favorite_model")
 ```
 
 In each case, the models are then accessed via `ModelLibrary.get("some name")`
@@ -33,10 +33,10 @@ from modelkit import ModelLibrary
 # Create the prediction service
 # This downloads all the assets and instantiates all the `Model`
 # objects that were specified
-service = ModelLibrary(models=modelkit.models)
+library = ModelLibrary(models=modelkit.models)
 
 # This is only a dictionary lookup
-model = service.get("my_favorite_model")
+model = library.get("my_favorite_model")
 ```
 
 !!! info "Shortcuts"
@@ -44,8 +44,11 @@ model = service.get("my_favorite_model")
     For development, it is also possible to load a single model without a `ModelLibrary`:
 
     ```
-    model = load_model("my_favorite_model")
+    from modelkit import load_model
+    model = load_model("my_favorite_model", models="package")
     ```
+
+    If you have set the `MODELKIT_DEFAULT_PACKAGE` environment variable, you can also skip the `models=...` part.
 
 Predictions can be obtained either for a single item (usually a dict), or a _list of items_
 via the same predict method:
