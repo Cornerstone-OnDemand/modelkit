@@ -20,7 +20,7 @@ This can be achieved by `bin/tf_serving.py configure local-docker [SERVICE]`, wh
 
 The bash script `bin/run_tf_serving.sh` then runs the docker container exposing both the REST and gRPC endpoints.
 
-Also see [the CLI documentation](../cli.md).
+Also see [the CLI documentation](../../cli.md).
 
 ## Details
 

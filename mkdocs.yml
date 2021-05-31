@@ -7,7 +7,7 @@ nav:
   - Tutorial:
     - Models: 'library/overview.md'
     - Consuming models: 'library/using_models.md'
-    - Prediction service: 'library/prediction_service.md'
+    - Prediction service: 'library/model_library.md'
     - Developing models: 'library/developing_modelkit.md'
     - Organizing models: 'library/organizing.md'
     - Testing: 'library/testing.md'

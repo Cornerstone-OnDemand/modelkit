@@ -4,12 +4,12 @@ A `modelkit.Model` is a Python class implementing methods to deserialize assets 
 
 Some quick `Model` facts:
 
--   Models do not have to have an asset (text cleaning models)
--   Models do not have to have a prediction method (they are then called `Asset`)
--   Models can depend on other models and share objects in memory (in particular, they can share an `Asset`)
--   Models can implement batched/vectorized logic
--   Models can implement asynchronous logic and be called either way
--   Models can implement the logic to fit themselves and generate the asset for prediction
+- Models do not have to have an asset (text cleaning models)
+- Models do not have to have a prediction method (they are then called `Asset`)
+- Models can depend on other models and share objects in memory (in particular, they can share an `Asset`)
+- Models can implement batched/vectorized logic
+- Models can implement asynchronous logic and be called either way
+- Models can implement the logic to fit themselves and generate the asset for prediction
 
 ### The `Model` class
 
@@ -19,22 +19,22 @@ The prediction logic is implemented in an asynchronous `_predict_one` method tha
 
 The asset loading logic is implemented in a `_load` method that is run after the `Model` is instantiated, and can load the asset specified in the `Model`'s configuration. For more on this see Lazy Mode.
 
-### A simple `Model` class
+### The simplest `Model` class
 
-This simple model class will always return `"YOLO les simpsons"`:
+This simple model class will always return `"something"`:
 
 ```python
 from modelkit.core.model import Model
 
-class YOLOModel(Model):
+class SimpleModel(Model):
     async def _predict_one(self, item) -> str:
-        return "YOLO les simpsons"
+        return "something"
 ```
 
 It can be loaded to make "predictions" as so:
 
 ```python
-m = YOLOModel()
+m = SimpleModel()
 m({}) # returns "YOLO les simpsons"
 ```
 
@@ -47,28 +47,31 @@ To do so, we have to _configure_ our model: give it a name and dependencies.
 Models are made available to clients using `modelkit` by specifying them using the `CONFIGURATIONS` class attribute:
 
 ```python
-class YOLOModel(Model):
-    CONFIGURATIONS = {"yolo": {}}
+class SimpleModel(Model):
+    CONFIGURATIONS = {
+        "simple": {}
+    }
     async def _predict_one(self, item):
-        return "YOLO les simpsons"
+        return "something"
 ```
 
-!!! warning
-    You have to `async def` when implementing `_predict_one` and `_predict_multiple`, even if the function is synchronous.
+!!! warning You have to `async def` when implementing `_predict_one` and `_predict_multiple`, even if the function is synchronous.
 
-Right now, we have only given it a name `"yolo"` which makes the model available to other models via the `ModelLibrary`.
+Right now, we have only given it a name `"simple"` which makes the model available to other models via the `ModelLibrary`.
 
 The rest of the configuration is empty but we will add to it at the next section.
 
-Assuming that `YOLOModel` is defined in `my_module.my_models`, it is now accessible via:
+Assuming that `SimpleModel` is defined in `my_module.my_models`, it is now accessible via:
 
 ```python
 from modelkit.core import ModelLibrary
 import my_module.my_models
 
 p = ModelLibrary(models=my_module.my_models)
-m = p.get("yolo")
+m = p.get("simple")
 ```
+
+See [Organization](organizing.md) for more information on how to organize your models.
 
 ### Model settings
 
@@ -76,28 +79,29 @@ The simplest configuration options are `model_settings`:
 
 ```python
 from modelkit.core.model import Model
-class YOLOModel(Model):
+
+class SimpleModel(Model):
     CONFIGURATIONS = {
-        "yolo": {"model_settings": {"value" : "les simpsons"}},
-        "yolo_2": {"model_settings": {"value" : "pas les simpsons"}}
+        "simple": {"model_settings": {"value" : "something"}},
+        "simple2": {"model_settings": {"value" : "something2"}}
     }
     async def _predict_one(self, item):
-        return "YOLO " + self.model_settings["value"]
+        return self.model_settings["value"]
 ```
 
-Now, there are two versions of the model available, `yolo` and `yolo_2`:
+Now, there are two versions of the model available, `simple` and `simple2`:
 
 ```python
 from modelkit.core import ModelLibrary
 
 p = ModelLibrary(models=YOLOModel)
-m = p.get("yolo")
+m = p.get("simple")
 print(m({}))
-m2 = p.get("yolo_2")
+m2 = p.get("simple2")
 print(m2({}))
 ```
 
-It will print both `"YOLO les simpsons"` and `"YOLO pas les simpsons"`.
+It will print both `"something"` and `"something2"`.
 
 ## Model assets and dependencies
 
@@ -105,42 +109,45 @@ The usefulness of modelkit `Model`s and their configuration is more apparent whe
 
 ### Model assets
 
-A model can implement a `_load` method that loads information from an asset stored on the object store (fetched using `assets`). It may contain files, folders, parameters, optimized data structures, or anything really.
+A model can implement a `_load` method that loads information from an asset stored locally, or retrieved from an object store at run time. It may contain files, folders, parameters, optimized data structures, or anything really.
 
-The model asset is specified in the `CONFIGURATIONS` with `asset=asset_name:version`, following `storage.AssetsManager` conventions.
+The model asset is specified in the `CONFIGURATIONS` with `asset=asset_name:version`, following `storage.AssetsManager` conventions (see [Assets](../assets/assets.md)).
 
-When the `_load` method is called, the object has an `asset_path` attribute that points to the path of the asset locally. This is then used to load the relevant information from the asset file(s).
+When the `_load` method is called, the object will have an `asset_path` attribute that points to the path of the asset locally. This is then used to load the relevant information from the asset file(s).
 
 ### Model with asset example
 
 Adding the key to the model's configuration:
 
 ```python
-class YOLOModel(Model):
+class ModelWithAsset(Model):
     CONFIGURATIONS = {
-        "yolo": {"asset": "test/yolo:1"}
+        "model_with_asset": {"asset": "test/yolo:1"}
     }
 ```
 
-Will cause the `ModelLibrary` to download `gs://bucket/assets/test/1/yolo` locally to a temporary folder (which storage provider and bucket is used depends on your configuration).
+Will cause the `ModelLibrary` to download `gs://bucket/assets/test/1/yolo` locally to the assets folder folder (which storage provider and bucket is used depends on your configuration), and set the `Model.asset_path` attribute accordingly.
 
-Once the asset is downloaded, its path is written to the Model's `asset_path` attribute. We can then define our deserialization logic:
+It is up to the user to define the deserialization logic:
 
 ```python
-class YOLOModel(Model):
-    async def _predict_one(self, item: Dict[str, str], **kwargs) -> float:
-        return self.data_structure["response"] # returns "YOLO les simpsons"
-
+class ModelWithAsset(Model):
     def _load(self):
+        # For example, here, the asset is a BZ2 compressed JSON file
         with bz2.BZ2File(self.asset_path, "rb") as f:
             self.data_structure = pickle.load(f) # loads {"response": "YOLO les simpsons"}
+
+    async def _predict_one(self, item: Dict[str, str], **kwargs) -> float:
+        return self.data_structure["response"] # returns "YOLO les simpsons"
 ```
+
+!!! info Assets retrieval is handled by `modelkit`, and it is guaranteed that they be present when `_load` is called, even in lazy mode. However, it is not true when `__init__` is called. In general, it is not a good idea to subclass `__init__`.
 
 ### Model dependencies
 
-In addition, and to avoid redundant memory usage, a `Model` can depend on other `Model`s, and exploit their attributes and predictions.
+In addition, `modelkit` models are **composable**.
 
-Of course, all models have to be defined in the same configuration passed to the `ModelLibrary` (by default models are in `modelkit.models`).
+That is, a `Model` can depend on other `Model`s, and exploit their attributes and predictions.
 
 For example your can set your model's configuration to have access to two other `Model` objects:
 
@@ -156,7 +163,7 @@ class SomeModel(Model):
     }
 ```
 
-And then access these in the `_predict_*` function:
+The `ModelLibrary` ensures that whenever `_load` or the `_predict_*` function are called, these models are loaded and present in the `model_dependencies` dictionary:
 
 ```python
 async def _predict_one(self, item):
@@ -183,24 +190,22 @@ class SomeModel(Model):
     }
 ```
 
-In this case, the instantiated `SomeModel.model_dependencies["cleaner"]`  will point to `sentence_piece_cleaner` in one configuration and to `sentence_piece_cleaner_2` in the other.
-
-
+In this case, the instantiated `SomeModel.model_dependencies["cleaner"]` will point to `sentence_piece_cleaner` in one configuration and to `sentence_piece_cleaner_2` in the other.
 
 ### Model attributes
 
 `Model` have several attributes set by the `ModelLibrary` when they are initialized:
 
--   `asset_path` the path to the asset set in the `Model`'s configuration
--   `configuration_key` the key of the model's configuration
--   `model_dependencies` a dictionary of `Model` dependencies
--   `model_settings` the `model_settings` as passed at initialization
--   `service_settings` the settings of the `ModelLibrary` that created the model
+- `asset_path` the path to the asset set in the `Model`'s configuration
+- `configuration_key` the key of the model's configuration
+- `model_dependencies` a dictionary of `Model` dependencies
+- `model_settings` the `model_settings` as passed at initialization
+- `service_settings` the settings of the `ModelLibrary` that created the model
 
 And a set of attributes always present:
 
--   `model_classname` the name of the `Model`'s subclass
--   `batch_size` the batch size for the model: if `_predict_multiple` is implemented it will always get batches of this size (defaults to 64)
+- `model_classname` the name of the `Model`'s subclass
+- `batch_size` the batch size for the model: if `_predict_multiple` is implemented it will always get batches of this size (defaults to 64)
 
 ## Model typing
 
@@ -232,8 +237,8 @@ z : int = m(1) # would lead to a typing error with typecheckers (e.g. mypy)
 
 In addition, whenever the model's `predict` method is called, the type of the item is validated against the provided type and raises an error if the validation fails:
 
--   `modelkit.core.model.ItemValidationException` if the item fails to validate
--   `modelkit.core.model.ReturnValueValidationException` if the return value of the predict fails to validate
+- `modelkit.core.model.ItemValidationException` if the item fails to validate
+- `modelkit.core.model.ReturnValueValidationException` if the return value of the predict fails to validate
 
 ### Marshalling of item/return values
 
@@ -269,11 +274,9 @@ In this case, we may not want the parent asset-bearing `Model` object to impleme
 
 This is what an `modelkit.core.model.Asset` is.
 
-!!! info
-    In fact, it is defined the other way around: `Model`s are `Asset`s with a predict function, and thus `Model` inherits from `Asset`.
+!!! info In fact, it is defined the other way around: `Model`s are `Asset`s with a predict function, and thus `Model` inherits from `Asset`.
 
-!!! info
-    There are two ways to use a data asset in a `Model`: either load it directly via its configuration and the `_load`, or package it in an `Asset` and use the deserialized object via model dependencies.
+!!! info There are two ways to use a data asset in a `Model`: either load it directly via its configuration and the `_load`, or package it in an `Asset` and use the deserialized object via model dependencies.
 
 ### Asset file override for debugging
 
