@@ -3,10 +3,12 @@ from typing import Any, Dict, List, Optional, Type, Union
 
 import fastapi
 from rich.console import Console
+from structlog import get_logger
 
 from modelkit.core.library import LibrarySettings, ModelConfiguration, ModelLibrary
 from modelkit.core.model import Model
-from modelkit.log import logger
+
+logger = get_logger(__name__)
 
 # create APIRoute for model
 # create startup event
