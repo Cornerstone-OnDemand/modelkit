@@ -14,6 +14,7 @@ import humanize
 from pydantic import ValidationError
 from rich.console import Console
 from rich.tree import Tree
+from structlog import get_logger
 
 import modelkit.assets
 from modelkit.assets.manager import AssetsManager
@@ -21,10 +22,11 @@ from modelkit.assets.settings import AssetSpec
 from modelkit.core.model import Model
 from modelkit.core.model_configuration import ModelConfiguration, configure, list_assets
 from modelkit.core.settings import LibrarySettings
-from modelkit.log import logger
 from modelkit.utils.memory import PerformanceTracker
 from modelkit.utils.pretty import describe
 from modelkit.utils.redis import RedisCacheException, check_redis
+
+logger = get_logger(__name__)
 
 try:
     import redis

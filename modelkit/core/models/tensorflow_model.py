@@ -5,6 +5,7 @@ from typing import Any, Dict, List
 import aiohttp
 import numpy as np
 import requests
+from structlog import get_logger
 from tenacity import (
     retry,
     retry_if_exception,
@@ -14,7 +15,8 @@ from tenacity import (
 
 from modelkit.core.model import Model
 from modelkit.core.types import ItemType, ReturnType
-from modelkit.log import logger
+
+logger = get_logger(__name__)
 
 try:
     import tensorflow as tf

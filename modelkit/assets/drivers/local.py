@@ -4,9 +4,11 @@ import shutil
 
 import pydantic
 from pydantic import BaseSettings
+from structlog import get_logger
 
 from modelkit.assets import errors
-from modelkit.assets.log import logger
+
+logger = get_logger(__name__)
 
 
 class LocalDriverSettings(BaseSettings):
