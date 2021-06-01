@@ -55,7 +55,7 @@ class Asset:
         """
         self.configuration_key = kwargs.get("configuration_key")
         self.service_settings = kwargs.get("service_settings") or LibrarySettings()
-        self.batch_size = kwargs.pop("batch_size", 64)
+        self.batch_size = kwargs.get("model_settings", {}).get("batch_size", 64)
         self.asset_path = kwargs.pop("asset_path", "")
         self.redis_cache = kwargs.pop("redis_cache", None)
         self._loaded = False

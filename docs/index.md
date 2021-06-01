@@ -1,8 +1,12 @@
-`modelkit` is a Python library to define and and run machine learning (ML) code in production environments.
+`modelkit` is a Python framework to maintain and run machine learning (ML) code in production environments.
 
-## Version
+The key features are:
 
-Current package version:
-
-  - PEP440 version: `202104.299`
-  - last release date: `2021.04.28`
+- **type-safe** Models' inputs and outputs can be validated by [pydantic](https://pydantic-docs.helpmanual.io/)
+- **composable** Models are *composable*: they can depend on other models. 
+- **organized** Store and share your models as regular Python packages.
+- **extensible** Models can rely on arbitrary supporting configurations files called *assets* hosted on local or cloud object stores
+- **testable** Models carry their own unit test cases, and unit testing fixtures are available for [pytest](https://docs.pytest.org/en/6.2.x/)
+- **fast to code** Models can be served in a single CLI call using [fastapi](https://fastapi.tiangolo.com/)
+- **fast** Models' predictions can be batched for speed
+- **async** Models support async and synchronous prediction functions

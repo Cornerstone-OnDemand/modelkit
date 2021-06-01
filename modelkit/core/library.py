@@ -46,7 +46,7 @@ class ModelLibrary:
         configuration: Optional[
             Dict[str, Union[Dict[str, Any], ModelConfiguration]]
         ] = None,
-        models: Optional[Union[ModuleType, Type, List]] = None,
+        models: Optional[Union[ModuleType, Type, List, str]] = None,
         required_models: Optional[Union[List[str], Dict[str, Any]]] = None,
     ):
         """
@@ -65,6 +65,8 @@ class ModelLibrary:
         self.assetsmanager_settings = assetsmanager_settings or {}
         self._override_assets_manager = None
         self._lazy_loading = self.settings.lazy_loading
+        if models is None:
+            models = os.environ.get("MODELKIT_DEFAULT_PACKAGE")
         self.configuration = configure(models=models, configuration=configuration)
         self.models: Dict[str, Model] = {}
         self.assets_info: Dict[str, Dict[str, str]] = {}

@@ -20,7 +20,7 @@ This can be achieved by `bin/tf_serving.py configure local-docker [SERVICE]`, wh
 
 The bash script `bin/run_tf_serving.sh` then runs the docker container exposing both the REST and gRPC endpoints.
 
-Also see [the CLI documentation](../cli.md).
+Also see [the CLI documentation](../../cli.md).
 
 ## Details
 
@@ -83,7 +83,7 @@ async def _predict_multiple(self, items):
         ]
 ```
 
-!!! warning
+!!! important
     Be careful that `_tensorflow_predict` returns a dict of `np.ndarray` of shape `(len(items),?)`
     when `_predict_multiple` expects a list of `len(items)` dicts of `np.ndarray`.
 

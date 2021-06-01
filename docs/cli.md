@@ -1,85 +1,92 @@
-# Command line interfaces
+# `modelkit` CLI
 
-## Generic CLIs
+## Models description
 
-### General purpose predict
+### Describe
 
-This prompt accept JSON items and prints predictions.
+This CLI prints out all relevant information on a 
+given `modelkit` model repository:
 ```sh
-bin/predict.py model_name
+modelkit describe [PACKAGE] [--required-models ...]
+```
+### Assets listing
+
+This CLI will show all necessary assets to run models
+```sh
+modelkit list-assets [PACKAGE] [--required-models ...]
+```
+### Dependencies graph
+
+This CLI will create a .DOT file with a graph of all models,
+their assets and model dependencies.
+```sh
+modelkit dependencies-graph [PACKAGE] [--required-models ...]
+```
+This requires [graphviz](https://graphviz.org/) for the graph layout. 
+
+
+## Benchmarking
+
+### Memory benchmark
+
+This CLI attempts to measure the memory consumption 
+of a set of `modelkit` models:
+```sh
+modelkit memory [PACKAGE] [--required-models ...]
 ```
 
-### Benchmarking CLI
+### Time
 
-We expose a number of maintenance/benchmarking CLI in `bin/benchmark.py`
-
-#### Memory consumption
-
-Benchmark the memory consumption of a `ModelLibrary` with all models
+This CLI accepts a model and item, and will time the prediction
 ```sh
-bin/benchmark.py
+modelkit time MODEL_NAME EXAMPLE_ITEM --models PACKAGE
 ```
 
-#### Model dependency graph
+## Serving
 
-Create a [dot](https://en.wikipedia.org/wiki/DOT_(graph_description_language)) graph dependency file of models' dependencies and required assets with:
+`modelkit` provides a single CLI to run a local `FastAPI` server with
+all loaded models mounted as endpoints:
 ```sh
-bin/benchmark.py dependency-graph --model model_1 --model model_2
+modelkit serve PACKAGE [--required-models ...]
+```
+This is useful in order to inspect the swagger.
+
+!!! important
+    Note that models whose payloads are not serializable will
+    not be exposed, this is true in particular of numpy arrays
+
+## Assets management
+
+To list all assets:
+```sh
+$ modelkit assets list
 ```
 
-Or, for all models
+To create a new asset:
 ```sh
-bin/benchmark.py dependency-graph --all
+$ modelkit assets new /path/to/asset asset_category/asset_name
 ```
 
-To produce a neat PNG file from the `dependencies.dot` file use:
-```sh
-neato -Tpng dependencies.dot > dependency-graph-v1.png
-```
-
-#### List assets
-
-List the assets necessary for a given set of models
-```sh
-bin/benchmark.py assets --model model_1 --model model_2
-```
-
-Or, for all models
-```sh
-bin/benchmark.py assets --all
-```
-
-
-
-### TF Serving CLIs
-
-#### Local deployment CLI
-
-These CLIs download the models and create the directory structure and configuration file necessary for the TF serving Docker containers.
+To update an asset's minor version:
 
 ```sh
-bin/tf_serving.py configure [local-docker|local-process|remote-gcs|remote-s3] SERVICE_NAME [--verbose]
+$ modelkit assets update /path/to/asset asset_category/asset_name
 ```
 
-Where `SERVICE_NAME` is a key of the dictionary `modelkit.models.config.TF_SERVING_MODELS`.
-
-In `local-docker` mode this will write a configuration file to `${WORKING_DIR}/modelkit-assets/SERVICE_NAME.config`, usable with a docker container whose `/config` folder points to `${WORKING_DIR}/modelkit-assets`.
-
-In `local-process` mode this will write a configuration file to `${WORKING_DIR}/modelkit-assets/SERVICE_NAME.config`, usable with the TF serving process (that is, will local paths hardcoded in the configuration, this is used in the CI and not recommended).
-
-In `remote-s3` mode this won't upload any data, but with `--verbose` this will print the configuration that you can copy/paste in the src/deploy/tensorflow/tensorflow.config.template file in a given PipelineKit project.
-
-#### Run the container
-
+To push a new major version:
 ```sh
-bin/run_tfserving.sh SERVICE_NAME
+$ modelkit assets update /path/to/asset asset_category/asset_name --bump-major
 ```
 
-Starts the TF serving container given the exported models in `${WORKING_DIR}/tfserving-models` for the given `SERVICE_NAME` (pointing to the right config file).
+## TF serving
 
-!!! info
-    Don't forget to
-    ```
-    docker rm -f local-tf-serving
-    ```
-    when you are done.
+To configure models from a package to be run in TF serving:
+```sh
+modelkit tf-serving local-docker --models [PACKAGE]
+```
+
+This will write a configuration file with relative paths to the model files. This is meant to be used by mounting the `WORKING_DIR` in the container under the path `/config`.
+
+Other options include:
+- `local-process` To create a config file with absolute paths to the assets under `WORKING_DIR`
+- `remote` which will use whichever remote paths are found for the assets (i.e. as configured by the `STORAGE_PROVIDER`)

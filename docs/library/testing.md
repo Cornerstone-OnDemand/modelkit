@@ -11,7 +11,7 @@ The belief is that test cases for models constitute essential documentation for 
 ```python
 from modelkit.core.fixtures import make_modellibrary_test
 
-make_ModelLibrary_test(
+make_modellibrary_test(
     **prediction_service_arguments, # insert any arguments to ModelLibrary here
     fixture_name="testing_prediction_service",
     test_name="test_auto_prediction_service",
@@ -25,7 +25,7 @@ In addition, it creates a test called `test_auto_prediction_service` that iterat
 
 ### Defining test cases
 
-Any `modelkit.core.Model` can define its own test cases which are discoverable by the test created by `make_ModelLibrary_test`:
+Any `modelkit.core.Model` can define its own test cases which are discoverable by the test created by `make_modellibrary_test`:
 
 ```python
 class TestableModel(Model[ModelItemType, ModelItemType]):
@@ -52,18 +52,3 @@ def test_function(model_key, item, result, testing_prediction_service):
     assert svc.get(model_key)(item) == result
 
 ```
-
-## Troubleshooting
-
-Here are a couple of issues that can occur when running the tests locally:
-
-### Missing AWS credentials
-If you see this message:
-```
-ClientError: An error occurred (ExpiredTokenException) when calling the GetParameter operation: The security token included in the request is expired`
-```
-Run the command `gimme-aws-creds` to update your AWS credentials and restart the tests.
-
-### Missing GCS credentials
-If you are not supposed to have access to GCS, you can ignore the GCS-related test by setting `ENABLE_GCS=False` in your environment variables.
-NB: this won't be necessary once everything is migrated to AWS.

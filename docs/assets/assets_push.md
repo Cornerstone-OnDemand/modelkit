@@ -51,7 +51,7 @@ create the remote asset `name:0.0` as follows:
 assets_manager.create_asset(asset_path, name)
 ```
 
-!!! warning
+!!! important
     Creating new assets programmatically is likely not a very good idea.
     Just do it manually once using the CLI.
 

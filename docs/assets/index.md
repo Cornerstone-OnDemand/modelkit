@@ -16,7 +16,7 @@ with open(asset_path, "r") as f:
 
 ```
 
-!!! warning
+!!! important
     You need to [configure your environment](environment.md) to run this code.
 
 ## CLI

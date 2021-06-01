@@ -1,6 +1,8 @@
+import numpy as np
 import pydantic
 
 from modelkit.core.model import Model
+from modelkit.core.models.tensorflow_model import TensorflowModel
 
 
 class SomeSimpleValidatedModelA(Model[str, str]):
@@ -35,3 +37,16 @@ class SomeComplexValidatedModelA(Model[ItemModel, ResultModel]):
 
     async def _predict_one(self, item):
         return {"sorted": "".join(sorted(item.string))}
+
+
+class DummyTFModel(TensorflowModel):
+    CONFIGURATIONS = {
+        "dummy_tf_model": {
+            "asset": "dummy_tf_model:0.0",
+            "model_settings": {
+                "output_dtypes": {"lambda": np.float32},
+                "output_tensor_mapping": {"lambda": "nothing"},
+                "output_shapes": {"lambda": (3, 2, 1)},
+            },
+        }
+    }
