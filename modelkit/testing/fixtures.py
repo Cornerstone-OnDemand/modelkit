@@ -104,16 +104,14 @@ def modellibrary_fixture(
     frame.f_locals[fixture_name] = fixture_function
 
 
-def tf_serving_fixture(request, required_models, deployment="docker", models=None):
+def tf_serving_fixture(request, svc, deployment="docker"):
     cmd = [
         "--port=8500",
         "--rest_api_port=8501",
     ]
 
+    deploy_tf_models(svc, "local-docker", config_name="testing")
     if deployment == "process":
-        deploy_tf_models(
-            required_models, "local-process", config_name="testing", models=models
-        )
         proc = subprocess.Popen(
             [
                 "tensorflow_model_server",
@@ -128,9 +126,6 @@ def tf_serving_fixture(request, required_models, deployment="docker", models=Non
             proc.terminate()
 
     else:
-        deploy_tf_models(
-            required_models, "local-docker", config_name="testing", models=models
-        )
         # kill previous tfserving container (if any)
         subprocess.call(
             ["docker", "rm", "-f", "modelkit-tfserving-tests"],
@@ -160,4 +155,6 @@ def tf_serving_fixture(request, required_models, deployment="docker", models=Non
             tfserving_proc.terminate()
 
     request.addfinalizer(finalize)
-    connect_tf_serving(required_models[0], "localhost", 8500, "grpc")
+    connect_tf_serving(
+        next((x for x in svc.required_models)), "localhost", 8500, "grpc"
+    )

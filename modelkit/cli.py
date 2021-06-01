@@ -21,6 +21,7 @@ from modelkit.api import ModelkitAutoAPIRouter
 from modelkit.assets.cli import assets_cli
 from modelkit.core.model_configuration import configure, list_assets
 from modelkit.core.models.tensorflow_model import safe_np_dump
+from modelkit.utils.tensorflow import deploy_tf_models
 
 
 @click.group()
@@ -256,3 +257,16 @@ def predict(model_name, models):
         if r:
             res = model(json.loads(r))
             click.secho(json.dumps(res, indent=2, default=safe_np_dump))
+
+
+@modelkit_cli.command("tf-serving")
+@click.argument("mode", type=click.Choice(["local-docker", "local-process", "remote"]))
+@click.option("--models", type=str, required=True)
+@click.option("--required-models", "-r", multiple=True)
+@click.option("--verbose", is_flag=True)
+def tf_serving(mode, models, required_models, verbose):
+    service = _configure_from_cli_arguments(
+        models, required_models, all, {"lazy_loading": True}
+    )
+
+    deploy_tf_models(service, mode, verbose=verbose)

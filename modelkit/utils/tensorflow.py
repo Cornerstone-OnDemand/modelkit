@@ -3,7 +3,7 @@ import os
 from modelkit.assets.manager import AssetsManager
 from modelkit.assets.settings import AssetSpec
 from modelkit.core.library import download_assets
-from modelkit.core.model_configuration import configure
+from modelkit.core.models.tensorflow_model import TensorflowModel
 from modelkit.log import logger
 
 
@@ -22,16 +22,17 @@ def write_config(destination, models, verbose=False):
             print(f.read())
 
 
-def deploy_tf_models(
-    required_models, mode, config_name="config", verbose=False, models=None
-):
+def deploy_tf_models(svc, mode, config_name="config", verbose=False):
     manager = AssetsManager()
-    configuration = configure(models=models)
+    configuration = svc.configuration
     model_paths = {}
-    for model_name in required_models:
+    for model_name in svc.required_models:
         model_configuration = configuration[model_name]
+        if not issubclass(model_configuration.model_type, TensorflowModel):
+            logger.info(f"Skipping non TF model `{model_name}`")
+            continue
         if not model_configuration.asset:
-            raise ValueError("Is this a TensorFlow model with an asset?")
+            raise ValueError(f"TensorFlow model `{model_name}` does not have an asset")
         spec = AssetSpec.from_string(model_configuration.asset)
         if mode == "local-docker":
             model_paths[model_name] = os.path.join(
@@ -53,11 +54,21 @@ def deploy_tf_models(
 
     if mode == "local-docker" or mode == "local-process":
         logger.info("Checking that local models are present.")
-        download_assets(configuration=configuration, required_models=required_models)
+        download_assets(
+            configuration=configuration, required_models=svc.required_models
+        )
         target = os.path.join(manager.assets_dir, f"{config_name}.config")
-    logger.info(
-        "Writing TF serving configuration locally.",
-        config_name=config_name,
-        target=target,
-    )
-    write_config(target, model_paths, verbose=verbose)
+
+    if model_paths:
+        logger.info(
+            "Writing TF serving configuration locally.",
+            config_name=config_name,
+            target=target,
+        )
+        write_config(target, model_paths, verbose=verbose)
+    else:
+        logger.info(
+            "Nothing to write",
+            config_name=config_name,
+            target=target,
+        )
