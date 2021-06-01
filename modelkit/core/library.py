@@ -64,7 +64,7 @@ class ModelLibrary:
         self._override_assets_manager = None
         self._lazy_loading = self.settings.lazy_loading
         if models is None:
-            models = os.environ.get("MODELKIT_DEFAULT_PACKAGE", None)
+            models = os.environ.get("MODELKIT_DEFAULT_PACKAGE")
         self.configuration = configure(models=models, configuration=configuration)
         self.models: Dict[str, Model] = {}
         self.assets_info: Dict[str, Dict[str, str]] = {}
