@@ -58,22 +58,35 @@ This is useful in order to inspect the swagger.
 ## Assets management
 
 To list all assets:
-```bash
+```sh
 $ modelkit assets list
 ```
 
 To create a new asset:
-```bash
+```sh
 $ modelkit assets new /path/to/asset asset_category/asset_name
 ```
 
 To update an asset's minor version:
 
-```bash
+```sh
 $ modelkit assets update /path/to/asset asset_category/asset_name
 ```
 
 To push a new major version:
-```bash
+```sh
 $ modelkit assets update /path/to/asset asset_category/asset_name --bump-major
 ```
+
+## TF serving
+
+To configure models from a package to be run in TF serving:
+```sh
+modelkit tf-serving local-docker --models [PACKAGE]
+```
+
+This will write a configuration file with relative paths to the model files. This is meant to be used by mounting the `WORKING_DIR` in the container under the path `/config`.
+
+Other options include:
+- `local-process` To create a config file with absolute paths to the assets under `WORKING_DIR`
+- `remote` which will use whichever remote paths are found for the assets (i.e. as configured by the `STORAGE_PROVIDER`)
