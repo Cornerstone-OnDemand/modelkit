@@ -9,4 +9,4 @@ The key features are:
 - **testable** Models carry their own unit test cases, and unit testing fixtures are available for [pytest](https://docs.pytest.org/en/6.2.x/)
 - **fast to code** Models can be served in a single CLI call using [fastapi](https://fastapi.tiangolo.com/)
 - **fast** Models' predictions can be batched for speed
-- **async** Models support sync and synchronous prediction functions
+- **async** Models support async and synchronous prediction functions

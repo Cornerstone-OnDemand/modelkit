@@ -1,6 +1,6 @@
 # Assets
 
-An asset is a file or a directory that is typically shared andstored on a remote object store (such as GCS or S3).
+An asset is a file or a directory that is typically shared and stored on a remote object store (such as GCS or S3).
 
 `modelkit` has tooling to push and retrieve these assets.
 
