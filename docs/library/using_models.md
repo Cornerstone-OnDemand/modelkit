@@ -39,7 +39,7 @@ library = ModelLibrary(models=modelkit.models)
 model = library.get("my_favorite_model")
 ```
 
-!!! info "Shortcuts"
+!!! note "Shortcuts"
 
     For development, it is also possible to load a single model without a `ModelLibrary`:
 

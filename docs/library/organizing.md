@@ -26,7 +26,8 @@ import my_ml_package
 service = ModelLibrary(models=package)
 ```
 
-!!! Info It is also possible to refer to a sub module `ModelLibrary(models=package.subpackage)` the `Model` classes themselves `ModelLibrary(models=SomeModelClass)`, string package names `ModelLibrary(models="package.module_2")` or any combination of the above `ModelLibrary(models=[package.subpackage, SomeModelClass])`
+!!! note 
+    It is also possible to refer to a sub module `ModelLibrary(models=package.subpackage)` the `Model` classes themselves `ModelLibrary(models=SomeModelClass)`, string package names `ModelLibrary(models="package.module_2")` or any combination of the above `ModelLibrary(models=[package.subpackage, SomeModelClass])`
 
 In order to restrict the models that are actually being loaded, pass a list of `required_models` keys to the `ModelLibrary` instantiation:
 

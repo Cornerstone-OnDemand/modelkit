@@ -51,7 +51,7 @@ modelkit serve PACKAGE [--required-models ...]
 ```
 This is useful in order to inspect the swagger.
 
-!!! warning
+!!! important
     Note that models whose payloads are not serializable will
     not be exposed, this is true in particular of numpy arrays
 

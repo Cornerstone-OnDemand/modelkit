@@ -83,7 +83,7 @@ async def _predict_multiple(self, items):
         ]
 ```
 
-!!! warning
+!!! important
     Be careful that `_tensorflow_predict` returns a dict of `np.ndarray` of shape `(len(items),?)`
     when `_predict_multiple` expects a list of `len(items)` dicts of `np.ndarray`.
 

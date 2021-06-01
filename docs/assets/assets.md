@@ -37,7 +37,7 @@ The specification:
   available version `1.*`
   - may omit version: `asset_category/asset_name` points to the latest version `*.*`
 
-!!! info
+!!! note
     Keep in mind that the asset name can contain any number of separators (`/`).
 
 
@@ -68,7 +68,7 @@ Remote assets are stored in object stores, referenced as:
 [provider]://[bucket]/[assetsmanager-prefix]/[category]/[name]/[version]
 ```
 
-!!! info
+!!! note
   If the asset consists in a directory, all sub files will be stored as 
   separate objects with this prefix.
 

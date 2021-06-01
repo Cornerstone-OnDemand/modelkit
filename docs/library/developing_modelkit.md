@@ -55,7 +55,8 @@ class SimpleModel(Model):
         return "something"
 ```
 
-!!! warning You have to `async def` when implementing `_predict_one` and `_predict_multiple`, even if the function is synchronous.
+!!! important
+    You have to `async def` when implementing `_predict_one` and `_predict_multiple`, even if the function is synchronous.
 
 Right now, we have only given it a name `"simple"` which makes the model available to other models via the `ModelLibrary`.
 
@@ -141,7 +142,8 @@ class ModelWithAsset(Model):
         return self.data_structure["response"] # returns "YOLO les simpsons"
 ```
 
-!!! info Assets retrieval is handled by `modelkit`, and it is guaranteed that they be present when `_load` is called, even in lazy mode. However, it is not true when `__init__` is called. In general, it is not a good idea to subclass `__init__`.
+!!! note
+    Assets retrieval is handled by `modelkit`, and it is guaranteed that they be present when `_load` is called, even in lazy mode. However, it is not true when `__init__` is called. In general, it is not a good idea to subclass `__init__`.
 
 ### Model dependencies
 
@@ -266,6 +268,64 @@ y : ReturnModel = m({"x": 1})
 y : List[ReturnModel] = m([{"x": 1}, {"x": 2}])
 ```
 
+## Batching and vectorization
+
+
+`Model` can easily deal with a single item or multiple items in the inputs:
+```python
+
+class Identity(Model)
+    async def _predict_one(self, item):
+        return item
+    
+m = Identity()
+m({}) # == {}
+m([{}, {"hello": "world"}]) == [{}, {"hello": "world"}]
+```
+
+It is sometimes interesting to implement batched or vectorized logic, to treat
+batches of inputs at once. In this case, one can override `_predict_multiple` instead of `_predict_one`:
+
+```python
+
+class IdentityBatched(Model)
+    async def _predict_one(self, items):
+        return items
+    
+m_batched = IdentityBatched()
+```
+
+Requesting model predictions will lead to the exact same result:
+
+```python
+m_batched({}) # == {}
+m_batched([{}, {"hello": "world"}]) == [{}, {"hello": "world"}]
+```
+
+### Batch size
+
+When `_predict_muliple` is overridden, the `Model` will call it with lists of items. 
+The length of the list can be controled by the `batch_size`, either at call time:
+
+```python
+m_batched([{}, {"hello": "world"}], batch_size=2) 
+```
+
+or set in the model configuration
+
+```python
+class IdentityBatched(Model):
+    CONFIGURATIONS = {
+        "some_model": {
+            "model_settings": {
+                "batch_size": 32
+            }
+        }
+    }
+    async def _predict_one(self, items):
+        return items
+```
+
 ## `Asset` class
 
 It is sometimes useful for a given asset in memory to serve many different `Model` objects. It is possibly by using the `model_dependencies` to point to a parent `Model` that is the only one to load the asset via `_load`.
@@ -274,9 +334,11 @@ In this case, we may not want the parent asset-bearing `Model` object to impleme
 
 This is what an `modelkit.core.model.Asset` is.
 
-!!! info In fact, it is defined the other way around: `Model`s are `Asset`s with a predict function, and thus `Model` inherits from `Asset`.
+!!! note
+    In fact, it is defined the other way around: `Model`s are `Asset`s with a predict function, and thus `Model` inherits from `Asset`.
 
-!!! info There are two ways to use a data asset in a `Model`: either load it directly via its configuration and the `_load`, or package it in an `Asset` and use the deserialized object via model dependencies.
+!!! note
+    There are two ways to use a data asset in a `Model`: either load it directly via its configuration and the `_load`, or package it in an `Asset` and use the deserialized object via model dependencies.
 
 ### Asset file override for debugging
 
