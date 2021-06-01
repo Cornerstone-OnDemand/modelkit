@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import pydantic
 import pytest
@@ -8,9 +8,18 @@ from modelkit.core.model import (
     Model,
     ReturnValueValidationException,
 )
+from modelkit.core.settings import LibrarySettings
+from modelkit.utils.pydantic import construct_recursive
 
 
-def test_validate_item_spec_pydantic():
+@pytest.mark.parametrize(
+    "service_settings",
+    [
+        LibrarySettings(),
+        LibrarySettings(enable_validation=False),
+    ],
+)
+def test_validate_item_spec_pydantic(service_settings):
     class ItemModel(pydantic.BaseModel):
         x: int
 
@@ -20,19 +29,29 @@ def test_validate_item_spec_pydantic():
 
     valid_test_item = {"x": 10}
 
-    m = SomeValidatedModel()
+    m = SomeValidatedModel(service_settings=service_settings)
     assert m(valid_test_item) == valid_test_item
 
-    with pytest.raises(ItemValidationException):
+    if service_settings.enable_validation:
+        with pytest.raises(ItemValidationException):
+            m({"ok": 1})
+        with pytest.raises(ItemValidationException):
+            m({"x": "something", "blabli": 10})
+    else:
         m({"ok": 1})
-
-    with pytest.raises(ItemValidationException):
         m({"x": "something", "blabli": 10})
 
     assert m([valid_test_item] * 2) == [valid_test_item] * 2
 
 
-def test_validate_item_spec_pydantic_default():
+@pytest.mark.parametrize(
+    "service_settings",
+    [
+        LibrarySettings(),
+        LibrarySettings(enable_validation=False),
+    ],
+)
+def test_validate_item_spec_pydantic_default(service_settings):
     class ItemType(pydantic.BaseModel):
         x: int
         y: str = "ok"
@@ -43,9 +62,10 @@ def test_validate_item_spec_pydantic_default():
 
     class TypedModel(Model[ItemType, ReturnType]):
         async def _predict_one(self, item, **kwargs):
+            print(item)
             return {"result": item.x + len(item.y)}
 
-    m = TypedModel()
+    m = TypedModel(service_settings=service_settings)
     res = m({"x": 10, "y": "okokokokok"})
     assert res.result == 20
     assert res.something_else == "ok"
@@ -53,33 +73,56 @@ def test_validate_item_spec_pydantic_default():
     assert res.result == 12
     assert res.something_else == "ok"
 
-    with pytest.raises(ItemValidationException):
-        m({})
+    if service_settings.enable_validation:
+        with pytest.raises(ItemValidationException):
+            m({})
+    else:
+        with pytest.raises(AttributeError):
+            m({})
 
 
-def test_validate_item_spec_typing():
+@pytest.mark.parametrize(
+    "service_settings",
+    [
+        LibrarySettings(),
+        LibrarySettings(enable_validation=False),
+    ],
+)
+def test_validate_item_spec_typing(service_settings):
     class SomeValidatedModel(Model[Dict[str, int], Any]):
         async def _predict_one(self, item):
             return item
 
     valid_test_item = {"x": 10}
 
-    m = SomeValidatedModel()
+    m = SomeValidatedModel(service_settings=service_settings)
     assert m(valid_test_item) == valid_test_item
 
-    with pytest.raises(ItemValidationException):
+    if service_settings.enable_validation:
+        with pytest.raises(ItemValidationException):
+            m(["ok"])
+
+        with pytest.raises(ItemValidationException):
+            m("x")
+
+        with pytest.raises(ItemValidationException):
+            m([1, 2, 1])
+    else:
         m(["ok"])
-
-    with pytest.raises(ItemValidationException):
         m("x")
-
-    with pytest.raises(ItemValidationException):
         m([1, 2, 1])
 
     assert m([valid_test_item] * 2) == [valid_test_item] * 2
 
 
-def test_validate_return_spec():
+@pytest.mark.parametrize(
+    "service_settings",
+    [
+        LibrarySettings(),
+        LibrarySettings(enable_validation=False),
+    ],
+)
+def test_validate_return_spec(service_settings):
     class ItemModel(pydantic.BaseModel):
         x: int
 
@@ -87,7 +130,7 @@ def test_validate_return_spec():
         async def _predict_one(self, item):
             return item
 
-    m = SomeValidatedModel()
+    m = SomeValidatedModel(service_settings)
     ret = m({"x": 10})
     assert ret.x == 10
 
@@ -95,7 +138,14 @@ def test_validate_return_spec():
         m({"x": "something", "blabli": 10})
 
 
-def test_validate_list_items():
+@pytest.mark.parametrize(
+    "service_settings",
+    [
+        LibrarySettings(),
+        LibrarySettings(enable_validation=False),
+    ],
+)
+def test_validate_list_items(service_settings):
     class ItemModel(pydantic.BaseModel):
         x: str
         y: str = "ok"
@@ -109,18 +159,53 @@ def test_validate_list_items():
             self.counter += 1
             return item
 
-    m = SomeValidatedModel()
+    m = SomeValidatedModel(service_settings=service_settings)
     m([{"x": 10, "y": "ko"}] * 10)
     assert m.counter == 10
     m({"x": 10, "y": "ko"})
     assert m.counter == 11
 
 
-def test_validate_none():
+@pytest.mark.parametrize(
+    "service_settings",
+    [
+        LibrarySettings(),
+        LibrarySettings(enable_validation=False),
+    ],
+)
+def test_validate_none(service_settings):
     class SomeValidatedModel(Model):
         async def _predict_one(self, item):
             return item
 
-    m = SomeValidatedModel()
+    m = SomeValidatedModel(service_settings=service_settings)
     assert m({"x": 10}) == {"x": 10}
     assert m(1) == 1
+
+
+def test_construct_recursive():
+    class Item(pydantic.BaseModel):
+        class SubItem(pydantic.BaseModel):
+            class SubSubItem(pydantic.BaseModel):
+                a: str
+
+            z: SubSubItem
+
+        class ListItem(pydantic.BaseModel):
+            content: int
+
+        x: int
+        y: SubItem
+        d: Dict[str, int]
+        z: List[ListItem]
+
+    item_data = {
+        "x": 1,
+        "y": {"z": {"a": "ok"}},
+        "d": {"ok": 1},
+        "z": [{"content": "content"}],
+    }
+
+    item_construct_recursive = construct_recursive(Item, **item_data)
+    assert item_construct_recursive.y.z.a == "ok"
+    assert item_construct_recursive.z[0].content == "content"
