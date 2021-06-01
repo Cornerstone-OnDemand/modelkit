@@ -1,3 +1,4 @@
+from structlog import get_logger
 from tenacity import (
     retry,
     retry_if_exception,
@@ -5,8 +6,7 @@ from tenacity import (
     wait_random_exponential,
 )
 
-from modelkit.log import logger
-
+logger = get_logger(__name__)
 try:
     import redis
 except ImportError:

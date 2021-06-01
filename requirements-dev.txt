@@ -14,8 +14,6 @@ nox
 # cli
 memory-profiler
 networkx
-# logs + 🌈 = 😎
-colorama
 # releases
 bump2version
 # optional

@@ -7,17 +7,19 @@ import time
 
 import humanize
 from dateutil import parser, tz
+from structlog import get_logger
 
 from modelkit.assets import errors
 from modelkit.assets.drivers import settings_to_driver
-from modelkit.assets.log import logger
 from modelkit.assets.settings import RemoteAssetsStoreSettings
 from modelkit.assets.versioning import (
     MajorVersionDoesNotExistError,
     increment_version,
     sort_versions,
 )
-from modelkit.logging.context import ContextualizedLogging
+from modelkit.utils.logging import ContextualizedLogging
+
+logger = get_logger(__name__)
 
 
 def get_size(dir_path):

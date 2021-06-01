@@ -3,9 +3,9 @@ import re
 from typing import Union, cast
 
 import filelock
+from structlog import get_logger
 
 from modelkit.assets import errors
-from modelkit.assets.log import logger
 from modelkit.assets.remote import RemoteAssetsStore
 from modelkit.assets.settings import AssetsManagerSettings, AssetSpec
 from modelkit.assets.versioning import (
@@ -14,7 +14,9 @@ from modelkit.assets.versioning import (
     parse_version,
     sort_versions,
 )
-from modelkit.logging.context import ContextualizedLogging
+from modelkit.utils.logging import ContextualizedLogging
+
+logger = get_logger(__name__)
 
 
 class AssetsManager:

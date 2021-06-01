@@ -2,12 +2,13 @@ import os
 from typing import Optional
 
 import pydantic
+from structlog import get_logger
 from tenacity import retry
 
 from modelkit.assets import errors
 from modelkit.assets.drivers.retry import RETRY_POLICY
-from modelkit.assets.log import logger
 
+logger = get_logger(__name__)
 try:
     from google.api_core.exceptions import NotFound
     from google.cloud import storage

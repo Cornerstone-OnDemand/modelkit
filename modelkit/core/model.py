@@ -8,13 +8,15 @@ import humanize
 import pydantic
 from rich.markup import escape
 from rich.tree import Tree
+from structlog import get_logger
 
 import modelkit
 from modelkit.core.settings import LibrarySettings
 from modelkit.core.types import ItemType, ModelTestingConfiguration, ReturnType
-from modelkit.log import logger
 from modelkit.utils.memory import PerformanceTracker
 from modelkit.utils.pretty import describe, pretty_print_type
+
+logger = get_logger(__name__)
 
 
 def _run_secretly_sync_async_fn(async_fn, *args, **kwargs):
