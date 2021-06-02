@@ -50,22 +50,25 @@ model = library.get("my_favorite_model")
 
     If you have set the `MODELKIT_DEFAULT_PACKAGE` environment variable, you can also skip the `models=...` part.
 
-Predictions can be obtained either for a single item (usually a dict), or a _list of items_
-via the same predict method:
+Predictions can be obtained by calling the object:
 
 ```python
 # This runs the Model method
-prediction = model(item)
+prediction = model(item) # or model.predict(item)
 # or
-prediction = await model_async(item)
+prediction = await model.predict_async(item)
 ```
 
-If `predict` (or `predict_async`) sees a list, it will call `_predict_batch` and
-return a list of processed items (possibly leveraging batching/vectorization
-for performance).
+Predictions for list of items can be obtained by using `predict_batch`:
 
-If `predict` sees something else it will try to call `_predict` on it and return the
-response for a single item.
+```python
+prediction = model.predict_batch(items)
+# or
+prediction = await model.predict_batch_async(item)
+```
+
+Which allows the user to leverage vectorized code by implementing `_predict_batch` instead of `_predict`.
+
 # CLIs
 
 Also see the CLIs documentation [here](../cli.md)

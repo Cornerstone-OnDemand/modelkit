@@ -280,7 +280,8 @@ class Identity(Model)
     
 m = Identity()
 m({}) # == {}
-m([{}, {"hello": "world"}]) == [{}, {"hello": "world"}]
+# or
+m.predict_batch([{}, {"hello": "world"}]) == [{}, {"hello": "world"}]
 ```
 
 It is sometimes interesting to implement batched or vectorized logic, to treat
@@ -299,16 +300,17 @@ Requesting model predictions will lead to the exact same result:
 
 ```python
 m_batched({}) # == {}
-m_batched([{}, {"hello": "world"}]) == [{}, {"hello": "world"}]
+m_batched.predict_batch([{}, {"hello": "world"}]) == [{}, {"hello": "world"}]
 ```
 
 ### Batch size
 
 When `_predict_muliple` is overridden, the `Model` will call it with lists of items. 
-The length of the list can be controled by the `batch_size`, either at call time:
+
+The length of the list is fixed and controled by the `batch_size` parameter either at call time:
 
 ```python
-m_batched([{}, {"hello": "world"}], batch_size=2) 
+m_batched.predict_batch([{}, {"hello": "world"}], batch_size=2) 
 ```
 
 or set in the model configuration
