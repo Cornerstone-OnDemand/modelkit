@@ -80,6 +80,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
             if not isinstance(m, Model):
                 continue
             path = route_paths.get(model_name, "/predict/" + model_name)
+            batch_path = route_paths.get(model_name, "/predict/batch/" + model_name)
 
             summary = ""
             description = ""
@@ -97,11 +98,23 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
 
             logger.info("Adding model", name=model_name)
             try:
+                item_type = m.item_type if hasattr(m, "item_type") else Any
+                try:
+                    item_type.schema()
+                except (ValueError, AttributeError):
+                    item_type = Any
+
                 self.add_api_route(
                     path,
-                    self._make_model_endpoint_fn(
-                        model_name, m.item_type if hasattr(m, "item_type") else None
-                    ),
+                    self._make_model_endpoint_fn(model_name, item_type),
+                    methods=["POST"],
+                    description=description,
+                    summary=summary,
+                    tags=[str(type(m).__module__)],
+                )
+                self.add_api_route(
+                    batch_path,
+                    self._make_batch_model_endpoint_fn(model_name, item_type),
                     methods=["POST"],
                     description=description,
                     summary=summary,
@@ -114,16 +127,19 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
                 )
 
     def _make_model_endpoint_fn(self, model_name, item_type):
-        item_type = item_type or Any
-        try:
-            item_type.schema()
-        except (ValueError, AttributeError):
-            item_type = Any
-
         def _endpoint(
             item: item_type = fastapi.Body(...),
             model=fastapi.Depends(lambda: self.svc.get(model_name)),
         ):  # noqa: B008
             return model(item)
+
+        return _endpoint
+
+    def _make_batch_model_endpoint_fn(self, model_name, item_type):
+        def _endpoint(
+            item: List[item_type] = fastapi.Body(...),
+            model=fastapi.Depends(lambda: self.svc.get(model_name)),
+        ):  # noqa: B008
+            return model.predict_batch(item)
 
         return _endpoint

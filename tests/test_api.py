@@ -99,6 +99,12 @@ def test_api_simple_type(item, api_no_type):
     assert res.status_code == 200
     assert res.json() == item
 
+    res = api_no_type.post(
+        "/predict/batch/some_model", headers={"Content-Type": "application/json"}, json=[item]
+    )
+    assert res.status_code == 200
+    assert res.json() == [item]
+
 
 @pytest.mark.parametrize("item", [{"string": "ok"}])
 def test_api_complex_type(item, api_no_type):
@@ -109,6 +115,14 @@ def test_api_complex_type(item, api_no_type):
     )
     assert res.status_code == 200
     assert res.json()["sorted"] == "".join(sorted(item["string"]))
+
+    res = api_no_type.post(
+        "/predict/batch/some_complex_model",
+        headers={"Content-Type": "application/json"},
+        json=[item],
+    )
+    assert res.status_code == 200
+    assert res.json()[0]["sorted"] == "".join(sorted(item["string"]))
 
 
 def test_api_doc(api_no_type):
