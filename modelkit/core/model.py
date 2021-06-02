@@ -1,3 +1,4 @@
+import asyncio
 import copy
 import hashlib
 import pickle  # nosec
@@ -329,6 +330,13 @@ class BaseModel(Asset, Generic[ItemType, ReturnType]):
 
 
 class Model(BaseModel[ItemType, ReturnType]):
+    def load(self):
+        super().load()
+        """For Model instances, there may be a need to also load the dependencies"""
+        for model_name, m in self._model_dependencies.items():
+            if isinstance(m, AsyncModel):
+                self._model_dependencies[model_name] = WrappedAsyncModel(m)
+
     def __call__(
         self,
         item: ItemType,
@@ -684,3 +692,14 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
 
     async def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
         return [await self._predict(p, **kwargs) for p in items]
+
+
+class WrappedAsyncModel:
+    def __init__(self, async_model: AsyncModel):
+        self.async_model = async_model
+
+    def predict(self, item):
+        return asyncio.run(self.async_model.predict_async(item))
+
+    def predict_batch(self, items):
+        return asyncio.run(self.async_model.predict_batch_async(items))
