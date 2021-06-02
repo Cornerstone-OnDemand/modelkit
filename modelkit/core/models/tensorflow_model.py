@@ -13,7 +13,7 @@ from tenacity import (
     wait_random_exponential,
 )
 
-from modelkit.core.model import Model
+from modelkit.core.model import AsyncModel, Model
 from modelkit.core.types import ItemType, ReturnType
 
 logger = get_logger(__name__)
@@ -63,6 +63,10 @@ class TensorflowModel(Model[ItemType, ReturnType]):
         assert output_tensor_mapping.keys() == self.output_dtypes.keys()
         assert output_tensor_mapping.keys() == self.output_shapes.keys()
 
+        self.tf_model_name = (
+            kwargs.pop("model_settings", {}).get("tf_model_name")
+            or self.configuration_key
+        )
         # the GRPC stub
         self.grpc_stub = None
 
@@ -72,7 +76,7 @@ class TensorflowModel(Model[ItemType, ReturnType]):
 
         if self.service_settings.tf_serving.enable:
             self.grpc_stub = connect_tf_serving(
-                self.configuration_key,
+                self.tf_model_name,
                 self.service_settings.tf_serving.host,
                 self.service_settings.tf_serving.port,
                 self.service_settings.tf_serving.mode,
@@ -85,18 +89,18 @@ class TensorflowModel(Model[ItemType, ReturnType]):
         self.aiohttp_session = None
         self.requests_session = None
 
-    async def _predict_batch(self, items, **kwargs):
+    def _predict_batch(self, items, **kwargs):
         """A generic _predict_batch that stacks and passes items to TensorFlow"""
         vects = {
             key: np.stack([item[key] for item in items], axis=0) for key in items[0]
         }
-        prediction = await self._tensorflow_predict(vects)
+        prediction = self._tensorflow_predict(vects)
         return [
             {key: prediction[key][k, ...] for key in self.output_shapes}
             for k in range(len(items))
         ]
 
-    async def _tensorflow_predict(
+    def _tensorflow_predict(
         self, vects: Dict[str, np.ndarray], grpc_dtype=None
     ) -> Dict[str, np.ndarray]:
         """
@@ -109,15 +113,13 @@ class TensorflowModel(Model[ItemType, ReturnType]):
                 return self._tensorflow_predict_grpc(vects, dtype=grpc_dtype)
             if self.service_settings.tf_serving.mode == "rest":
                 return self._tensorflow_predict_rest(vects)
-            if self.service_settings.tf_serving.mode == "rest-async":
-                return await self._tensorflow_predict_rest_async(vects)
         return self._tensorflow_predict_local(vects)
 
     def _tensorflow_predict_grpc(
         self, vects: Dict[str, np.ndarray], dtype=None
     ) -> Dict[str, np.ndarray]:
         request = PredictRequest()
-        request.model_spec.name = self.configuration_key
+        request.model_spec.name = self.tf_model_name
         for key, vect in vects.items():
             request.inputs[key].CopyFrom(
                 tf.compat.v1.make_tensor_proto(vect, dtype=dtype)
@@ -141,7 +143,7 @@ class TensorflowModel(Model[ItemType, ReturnType]):
         response = self.requests_session.post(
             f"http://{self.service_settings.tf_serving.host}:"
             f"{self.service_settings.tf_serving.port}"
-            f"/v1/models/{self.configuration_key}:predict",
+            f"/v1/models/{self.tf_model_name}:predict",
             data=json.dumps({"inputs": vects}, default=safe_np_dump),
         )
         if response.status_code != 200:
@@ -160,36 +162,6 @@ class TensorflowModel(Model[ItemType, ReturnType]):
             name: np.array(outputs[name], dtype=self.output_dtypes[name])
             for name in self.output_tensor_mapping
         }
-
-    async def _tensorflow_predict_rest_async(
-        self, vects: Dict[str, Any]
-    ) -> Dict[str, np.ndarray]:
-        if self.aiohttp_session is None:
-            # aiohttp wants us to initialize the session in an event loop
-            self.aiohttp_session = aiohttp.ClientSession()
-        async with self.aiohttp_session.post(
-            f"http://{self.service_settings.tf_serving.host}:"
-            f"{self.service_settings.tf_serving.port}"
-            f"/v1/models/{self.configuration_key}:predict",
-            data=json.dumps({"inputs": vects}, default=safe_np_dump),
-        ) as response:
-            if response.status != 200:
-                raise TFServingError(
-                    f"TF Serving error [{response.reason}]: {response.text}"
-                )
-            response_json = await response.json()
-        outputs = response_json["outputs"]
-        if not isinstance(outputs, dict):
-            # with some (legacy) models, the output is the result, instead of a dict
-            return {
-                name: np.array(outputs, dtype=self.output_dtypes[name])
-                for name in self.output_tensor_mapping
-            }
-        results = {
-            name: np.array(outputs[name], dtype=self.output_dtypes[name])
-            for name in self.output_tensor_mapping
-        }
-        return results
 
     def _tensorflow_predict_local(
         self, vects: Dict[str, np.ndarray]
@@ -226,6 +198,80 @@ class TensorflowModel(Model[ItemType, ReturnType]):
                 i += 1
             else:
                 results.append(self._generate_empty_prediction())
+        return results
+
+
+class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType]):
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+        output_tensor_mapping = kwargs.pop("output_tensor_mapping", {}) or kwargs[
+            "model_settings"
+        ].get("output_tensor_mapping")
+        self.output_tensor_mapping = output_tensor_mapping
+        self.output_shapes = kwargs.get("output_shapes", {}) or kwargs[
+            "model_settings"
+        ].get("output_shapes")
+        self.output_dtypes = kwargs.pop(
+            "output_dtypes", {name: np.float for name in output_tensor_mapping}
+        ) or kwargs["model_settings"].get("output_dtypes")
+        # sanity checks
+        assert output_tensor_mapping.keys() == self.output_dtypes.keys()
+        assert output_tensor_mapping.keys() == self.output_shapes.keys()
+
+        self.tf_model_name = (
+            kwargs.pop("model_settings", {}).get("tf_model_name")
+            or self.configuration_key
+        )
+        # the GRPC stub
+        self.grpc_stub = None
+
+        connect_tf_serving(
+            self.tf_model_name,
+            self.service_settings.tf_serving.host,
+            self.service_settings.tf_serving.port,
+            self.service_settings.tf_serving.mode,
+        )
+        self.aiohttp_session = None
+
+    async def _predict_batch(self, items, **kwargs):
+        """A generic _predict_batch that stacks and passes items to TensorFlow"""
+        vects = {
+            key: np.stack([item[key] for item in items], axis=0) for key in items[0]
+        }
+        prediction = await self._tensorflow_predict(vects)
+        return [
+            {key: prediction[key][k, ...] for key in self.output_shapes}
+            for k in range(len(items))
+        ]
+
+    async def _tensorflow_predict(
+        self, vects: Dict[str, np.ndarray]
+    ) -> Dict[str, np.ndarray]:
+        if self.aiohttp_session is None:
+            # aiohttp wants us to initialize the session in an event loop
+            self.aiohttp_session = aiohttp.ClientSession()
+        async with self.aiohttp_session.post(
+            f"http://{self.service_settings.tf_serving.host}:"
+            f"{self.service_settings.tf_serving.port}"
+            f"/v1/models/{self.tf_model_name}:predict",
+            data=json.dumps({"inputs": vects}, default=safe_np_dump),
+        ) as response:
+            if response.status != 200:
+                raise TFServingError(
+                    f"TF Serving error [{response.reason}]: {response.text}"
+                )
+            response_json = await response.json()
+        outputs = response_json["outputs"]
+        if not isinstance(outputs, dict):
+            # with some (legacy) models, the output is the result, instead of a dict
+            return {
+                name: np.array(outputs, dtype=self.output_dtypes[name])
+                for name in self.output_tensor_mapping
+            }
+        results = {
+            name: np.array(outputs[name], dtype=self.output_dtypes[name])
+            for name in self.output_tensor_mapping
+        }
         return results
 
 
