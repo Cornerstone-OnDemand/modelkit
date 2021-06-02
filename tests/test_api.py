@@ -125,6 +125,21 @@ def test_api_complex_type(item, api_no_type):
     assert res.json()[0]["sorted"] == "".join(sorted(item["string"]))
 
 
+EXCLUDED = ["load time", "load memory"]
+
+
+def _strip_description_fields(spec):
+    if isinstance(spec, str):
+        return "\n".join(
+            line for line in spec.split("\n") if not any(x in line for x in EXCLUDED)
+        )
+    if isinstance(spec, list):
+        return [_strip_description_fields(x) for x in spec]
+    if isinstance(spec, dict):
+        return {key: _strip_description_fields(value) for key, value in spec.items()}
+    return spec
+
+
 def test_api_doc(api_no_type):
     r = testing.ReferenceJson(os.path.join(TEST_DIR, "testdata", "api"))
     res = api_no_type.get(
@@ -134,4 +149,4 @@ def test_api_doc(api_no_type):
         # Output is different on Windows platforms since
         # modelkit.utils.memory cannot track memory increment
         # and write it
-        r.assert_equal("openapi.json", res.json())
+        r.assert_equal("openapi.json", _strip_description_fields(res.json()))
