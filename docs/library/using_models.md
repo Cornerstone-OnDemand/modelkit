@@ -9,7 +9,7 @@ The normal way to use `modelkit` models is by instantiating a `ModelLibrary` wit
 from modelkit import ModelLibrary, Model
 
 class MyModel(Model):
-    async def _predict_one(self, item):
+    async def _predict(self, item):
         return item
 
 
@@ -50,22 +50,25 @@ model = library.get("my_favorite_model")
 
     If you have set the `MODELKIT_DEFAULT_PACKAGE` environment variable, you can also skip the `models=...` part.
 
-Predictions can be obtained either for a single item (usually a dict), or a _list of items_
-via the same predict method:
+Predictions can be obtained by calling the object:
 
 ```python
 # This runs the Model method
-prediction = model(item)
+prediction = model(item) # or model.predict(item)
 # or
-prediction = await model_async(item)
+prediction = await model.predict_async(item)
 ```
 
-If `predict` (or `predict_async`) sees a list, it will call `_predict_multiple` and
-return a list of processed items (possibly leveraging batching/vectorization
-for performance).
+Predictions for list of items can be obtained by using `predict_batch`:
 
-If `predict` sees something else it will try to call `_predict_one` on it and return the
-response for a single item.
+```python
+predictions = model.predict_batch(items)
+# or
+predictions = await model.predict_batch_async(items)
+```
+
+Which allows the user to leverage vectorized code by implementing `_predict_batch` instead of `_predict`.
+
 # CLIs
 
 Also see the CLIs documentation [here](../cli.md)

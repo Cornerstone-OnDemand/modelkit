@@ -15,7 +15,7 @@ Some quick `Model` facts:
 
 `modelkit` models are subclasses of the `modelkit.core.model.Model` class.
 
-The prediction logic is implemented in an asynchronous `_predict_one` method that takes a single argument `item`. This represents a single item, which is usually a json serializable dict (with maybe numpy arrays). In fact, Models implement `_predict_one` or `_predict_multiple` (both async) methods, and `Model` appropriately chooses between them and batches.
+The prediction logic is implemented in an asynchronous `_predict` method that takes a single argument `item`. This represents a single item, which is usually a json serializable dict (with maybe numpy arrays). In fact, Models implement `_predict` or `_predict_batch` (both async) methods, and `Model` appropriately chooses between them and batches.
 
 The asset loading logic is implemented in a `_load` method that is run after the `Model` is instantiated, and can load the asset specified in the `Model`'s configuration. For more on this see Lazy Mode.
 
@@ -27,7 +27,7 @@ This simple model class will always return `"something"`:
 from modelkit.core.model import Model
 
 class SimpleModel(Model):
-    async def _predict_one(self, item) -> str:
+    async def _predict(self, item) -> str:
         return "something"
 ```
 
@@ -51,12 +51,12 @@ class SimpleModel(Model):
     CONFIGURATIONS = {
         "simple": {}
     }
-    async def _predict_one(self, item):
+    async def _predict(self, item):
         return "something"
 ```
 
 !!! important
-    You have to `async def` when implementing `_predict_one` and `_predict_multiple`, even if the function is synchronous.
+    You have to `async def` when implementing `_predict` and `_predict_batch`, even if the function is synchronous.
 
 Right now, we have only given it a name `"simple"` which makes the model available to other models via the `ModelLibrary`.
 
@@ -86,7 +86,7 @@ class SimpleModel(Model):
         "simple": {"model_settings": {"value" : "something"}},
         "simple2": {"model_settings": {"value" : "something2"}}
     }
-    async def _predict_one(self, item):
+    async def _predict(self, item):
         return self.model_settings["value"]
 ```
 
@@ -138,7 +138,7 @@ class ModelWithAsset(Model):
         with bz2.BZ2File(self.asset_path, "rb") as f:
             self.data_structure = pickle.load(f) # loads {"response": "YOLO les simpsons"}
 
-    async def _predict_one(self, item: Dict[str, str], **kwargs) -> float:
+    async def _predict(self, item: Dict[str, str], **kwargs) -> float:
         return self.data_structure["response"] # returns "YOLO les simpsons"
 ```
 
@@ -168,7 +168,7 @@ class SomeModel(Model):
 The `ModelLibrary` ensures that whenever `_load` or the `_predict_*` function are called, these models are loaded and present in the `model_dependencies` dictionary:
 
 ```python
-async def _predict_one(self, item):
+async def _predict(self, item):
     cleaned = self.models_dependencies["sentence_piece_cleaner"](item["text"])
     ...
 
@@ -207,7 +207,7 @@ In this case, the instantiated `SomeModel.model_dependencies["cleaner"]` will po
 And a set of attributes always present:
 
 - `model_classname` the name of the `Model`'s subclass
-- `batch_size` the batch size for the model: if `_predict_multiple` is implemented it will always get batches of this size (defaults to 64)
+- `batch_size` the batch size for the model: if `_predict_batch` is implemented it will always get batches of this size (defaults to 64)
 
 ## Model typing
 
@@ -218,7 +218,7 @@ Types are specified when instantiating the `Model` class:
 ```python
 # This model takes `str` items and always returns `int` values
 class SomeTypedModel(Model[str, int]):
-    def _predict_one(self, item):
+    def _predict(self, item):
         return len(item)
 ```
 
@@ -256,12 +256,12 @@ class ReturnModel(pydantic.BaseModel):
     x: int
 
 class SomeValidatedModel(Model[ItemModel, ReturnModel]):
-    async def _predict_one(self, item):
+    async def _predict(self, item):
         # item is guaranteed to be an instance of `ItemModel` even if we feed a dictionary item
         return {"x": item.x}
 
 m = SomeValidatedModel()
-# although we return a dict from the _predict_one method, return value
+# although we return a dict from the _predict method, return value
 # is turned into a `ReturnModel` instance.
 y : ReturnModel = m({"x": 1})
 # which also works with lists of items
@@ -275,22 +275,23 @@ y : List[ReturnModel] = m([{"x": 1}, {"x": 2}])
 ```python
 
 class Identity(Model)
-    async def _predict_one(self, item):
+    async def _predict(self, item):
         return item
     
 m = Identity()
 m({}) # == {}
-m([{}, {"hello": "world"}]) == [{}, {"hello": "world"}]
+# or
+m.predict_batch([{}, {"hello": "world"}]) == [{}, {"hello": "world"}]
 ```
 
 It is sometimes interesting to implement batched or vectorized logic, to treat
-batches of inputs at once. In this case, one can override `_predict_multiple` instead of `_predict_one`:
+batches of inputs at once. In this case, one can override `_predict_batch` instead of `_predict`:
 
 ```python
 
 class IdentityBatched(Model)
-    async def _predict_one(self, items):
-        return items
+    async def _predict(self, item):
+        return item
     
 m_batched = IdentityBatched()
 ```
@@ -299,16 +300,17 @@ Requesting model predictions will lead to the exact same result:
 
 ```python
 m_batched({}) # == {}
-m_batched([{}, {"hello": "world"}]) == [{}, {"hello": "world"}]
+m_batched.predict_batch([{}, {"hello": "world"}]) == [{}, {"hello": "world"}]
 ```
 
 ### Batch size
 
 When `_predict_muliple` is overridden, the `Model` will call it with lists of items. 
-The length of the list can be controled by the `batch_size`, either at call time:
+
+The length of the list is fixed and controled by the `batch_size` parameter either at call time:
 
 ```python
-m_batched([{}, {"hello": "world"}], batch_size=2) 
+m_batched.predict_batch([{}, {"hello": "world"}], batch_size=2) 
 ```
 
 or set in the model configuration
@@ -322,8 +324,8 @@ class IdentityBatched(Model):
             }
         }
     }
-    async def _predict_one(self, items):
-        return items
+    async def _predict(self, item):
+        return item
 ```
 
 ## `Asset` class

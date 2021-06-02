@@ -18,7 +18,7 @@ The normal way to use `modelkit` models is by instantiating a `ModelLibrary` wit
 from modelkit import ModelLibrary, Model
 
 class MyModel(Model):
-    async def _predict_one(self, item):
+    async def _predict(self, item):
         return item
 
 

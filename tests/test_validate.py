@@ -24,7 +24,7 @@ def test_validate_item_spec_pydantic(service_settings):
         x: int
 
     class SomeValidatedModel(Model[ItemModel, Any]):
-        async def _predict_one(self, item):
+        async def _predict(self, item):
             return item
 
     valid_test_item = {"x": 10}
@@ -41,7 +41,7 @@ def test_validate_item_spec_pydantic(service_settings):
         m({"ok": 1})
         m({"x": "something", "blabli": 10})
 
-    assert m([valid_test_item] * 2) == [valid_test_item] * 2
+    assert m.predict_batch([valid_test_item] * 2) == [valid_test_item] * 2
 
 
 @pytest.mark.parametrize(
@@ -61,8 +61,7 @@ def test_validate_item_spec_pydantic_default(service_settings):
         something_else: str = "ok"
 
     class TypedModel(Model[ItemType, ReturnType]):
-        async def _predict_one(self, item, **kwargs):
-            print(item)
+        async def _predict(self, item, **kwargs):
             return {"result": item.x + len(item.y)}
 
     m = TypedModel(service_settings=service_settings)
@@ -90,7 +89,7 @@ def test_validate_item_spec_pydantic_default(service_settings):
 )
 def test_validate_item_spec_typing(service_settings):
     class SomeValidatedModel(Model[Dict[str, int], Any]):
-        async def _predict_one(self, item):
+        async def _predict(self, item):
             return item
 
     valid_test_item = {"x": 10}
@@ -100,19 +99,19 @@ def test_validate_item_spec_typing(service_settings):
 
     if service_settings.enable_validation:
         with pytest.raises(ItemValidationException):
-            m(["ok"])
+            m.predict_batch(["ok"])
 
         with pytest.raises(ItemValidationException):
             m("x")
 
         with pytest.raises(ItemValidationException):
-            m([1, 2, 1])
+            m.predict_batch([1, 2, 1])
     else:
-        m(["ok"])
+        m.predict_batch(["ok"])
         m("x")
-        m([1, 2, 1])
+        m.predict_batch([1, 2, 1])
 
-    assert m([valid_test_item] * 2) == [valid_test_item] * 2
+    assert m.predict_batch([valid_test_item] * 2) == [valid_test_item] * 2
 
 
 @pytest.mark.parametrize(
@@ -127,7 +126,7 @@ def test_validate_return_spec(service_settings):
         x: int
 
     class SomeValidatedModel(Model[Any, ItemModel]):
-        async def _predict_one(self, item):
+        async def _predict(self, item):
             return item
 
     m = SomeValidatedModel(service_settings)
@@ -155,12 +154,12 @@ def test_validate_list_items(service_settings):
             self.counter = 0
             super().__init__(*args, **kwargs)
 
-        async def _predict_one(self, item):
+        async def _predict(self, item):
             self.counter += 1
             return item
 
     m = SomeValidatedModel(service_settings=service_settings)
-    m([{"x": 10, "y": "ko"}] * 10)
+    m.predict_batch([{"x": 10, "y": "ko"}] * 10)
     assert m.counter == 10
     m({"x": 10, "y": "ko"})
     assert m.counter == 11
@@ -175,7 +174,7 @@ def test_validate_list_items(service_settings):
 )
 def test_validate_none(service_settings):
     class SomeValidatedModel(Model):
-        async def _predict_one(self, item):
+        async def _predict(self, item):
             return item
 
     m = SomeValidatedModel(service_settings=service_settings)

@@ -63,10 +63,10 @@ tensors predicted by the TF model:
 -   `output_tensor_shapes` and `output_tensor_dtypes` a dict of shapes and dtypes of these
     tensors.
 
-Typically, inside a `_predict_multiple`, one would do something like:
+Typically, inside a `_predict_batch`, one would do something like:
 
 ```python
-async def _predict_multiple(self, items):
+async def _predict_batch(self, items):
     data = await self._tensorflow_predict(
             {
                 key: np.stack([item[key] for item in items], axis=0)
@@ -85,7 +85,7 @@ async def _predict_multiple(self, items):
 
 !!! important
     Be careful that `_tensorflow_predict` returns a dict of `np.ndarray` of shape `(len(items),?)`
-    when `_predict_multiple` expects a list of `len(items)` dicts of `np.ndarray`.
+    when `_predict_batch` expects a list of `len(items)` dicts of `np.ndarray`.
 
 ## Other methods to re-implement
 
@@ -105,7 +105,7 @@ In this case we use the following pattern, wherein we leverage the method
 `TensorflowModel._rebuild_predictions_with_mask`:
 
 ```python
-async def _predict_multiple(
+async def _predict_batch(
     self, items: List[Dict[str, str]], **kwargs
 ) -> List[Tuple[np.ndarray, List[str]]]:
     treated_items = self.treat(items)

@@ -14,7 +14,7 @@ class ReturnType(pydantic.BaseModel):
 
 
 class SomeModel(Model[ItemType, ReturnType]):
-    async def _predict_one(self, item):
+    async def _predict(self, item):
         return item
 
 
@@ -27,7 +27,7 @@ def test_model_serialization():
 
 
 class SomeModelWithoutTypes(Model):
-    async def _predict_one(self, item):
+    async def _predict(self, item):
         return item
 
 

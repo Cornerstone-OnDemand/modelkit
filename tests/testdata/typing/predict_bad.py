@@ -2,7 +2,7 @@ from modelkit.core.model import Model
 
 
 class BadModel(Model[int, int]):
-    def _predict_one(self, item):
+    def _predict(self, item):
         return item
 
 
