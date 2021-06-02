@@ -1,4 +1,3 @@
-import asyncio
 import os
 
 import numpy as np
@@ -82,8 +81,9 @@ def tf_serving(request, monkeypatch, working_dir):
     yield tf_serving_fixture(request, lib)
 
 
+@pytest.mark.asyncio
 @skip_unless("ENABLE_TF_SERVING_TEST", "True")
-def test_iso_serving_mode(tf_serving):
+async def test_iso_serving_mode(tf_serving, event_loop):
     model_name = "dummy_tf_model"
     # Get the prediction service running TF with gRPC serving
     svc_serving_grpc = ModelLibrary(
@@ -126,9 +126,8 @@ def test_iso_serving_mode(tf_serving):
 
     _compare_models(model_rest, model_grpc, TEST_ITEMS)
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(svc_serving_rest.close_connections())
-    loop.run_until_complete(svc_serving_grpc.close_connections())
+    await svc_serving_rest.close_connections()
+    await svc_serving_grpc.close_connections()
     assert model_rest.aiohttp_session is None
 
 
@@ -209,8 +208,9 @@ def _compare_models(model0, model1, items, tolerance=1e-2):
         )
 
 
+@pytest.mark.asyncio
 @skip_unless("ENABLE_TF_SERVING_TEST", "True")
-def test_iso_async(tf_serving):
+async def test_iso_async(tf_serving, event_loop):
     # Get the prediction service running TF with REST serving
     svc = ModelLibrary(
         required_models=["dummy_tf_model", "dummy_tf_model_async"],
@@ -227,9 +227,8 @@ def test_iso_async(tf_serving):
     m_jt2s = svc.get("dummy_tf_model")
     async_m_jt2s = svc.get("dummy_tf_model_async")
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(_compare_models_async(m_jt2s, async_m_jt2s, TEST_ITEMS))
-    loop.run_until_complete(svc.close_connections())
+    await _compare_models_async(m_jt2s, async_m_jt2s, TEST_ITEMS)
+    await svc.close_connections()
     assert async_m_jt2s.aiohttp_session is None
 
 
@@ -246,7 +245,7 @@ async def _compare_models_async(model, model_async, items, tolerance=1e-2):
         for item in items:
             res_model0 = model(item)
             res_model0_per_item.append(res_model0)
-            res_model1 = await model_async.predict_async(item)
+            res_model1 = await model_async.predict(item)
             assert compare_result(res_model0, res_model1, tolerance)
     except AssertionError as e:
         raise AssertionError(f"Models differ on single items\n{e.args[0]}")
@@ -254,7 +253,7 @@ async def _compare_models_async(model, model_async, items, tolerance=1e-2):
     try:
         # Compare two models in batches
         res_model0_items = model.predict_batch(items)
-        res_model1_items = await model_async.predict_batch_async(items)
+        res_model1_items = await model_async.predict_batch(items)
         for k in range(len(items)):
             res_model0 = res_model0_items[k]
             res_model1 = res_model1_items[k]

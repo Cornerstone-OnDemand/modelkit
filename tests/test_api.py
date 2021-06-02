@@ -13,7 +13,7 @@ from modelkit.core.model import Asset, Model
 from tests import TEST_DIR
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def api_no_type(event_loop):
     class SomeSimpleValidatedModel(Model[str, str]):
         """

@@ -1,5 +1,6 @@
 import asyncio
 
+import pydantic
 import pytest
 
 from modelkit.core.library import ModelLibrary
@@ -25,15 +26,17 @@ def test_compose_sync_async():
     assert m.predict({"hello": "world"}) == {"hello": "world"}
 
 
-async def _do_async(model, item):
+async def _do_async(model, item, expected=None):
+    expected = expected or item
     res = await model.predict(item)
-    assert item == res
+    assert expected == res
 
     res = await model.predict_batch([item] * 10)
-    assert [item] * 10 == res
+    assert [expected] * 10 == res
 
 
-def test_async_predict():
+@pytest.mark.asyncio
+async def test_async_predict(event_loop):
     class SomeModel(AsyncModel):
         async def _predict(self, item, **kwargs):
             await asyncio.sleep(0.1)
@@ -45,5 +48,20 @@ def test_async_predict():
     with pytest.raises(AssertionError):
         assert m.predict_batch([{}]) == [{}]
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(_do_async(m, {}))
+    await _do_async(m, {})
+
+    class Item(pydantic.BaseModel):
+        x: int
+
+    class SomeModel(AsyncModel[Item, Item]):
+        async def _predict(self, item, **kwargs):
+            await asyncio.sleep(0.1)
+            return item
+
+    m = SomeModel()
+    with pytest.raises(AssertionError):
+        assert m.predict({"x": 1}) == Item(x=1)
+    with pytest.raises(AssertionError):
+        assert m.predict_batch([{"x": 1}]) == [Item(x=1)]
+
+    await _do_async(m, {"x": 1}, Item(x=1))
