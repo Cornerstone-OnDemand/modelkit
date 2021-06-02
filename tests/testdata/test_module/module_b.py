@@ -12,7 +12,7 @@ class SomeSimpleValidatedModelB(Model[str, str]):
 
     CONFIGURATIONS = {"some_model_b": {}}
 
-    async def _predict_one(self, item):
+    async def _predict(self, item):
         return item
 
 
@@ -33,5 +33,5 @@ class SomeComplexValidatedModelB(Model[ItemModel, ResultModel]):
 
     CONFIGURATIONS = {"some_complex_model_b": {}}
 
-    async def _predict_one(self, item):
+    async def _predict(self, item):
         return {"sorted": "".join(sorted(item.string))}

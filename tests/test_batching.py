@@ -28,7 +28,7 @@ async def test_identitybatch_batch_process(
 ):
 
     m = Model()
-    monkeypatch.setattr(m, "_predict_multiple", func)
+    monkeypatch.setattr(m, "_predict_batch", func)
     if batch_size:
         assert await m._predict_by_batch(items, batch_size=batch_size) == expected
     else:
@@ -60,6 +60,6 @@ async def test_callback_batch_process(items, batch_size, expected_steps, monkeyp
         steps += 1
 
     m = Model()
-    monkeypatch.setattr(m, "_predict_multiple", func)
+    monkeypatch.setattr(m, "_predict_batch", func)
     await m._predict_by_batch(items, batch_size=batch_size, callback=callback)
     assert steps == expected_steps

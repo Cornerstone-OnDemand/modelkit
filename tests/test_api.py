@@ -24,7 +24,7 @@ def api_no_type(event_loop):
 
         CONFIGURATIONS = {"some_model": {}}
 
-        async def _predict_one(self, item):
+        async def _predict(self, item):
             return item
 
     class ItemModel(pydantic.BaseModel):
@@ -42,19 +42,19 @@ def api_no_type(event_loop):
 
         CONFIGURATIONS = {"some_complex_model": {}}
 
-        async def _predict_one(self, item):
+        async def _predict(self, item):
             return {"sorted": "".join(sorted(item.string))}
 
     class NotValidatedModel(Model):
         CONFIGURATIONS = {"unvalidated_model": {}}
 
-        async def _predict_one(self, item):
+        async def _predict(self, item):
             return item
 
     class ValidationNotSupported(Model[np.ndarray, np.ndarray]):
         CONFIGURATIONS = {"no_supported_model": {}}
 
-        async def _predict_one(self, item):
+        async def _predict(self, item):
             return item
 
     class SomeAsset(Asset):
@@ -64,7 +64,7 @@ def api_no_type(event_loop):
 
         CONFIGURATIONS = {"some_asset": {}}
 
-        async def _predict_one(self, item):
+        async def _predict(self, item):
             return {"sorted": "".join(sorted(item.string))}
 
     router = ModelkitAutoAPIRouter(

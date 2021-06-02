@@ -26,7 +26,7 @@ class TestableModel(Model[ModelItemType, ModelItemType]):
         ]
     }
 
-    async def _predict_one(self, item, add_one=False):
+    async def _predict(self, item, add_one=False):
         if add_one:
             return {"x": item.x + 1}
         return item
@@ -40,7 +40,7 @@ def test_list_cases():
             cases=[{"item": {"x": 1}, "result": {"x": 1}}]
         )
 
-        async def _predict_one(self, item):
+        async def _predict(self, item):
             return item
 
     assert list(SomeModel._iterate_test_cases()) == [
@@ -52,7 +52,7 @@ def test_list_cases():
 
         TEST_CASES = {"cases": [{"item": {"x": 1}, "result": {"x": 1}}]}
 
-        async def _predict_one(self, item):
+        async def _predict(self, item):
             return item
 
     assert list(TestableModel._iterate_test_cases()) == [

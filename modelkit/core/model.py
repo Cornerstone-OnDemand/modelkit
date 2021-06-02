@@ -165,7 +165,7 @@ class Model(Asset, Generic[ItemType, ReturnType]):
      timed and formatted properly.
 
     To implement a Model, either implement
-    _predict_one or _predict_multiple
+    _predict or _predict_batch
     that either take items or lists of items.
     """
 
@@ -292,9 +292,9 @@ class Model(Asset, Generic[ItemType, ReturnType]):
         **kwargs,
     ):
         """
-        Implement `Model._predict_one(item)` to make predictions
+        Implement `Model._predict(item)` to make predictions
         and if there can be enhancements with batching, implement
-        `Model._predict_multiple(items)`.
+        `Model._predict_batch(items)`.
         They call each other so make sure that you do
         in fact implement one of them.
         """
@@ -337,10 +337,10 @@ class Model(Asset, Generic[ItemType, ReturnType]):
                         key=key,
                         model=self.configuration_key,
                     )
-                    results = await self._predict_one(items, **kwargs)
+                    results = await self._predict(items, **kwargs)
                     self.redis_cache.set(key, pickle.dumps(results))
             else:
-                results = await self._predict_one(items, **kwargs)
+                results = await self._predict(items, **kwargs)
         elif self.redis_cache and self.model_settings.get("cache_predictions"):
             # In the case where cache is activated, sieve through
             #  individual items
@@ -420,20 +420,18 @@ class Model(Asset, Generic[ItemType, ReturnType]):
         predictions = []
         for step in range(0, len(items), batch_size):
             batch = items[step : step + batch_size]
-            current_predictions = await self._predict_multiple(batch, **kwargs)
+            current_predictions = await self._predict_batch(batch, **kwargs)
             predictions.extend(current_predictions)
             if callback:
                 callback(step, batch, current_predictions)
         return predictions
 
-    async def _predict_one(self, item: ItemType, **kwargs) -> ReturnType:
-        result = await self._predict_multiple([item], **kwargs)
+    async def _predict(self, item: ItemType, **kwargs) -> ReturnType:
+        result = await self._predict_batch([item], **kwargs)
         return result[0]
 
-    async def _predict_multiple(
-        self, items: List[ItemType], **kwargs
-    ) -> List[ReturnType]:
-        return [await self._predict_one(p, **kwargs) for p in items]
+    async def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
+        return [await self._predict(p, **kwargs) for p in items]
 
     @classmethod
     def _iterate_test_cases(cls, model_keys=None):

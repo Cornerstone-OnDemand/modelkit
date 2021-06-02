@@ -85,8 +85,8 @@ class TensorflowModel(Model[ItemType, ReturnType]):
         self.aiohttp_session = None
         self.requests_session = None
 
-    async def _predict_multiple(self, items, **kwargs):
-        """A generic _predict_multiple that stacks and passes items to TensorFlow"""
+    async def _predict_batch(self, items, **kwargs):
+        """A generic _predict_batch that stacks and passes items to TensorFlow"""
         vects = {
             key: np.stack([item[key] for item in items], axis=0) for key in items[0]
         }

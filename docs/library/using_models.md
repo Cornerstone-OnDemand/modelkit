@@ -9,7 +9,7 @@ The normal way to use `modelkit` models is by instantiating a `ModelLibrary` wit
 from modelkit import ModelLibrary, Model
 
 class MyModel(Model):
-    async def _predict_one(self, item):
+    async def _predict(self, item):
         return item
 
 
@@ -60,11 +60,11 @@ prediction = model(item)
 prediction = await model_async(item)
 ```
 
-If `predict` (or `predict_async`) sees a list, it will call `_predict_multiple` and
+If `predict` (or `predict_async`) sees a list, it will call `_predict_batch` and
 return a list of processed items (possibly leveraging batching/vectorization
 for performance).
 
-If `predict` sees something else it will try to call `_predict_one` on it and return the
+If `predict` sees something else it will try to call `_predict` on it and return the
 response for a single item.
 # CLIs
 

@@ -60,7 +60,7 @@ class DistantHTTPModel(Model[ItemType, ReturnType]):
         pass
 
     @retry(**SERVICE_MODEL_RETRY_POLICY)
-    async def _predict_one_async(self, item):
+    async def _predict_async(self, item):
         if self.aiohttp_session is None:
             # aiohttp wants us to initialize the session in an event loop
             self.aiohttp_session = aiohttp.ClientSession()
@@ -75,7 +75,7 @@ class DistantHTTPModel(Model[ItemType, ReturnType]):
             return await response.json()
 
     @retry(**SERVICE_MODEL_RETRY_POLICY)
-    def _predict_one_sync(self, item):
+    def _predict_sync(self, item):
         if not self.requests_session:
             self.requests_session = requests.Session()
         response = self.requests_session.post(
@@ -88,13 +88,13 @@ class DistantHTTPModel(Model[ItemType, ReturnType]):
             )
         return response.json()
 
-    async def _predict_one(self, item):
+    async def _predict(self, item):
         if self._async_mode is None:
             try:
                 asyncio.get_event_loop()
-                return await self._predict_one_async(item)
+                return await self._predict_async(item)
             except RuntimeError:
-                return self._predict_one_sync(item)
+                return self._predict_sync(item)
         if self._async_mode:
-            return await self._predict_one_async(item)
-        return self._predict_one_sync(item)
+            return await self._predict_async(item)
+        return self._predict_sync(item)

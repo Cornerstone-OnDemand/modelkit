@@ -4,7 +4,7 @@ from modelkit.core.model import Model
 
 
 class OKModel(Model[int, int]):
-    def _predict_one(self, item):
+    def _predict(self, item):
         return item
 
 
