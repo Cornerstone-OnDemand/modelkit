@@ -223,6 +223,15 @@ class Model(Asset, Generic[ItemType, ReturnType]):
         batch_size: int = None,
         **kwargs,
     ):
+        return self.predict(items, callback=callback, batch_size=batch_size, **kwargs)
+
+    def predict(
+        self,
+        items,
+        callback: Callable = None,
+        batch_size: int = None,
+        **kwargs,
+    ):
         return _run_secretly_sync_async_fn(
             self.predict_async, items, callback, batch_size, **kwargs
         )
