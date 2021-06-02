@@ -14,6 +14,19 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "ItemModel": {
+        "properties": {
+          "string": {
+            "title": "String",
+            "type": "string"
+          }
+        },
+        "required": [
+          "string"
+        ],
+        "title": "ItemModel",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -96,7 +109,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "title": "Item"
+                "$ref": "#/components/schemas/ItemModel"
               }
             }
           },

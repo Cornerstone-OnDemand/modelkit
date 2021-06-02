@@ -100,7 +100,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
                 self.add_api_route(
                     path,
                     self._make_model_endpoint_fn(
-                        model_name, m._item_type if hasattr(m, "_item_type") else None
+                        model_name, m.item_type if hasattr(m, "item_type") else None
                     ),
                     methods=["POST"],
                     description=description,

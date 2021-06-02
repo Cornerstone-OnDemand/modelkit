@@ -10,4 +10,4 @@ class OKModel(Model[int, int]):
 
 m = OKModel()
 y: int = m(1)
-y2: List[int] = m([1])
+y2: List[int] = m.predict_batch([1])

@@ -41,7 +41,7 @@ def test_validate_item_spec_pydantic(service_settings):
         m({"ok": 1})
         m({"x": "something", "blabli": 10})
 
-    assert m([valid_test_item] * 2) == [valid_test_item] * 2
+    assert m.predict_batch([valid_test_item] * 2) == [valid_test_item] * 2
 
 
 @pytest.mark.parametrize(
@@ -99,19 +99,19 @@ def test_validate_item_spec_typing(service_settings):
 
     if service_settings.enable_validation:
         with pytest.raises(ItemValidationException):
-            m(["ok"])
+            m.predict_batch(["ok"])
 
         with pytest.raises(ItemValidationException):
             m("x")
 
         with pytest.raises(ItemValidationException):
-            m([1, 2, 1])
+            m.predict_batch([1, 2, 1])
     else:
-        m(["ok"])
+        m.predict_batch(["ok"])
         m("x")
-        m([1, 2, 1])
+        m.predict_batch([1, 2, 1])
 
-    assert m([valid_test_item] * 2) == [valid_test_item] * 2
+    assert m.predict_batch([valid_test_item] * 2) == [valid_test_item] * 2
 
 
 @pytest.mark.parametrize(
@@ -159,7 +159,7 @@ def test_validate_list_items(service_settings):
             return item
 
     m = SomeValidatedModel(service_settings=service_settings)
-    m([{"x": 10, "y": "ko"}] * 10)
+    m.predict_batch([{"x": 10, "y": "ko"}] * 10)
     assert m.counter == 10
     m({"x": 10, "y": "ko"})
     assert m.counter == 11

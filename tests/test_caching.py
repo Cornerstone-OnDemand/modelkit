@@ -50,22 +50,22 @@ async def _do_model_test(model, ITEMS):
         assert i == res
         assert from_cache
 
-    res = model(ITEMS, _return_info=True)
+    res = model.predict_batch(ITEMS, _return_info=True)
     assert [x[0] for x in res] == ITEMS
     assert all([x[1] for x in res])
 
-    res = await model.predict_async(ITEMS, _return_info=True)
+    res = await model.predict_batch_async(ITEMS, _return_info=True)
     assert [x[0] for x in res] == ITEMS
     assert all([x[1] for x in res])
 
     mixed_items = ITEMS + [{"new": "item"}]
-    res = model(mixed_items, _return_info=True)
+    res = model.predict_batch(mixed_items, _return_info=True)
     assert [x[0] for x in res] == mixed_items
     assert all([x[1] for x in res[:-1]])
     assert not res[-1][1]
 
     mixed_items = ITEMS + [{"new": "item"}]
-    res = model(mixed_items, _return_info=True)
+    res = model.predict_batch(mixed_items, _return_info=True)
     assert [x[0] for x in res] == mixed_items
     assert all([x[1] for x in res])
 

@@ -174,8 +174,8 @@ def _compare_models(model0, model1, items, tolerance=1e-2):
 
     try:
         # Compare two models in batches
-        res_model0_items = model0(items)
-        res_model1_items = model1(items)
+        res_model0_items = model0.predict_batch(items)
+        res_model1_items = model1.predict_batch(items)
         for k in range(len(items)):
             res_model0 = res_model0_items[k]
             res_model1 = res_model1_items[k]
@@ -253,8 +253,8 @@ async def _compare_models_async(model, model_async, items, tolerance=1e-2):
 
     try:
         # Compare two models in batches
-        res_model0_items = model(items)
-        res_model1_items = await model_async.predict_async(items)
+        res_model0_items = model.predict_batch(items)
+        res_model1_items = await model_async.predict_batch_async(items)
         for k in range(len(items)):
             res_model0 = res_model0_items[k]
             res_model1 = res_model1_items[k]
