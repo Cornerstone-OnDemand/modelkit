@@ -1,4 +1,3 @@
-import asyncio
 import json
 
 import aiohttp
@@ -11,7 +10,7 @@ from tenacity import (
     wait_random_exponential,
 )
 
-from modelkit.core.model import AsyncModel
+from modelkit.core.model import AsyncModel, Model
 from modelkit.core.types import ItemType, ReturnType
 
 logger = get_logger(__name__)
@@ -46,23 +45,18 @@ SERVICE_MODEL_RETRY_POLICY = {
 }
 
 
-class DistantHTTPModel(AsyncModel[ItemType, ReturnType]):
+class AsyncDistantHTTPModel(AsyncModel[ItemType, ReturnType]):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
         self.endpoint = self.model_settings["endpoint"]
-        self._async_mode = self.model_settings.get(
-            "async_mode", self.service_settings.async_mode
-        )
         self.aiohttp_session = None
-        self.requests_session = None
 
     def _load(self):
         pass
 
     @retry(**SERVICE_MODEL_RETRY_POLICY)
-    async def _predict_async(self, item):
+    async def _predict(self, item):
         if self.aiohttp_session is None:
-            # aiohttp wants us to initialize the session in an event loop
             self.aiohttp_session = aiohttp.ClientSession()
         async with self.aiohttp_session.post(
             self.endpoint,
@@ -74,8 +68,18 @@ class DistantHTTPModel(AsyncModel[ItemType, ReturnType]):
                 )
             return await response.json()
 
+
+class DistantHTTPModel(Model[ItemType, ReturnType]):
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+        self.endpoint = self.model_settings["endpoint"]
+        self.requests_session = None
+
+    def _load(self):
+        pass
+
     @retry(**SERVICE_MODEL_RETRY_POLICY)
-    def _predict_sync(self, item):
+    def _predict(self, item):
         if not self.requests_session:
             self.requests_session = requests.Session()
         response = self.requests_session.post(
@@ -87,14 +91,3 @@ class DistantHTTPModel(AsyncModel[ItemType, ReturnType]):
                 response.status_code, response.reason, response.text
             )
         return response.json()
-
-    async def _predict(self, item):
-        if self._async_mode is None:
-            try:
-                asyncio.get_event_loop()
-                return await self._predict_async(item)
-            except RuntimeError:
-                return self._predict_sync(item)
-        if self._async_mode:
-            return await self._predict_async(item)
-        return self._predict_sync(item)
