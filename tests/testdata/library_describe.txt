@@ -33,8 +33,6 @@ Models
 │   │                                                                           
 │   │           With **a lot** of documentation                                 
 │   ├── signature: ItemModel -> ItemModel                                       
-│   ├── load time: 0 microseconds                                               
-│   ├── load memory: 0 Bytes                                                    
 │   └── batch size: 64                                                          
 └── some_model_a : SomeSimpleValidatedModelA = SomeSimpleValidatedModelA        
     instance                                                                    
@@ -43,6 +41,4 @@ Models
     │                                                                           
     │           that also has plenty more text                                  
     ├── signature: str -> str                                                   
-    ├── load time: 0 microseconds                                               
-    ├── load memory: 0 Bytes                                                    
     └── batch size: 64                                                          
