@@ -3,7 +3,7 @@ import copy
 import hashlib
 import pickle  # nosec
 import typing
-from typing import Any, Callable, Dict, Generic, List, Union
+from typing import Any, Callable, Dict, Generic, List, Type, Union
 
 import humanize
 import pydantic
@@ -84,6 +84,8 @@ class Asset:
 
 
 class InternalDataModel(pydantic.BaseModel):
+    data: Any
+
     class Config:
         arbitrary_types_allowed = True
         extra = "forbid"
@@ -318,6 +320,46 @@ class BaseModel(Asset, Generic[ItemType, ReturnType]):
 
         return t
 
+    def _validate(
+        self,
+        item: Any,
+        model: Union[Type[InternalDataModel], None],
+        exception: Type[ModelkitDataValidationException],
+    ):
+        if model:
+            try:
+                if self.service_settings.enable_validation:
+                    return model(data=item).data
+                else:
+                    return construct_recursive(model, data=item).data
+            except pydantic.error_wrappers.ValidationError as exc:
+                raise exception(
+                    f"{self.__class__.__name__}[{self.configuration_key}]",
+                    pydantic_exc=exc,
+                )
+        return item
+
+    def _validate_batch(
+        self,
+        items: List[Any],
+        model: Union[Type[InternalDataModel], None],
+        exception: Type[ModelkitDataValidationException],
+    ):
+        if model:
+            try:
+                if self.service_settings.enable_validation:
+                    items = [model(data=item).data for item in items]
+                else:
+                    items = [
+                        construct_recursive(model, data=item).data for item in items
+                    ]
+            except pydantic.error_wrappers.ValidationError as exc:
+                raise exception(
+                    f"{self.__class__.__name__}[{self.configuration_key}]",
+                    pydantic_exc=exc,
+                )
+        return items
+
 
 class Model(BaseModel[ItemType, ReturnType]):
     def load(self):
@@ -331,7 +373,6 @@ class Model(BaseModel[ItemType, ReturnType]):
         self,
         item: ItemType,
         _force_compute: bool = False,
-        _return_info: bool = False,
         **kwargs,
     ) -> ReturnType:
         return self.predict(item, _force_compute=_force_compute, **kwargs)
@@ -344,20 +385,9 @@ class Model(BaseModel[ItemType, ReturnType]):
         self,
         item: ItemType,
         _force_compute: bool = False,
-        _return_info: bool = False,
         **kwargs,
     ) -> ReturnType:
-        if self._item_model:
-            try:
-                if self.service_settings.enable_validation:
-                    item = self._item_model(data=item).data
-                else:
-                    item = construct_recursive(self._item_model, data=item).data
-            except pydantic.error_wrappers.ValidationError as exc:
-                raise ItemValidationException(
-                    f"{self.__class__.__name__}[{self.configuration_key}]",
-                    pydantic_exc=exc,
-                )
+        item = self._validate(item, self._item_model, ItemValidationException)
         if self.redis_cache and self.model_settings.get("cache_predictions"):
             key = self.item_cache_key(item, kwargs)
             if not _force_compute and self.redis_cache.exists(key):
@@ -366,29 +396,21 @@ class Model(BaseModel[ItemType, ReturnType]):
                     key=key,
                     model=self.configuration_key,
                 )
-                results = pickle.loads(self.redis_cache.get(key))  # nosec
+                result = pickle.loads(self.redis_cache.get(key))  # nosec
             else:
                 logger.debug(
                     "No cached prediction result found",
                     key=key,
                     model=self.configuration_key,
                 )
-                results = self._predict(item, **kwargs)
-                self.redis_cache.set(key, pickle.dumps(results))
+                result = self._predict(item, **kwargs)
+                self.redis_cache.set(key, pickle.dumps(result))
         else:
-            results = self._predict(item, **kwargs)
+            result = self._predict(item, **kwargs)
 
-        if self._return_model:
-            try:
-                if self.service_settings.enable_validation:
-                    results = self._return_model(data=results).data
-                else:
-                    results = construct_recursive(self._return_model, data=results).data
-            except pydantic.error_wrappers.ValidationError as exc:
-                raise ReturnValueValidationException(
-                    self.configuration_key, pydantic_exc=exc
-                )
-        return results
+        return self._validate(
+            result, self._return_model, ReturnValueValidationException
+        )
 
     def predict_batch(
         self,
@@ -399,20 +421,7 @@ class Model(BaseModel[ItemType, ReturnType]):
         _return_info: bool = False,
         **kwargs,
     ) -> List[ReturnType]:
-        if self._item_model:
-            try:
-                if self.service_settings.enable_validation:
-                    items = [self._item_model(data=item).data for item in items]
-                else:
-                    items = [
-                        construct_recursive(self._item_model, data=item).data
-                        for item in items
-                    ]
-            except pydantic.error_wrappers.ValidationError as exc:
-                raise ItemValidationException(
-                    f"{self.__class__.__name__}[{self.configuration_key}]",
-                    pydantic_exc=exc,
-                )
+        items = self._validate_batch(items, self._item_model, ItemValidationException)
         if self.redis_cache and self.model_settings.get("cache_predictions"):
             # In the case where cache is activated, sieve through
             # individual items
@@ -459,20 +468,10 @@ class Model(BaseModel[ItemType, ReturnType]):
                 callback=callback,
                 **kwargs,
             )
-        if self._return_model:
-            try:
-                if self.service_settings.enable_validation:
-                    results = [self._return_model(data=item).data for item in results]
-                else:
-                    results = [
-                        construct_recursive(self._return_model, data=item).data
-                        for item in results
-                    ]
-            except pydantic.error_wrappers.ValidationError as exc:
-                raise ReturnValueValidationException(
-                    self.configuration_key, pydantic_exc=exc
-                )
-        return results
+
+        return self._validate_batch(
+            results, self._return_model, ReturnValueValidationException
+        )
 
     def _predict_by_batch(
         self, items: List[ItemType], batch_size=64, callback=None, **kwargs
@@ -509,17 +508,7 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
         _force_compute: bool = False,
         **kwargs,
     ) -> ReturnType:
-        if self._item_model:
-            try:
-                if self.service_settings.enable_validation:
-                    item = self._item_model(data=item).data
-                else:
-                    item = construct_recursive(self._item_model, data=item).data
-            except pydantic.error_wrappers.ValidationError as exc:
-                raise ItemValidationException(
-                    f"{self.__class__.__name__}[{self.configuration_key}]",
-                    pydantic_exc=exc,
-                )
+        item = self._validate(item, self._item_model, ItemValidationException)
         if self.redis_cache and self.model_settings.get("cache_predictions"):
             key = self.item_cache_key(item, kwargs)
             if not _force_compute and self.redis_cache.exists(key):
@@ -540,17 +529,9 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
         else:
             results = await self._predict(item, **kwargs)
 
-        if self._return_model:
-            try:
-                if self.service_settings.enable_validation:
-                    results = self._return_model(data=results).data
-                else:
-                    results = construct_recursive(self._return_model, data=results).data
-            except pydantic.error_wrappers.ValidationError as exc:
-                raise ReturnValueValidationException(
-                    self.configuration_key, pydantic_exc=exc
-                )
-        return results
+        return self._validate(
+            results, self._return_model, ReturnValueValidationException
+        )
 
     async def predict_batch(
         self,
@@ -561,20 +542,7 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
         _return_info: bool = False,
         **kwargs,
     ) -> List[ReturnType]:
-        if self._item_model:
-            try:
-                if self.service_settings.enable_validation:
-                    items = [self._item_model(data=item).data for item in items]
-                else:
-                    items = [
-                        construct_recursive(self._item_model, data=item).data
-                        for item in items
-                    ]
-            except pydantic.error_wrappers.ValidationError as exc:
-                raise ItemValidationException(
-                    f"{self.__class__.__name__}[{self.configuration_key}]",
-                    pydantic_exc=exc,
-                )
+        items = self._validate_batch(items, self._item_model, ItemValidationException)
         if self.redis_cache and self.model_settings.get("cache_predictions"):
             # In the case where cache is activated, sieve through
             # individual items
@@ -621,20 +589,10 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
                 callback=callback,
                 **kwargs,
             )
-        if self._return_model:
-            try:
-                if self.service_settings.enable_validation:
-                    results = [self._return_model(data=item).data for item in results]
-                else:
-                    results = [
-                        construct_recursive(self._return_model, data=item).data
-                        for item in results
-                    ]
-            except pydantic.error_wrappers.ValidationError as exc:
-                raise ReturnValueValidationException(
-                    self.configuration_key, pydantic_exc=exc
-                )
-        return results
+
+        return self._validate_batch(
+            results, self._return_model, ReturnValueValidationException
+        )
 
     async def _predict_by_batch(
         self, items: List[ItemType], batch_size=64, callback=None, **kwargs
