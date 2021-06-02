@@ -29,7 +29,7 @@ class LibrarySettings(pydantic.BaseSettings):
     override_storage_prefix: Optional[str] = pydantic.Field(
         None, env="OVERRIDE_STORAGE_PREFIX"
     )
-
+    enable_validation: bool = pydantic.Field(True, env="ENABLE_VALIDATION")
     tf_serving: TFServingSettings = pydantic.Field(
         default_factory=lambda: TFServingSettings()
     )

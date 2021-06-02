@@ -12,6 +12,7 @@ from modelkit.assets.settings import (
     DriverSettings,
     RemoteAssetsStoreSettings,
 )
+from modelkit.core.settings import LibrarySettings
 
 test_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -167,3 +168,12 @@ def test_assetsmanager_minimal_prefix(monkeypatch, working_dir):
     assert settings.remote_store.driver.settings.bucket == "some-bucket"
     assert settings.remote_store.storage_prefix == "a-prefix"
     assert settings.assets_dir == Path(working_dir)
+
+
+def test_assetsmanager_no_validation(monkeypatch, working_dir):
+    monkeypatch.setenv("WORKING_DIR", working_dir)
+    settings = LibrarySettings()
+    assert settings.enable_validation
+    monkeypatch.setenv("ENABLE_VALIDATION", "False")
+    settings = LibrarySettings()
+    assert not settings.enable_validation

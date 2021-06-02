@@ -63,4 +63,11 @@ def test_describe():
         # modelkit.utils.memory cannot track memory increment
         # and write it
         r = ReferenceText(os.path.join(TEST_DIR, "testdata"))
-        r.assert_equal("library_describe.txt", capture.get())
+        captured = capture.get()
+        EXCLUDED = ["load time", "load memory"]
+        captured = "\n".join(
+            line
+            for line in captured.split("\n")
+            if not any(x in line for x in EXCLUDED)
+        )
+        r.assert_equal("library_describe.txt", captured)

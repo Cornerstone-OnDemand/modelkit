@@ -15,6 +15,7 @@ from modelkit.core.settings import LibrarySettings
 from modelkit.core.types import ItemType, ModelTestingConfiguration, ReturnType
 from modelkit.utils.memory import PerformanceTracker
 from modelkit.utils.pretty import describe, pretty_print_type
+from modelkit.utils.pydantic import construct_recursive
 
 logger = get_logger(__name__)
 
@@ -246,7 +247,7 @@ class Model(Asset, Generic[ItemType, ReturnType]):
                         #  The order of the Union arguments matter here, in order
                         #  to make sure that lists of items and single items
                         # are correctly validated
-                        data=(self._item_type, ...),
+                        data=(self.item_type, ...),
                         __base__=InternalDataModel,
                     )
                 if return_type != ReturnType:
@@ -255,7 +256,7 @@ class Model(Asset, Generic[ItemType, ReturnType]):
                     self._return_type = Union[List[return_type], return_type]
                     self._return_model = pydantic.create_model(
                         type_name,
-                        data=(self._return_type, ...),
+                        data=(self.return_type, ...),
                         __base__=InternalDataModel,
                     )
         except Exception as exc:
@@ -299,7 +300,19 @@ class Model(Asset, Generic[ItemType, ReturnType]):
         """
         if self._item_model:
             try:
-                items = self._item_model(data=items).data
+                if self.service_settings.enable_validation:
+                    if isinstance(items, list):
+                        items = [self._item_model(data=item).data for item in items]
+                    else:
+                        items = self._item_model(data=items).data
+                else:
+                    if isinstance(items, list):
+                        items = [
+                            construct_recursive(self._item_model, data=item).data
+                            for item in items
+                        ]
+                    else:
+                        items = construct_recursive(self._item_model, data=items).data
             except pydantic.error_wrappers.ValidationError as exc:
                 raise ItemValidationException(
                     f"{self.__class__.__name__}[{self.configuration_key}]",
@@ -376,7 +389,23 @@ class Model(Asset, Generic[ItemType, ReturnType]):
             )
         if self._return_model:
             try:
-                results = self._return_model(data=results).data
+                if self.service_settings.enable_validation:
+                    if isinstance(items, list):
+                        results = [
+                            self._return_model(data=item).data for item in results
+                        ]
+                    else:
+                        results = self._return_model(data=results).data
+                else:
+                    if isinstance(items, list):
+                        results = [
+                            construct_recursive(self._return_model, data=item).data
+                            for item in results
+                        ]
+                    else:
+                        results = construct_recursive(
+                            self._return_model, data=results
+                        ).data
             except pydantic.error_wrappers.ValidationError as exc:
                 raise ReturnValueValidationException(
                     self.configuration_key, pydantic_exc=exc

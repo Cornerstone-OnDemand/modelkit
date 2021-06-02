@@ -29,6 +29,7 @@ def clean_env():
         "LAZY_LOADING",
         "ASSETSMANAGER_PREFIX",
         "ASSETSMANAGER_TIMEOUT_S",
+        "ENABLE_VALIDATION",
     ]:
         os.environ.pop(env_var, None)
 
