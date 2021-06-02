@@ -1,4 +1,3 @@
-import asyncio
 import os
 
 import pytest
@@ -10,7 +9,7 @@ from modelkit.core.library import (
     download_assets,
     load_model,
 )
-from modelkit.core.model import Asset, AsyncModel, Model, NoModelDependenciesInInitError
+from modelkit.core.model import Asset, Model, NoModelDependenciesInInitError
 from modelkit.core.model_configuration import (
     ModelConfiguration,
     _configurations_from_objects,
@@ -477,27 +476,3 @@ def test_override_prefix(assetsmanager_settings):
 
     prediction = prediction_service.get("my_override_model")({})
     assert prediction.endswith(os.path.join("category", "override-asset", "1.0"))
-
-
-async def _do_async(model, item):
-    res = await model.predict_async(item)
-    assert item == res
-
-    res = await model.predict_batch_async([item] * 10)
-    assert [item] * 10 == res
-
-
-def test_async_predict():
-    class SomeModel(AsyncModel):
-        async def _predict(self, item, **kwargs):
-            await asyncio.sleep(0.1)
-            return item
-
-    m = SomeModel()
-    with pytest.raises(RuntimeError):
-        assert m.predict({}) == {}
-    with pytest.raises(RuntimeError):
-        assert m.predict_batch([{}]) == [{}]
-
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(_do_async(m, {}))

@@ -21,16 +21,6 @@ from modelkit.utils.pydantic import construct_recursive
 logger = get_logger(__name__)
 
 
-def _run_secretly_sync_async_fn(async_fn, *args, **kwargs):
-    coro = async_fn(*args, **kwargs)
-    try:
-        coro.send(None)
-    except StopIteration as exc:
-        return exc.value
-    else:
-        raise RuntimeError("this async function is not secretly synchronous")
-
-
 class NoModelDependenciesInInitError(BaseException):
     pass
 
@@ -501,32 +491,19 @@ class Model(BaseModel[ItemType, ReturnType]):
 
 
 class AsyncModel(BaseModel[ItemType, ReturnType]):
-    def __call__(
+    async def __call__(
         self,
         item: ItemType,
         _force_compute: bool = False,
         **kwargs,
     ) -> ReturnType:
-        return self.predict(item, _force_compute=_force_compute, **kwargs)
-
-    def predict(
-        self,
-        item: ItemType,
-        _force_compute: bool = False,
-        **kwargs,
-    ) -> ReturnType:
-        return _run_secretly_sync_async_fn(
-            self.predict_async,
-            item,
-            _force_compute=_force_compute,
-            **kwargs,
-        )
+        return await self.predict(item, _force_compute=_force_compute, **kwargs)
 
     async def _predict(self, item: ItemType, **kwargs) -> ReturnType:
         result = await self._predict_batch([item], **kwargs)
         return result[0]
 
-    async def predict_async(
+    async def predict(
         self,
         item: ItemType,
         _force_compute: bool = False,
@@ -575,26 +552,7 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
                 )
         return results
 
-    def predict_batch(
-        self,
-        items: List[ItemType],
-        callback: Callable = None,
-        batch_size: int = None,
-        _force_compute: bool = False,
-        _return_info: bool = False,
-        **kwargs,
-    ) -> List[ReturnType]:
-        return _run_secretly_sync_async_fn(
-            self.predict_batch_async,
-            items,
-            _force_compute=_force_compute,
-            _return_info=_return_info,
-            callback=callback,
-            batch_size=batch_size,
-            **kwargs,
-        )
-
-    async def predict_batch_async(
+    async def predict_batch(
         self,
         items: List[ItemType],
         callback: Callable = None,
@@ -699,7 +657,7 @@ class WrappedAsyncModel:
         self.async_model = async_model
 
     def predict(self, item):
-        return asyncio.run(self.async_model.predict_async(item))
+        return asyncio.run(self.async_model.predict(item))
 
     def predict_batch(self, items):
-        return asyncio.run(self.async_model.predict_batch_async(items))
+        return asyncio.run(self.async_model.predict_batch(items))
