@@ -62,9 +62,9 @@ prediction = await model.predict_async(item)
 Predictions for list of items can be obtained by using `predict_batch`:
 
 ```python
-prediction = model.predict_batch(items)
+predictions = model.predict_batch(items)
 # or
-prediction = await model.predict_batch_async(item)
+predictions = await model.predict_batch_async(items)
 ```
 
 Which allows the user to leverage vectorized code by implementing `_predict_batch` instead of `_predict`.

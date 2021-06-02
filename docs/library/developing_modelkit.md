@@ -290,8 +290,8 @@ batches of inputs at once. In this case, one can override `_predict_batch` inste
 ```python
 
 class IdentityBatched(Model)
-    async def _predict(self, items):
-        return items
+    async def _predict(self, item):
+        return item
     
 m_batched = IdentityBatched()
 ```
@@ -324,8 +324,8 @@ class IdentityBatched(Model):
             }
         }
     }
-    async def _predict(self, items):
-        return items
+    async def _predict(self, item):
+        return item
 ```
 
 ## `Asset` class
