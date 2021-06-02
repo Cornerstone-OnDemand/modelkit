@@ -3,11 +3,11 @@ import pytest
 from modelkit.core.model import Model
 
 
-async def _identity(x):
+def _identity(x):
     return x
 
 
-async def _double(x):
+def _double(x):
     return [y * 2 for y in x]
 
 
@@ -23,19 +23,16 @@ async def _double(x):
         (_double, [1, 2, 3], 128, [2, 4, 6]),
     ],
 )
-async def test_identitybatch_batch_process(
-    func, items, batch_size, expected, monkeypatch
-):
+def test_identitybatch_batch_process(func, items, batch_size, expected, monkeypatch):
 
     m = Model()
     monkeypatch.setattr(m, "_predict_batch", func)
     if batch_size:
-        assert await m._predict_by_batch(items, batch_size=batch_size) == expected
+        assert m._predict_by_batch(items, batch_size=batch_size) == expected
     else:
-        assert await m._predict_by_batch(items) == expected
+        assert m._predict_by_batch(items) == expected
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "items,batch_size,expected_steps",
     [
@@ -47,10 +44,10 @@ async def test_identitybatch_batch_process(
         (list(range(128)), 63, 3),
     ],
 )
-async def test_callback_batch_process(items, batch_size, expected_steps, monkeypatch):
+def test_callback_batch_process(items, batch_size, expected_steps, monkeypatch):
     steps = 0
 
-    async def func(items):
+    def func(items):
         return [item + 1 for item in items]
 
     def callback(batch_step, batch_items, batch_results):
@@ -61,5 +58,5 @@ async def test_callback_batch_process(items, batch_size, expected_steps, monkeyp
 
     m = Model()
     monkeypatch.setattr(m, "_predict_batch", func)
-    await m._predict_by_batch(items, batch_size=batch_size, callback=callback)
+    m._predict_by_batch(items, batch_size=batch_size, callback=callback)
     assert steps == expected_steps

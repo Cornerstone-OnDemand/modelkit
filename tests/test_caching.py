@@ -75,7 +75,7 @@ def test_redis_cache(redis_service):
     class SomeModel(Model):
         CONFIGURATIONS = {"model": {"model_settings": {"cache_predictions": True}}}
 
-        async def _predict(self, item):
+        def _predict(self, item):
             return item
 
     class SomeModelMultiple(Model):
@@ -83,7 +83,7 @@ def test_redis_cache(redis_service):
             "model_multiple": {"model_settings": {"cache_predictions": True}}
         }
 
-        async def _predict_batch(self, items):
+        def _predict_batch(self, items):
             return items
 
     svc = ModelLibrary(

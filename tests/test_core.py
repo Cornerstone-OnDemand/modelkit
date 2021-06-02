@@ -10,7 +10,7 @@ from modelkit.core.library import (
     download_assets,
     load_model,
 )
-from modelkit.core.model import Asset, Model, NoModelDependenciesInInitError
+from modelkit.core.model import Asset, AsyncModel, Model, NoModelDependenciesInInitError
 from modelkit.core.model_configuration import (
     ModelConfiguration,
     _configurations_from_objects,
@@ -27,11 +27,11 @@ def test_override_asset():
         def _load(self):
             pass
 
-        async def _predict(self, item, **kwargs):
+        def _predict(self, item, **kwargs):
             return self.asset_path
 
     class TestDepModel(Model):
-        async def _predict(self, item, **kwargs):
+        def _predict(self, item, **kwargs):
             return "dep" + self.asset_path
 
     config = {
@@ -210,7 +210,7 @@ def test_lazy_loading_dependencies():
         def _load(self):
             self.some_attribute = self.model_dependencies["model0"].some_attribute
 
-        async def _predict(self, item):
+        def _predict(self, item):
             return self.some_attribute
 
     p = ModelLibrary(models=[Model1, Model0], settings={"lazy_loading": True})
@@ -345,7 +345,7 @@ def test_load_model():
     class SomeModel(Model):
         CONFIGURATIONS = {"model": {}}
 
-        async def _predict(self, item):
+        def _predict(self, item):
             return item
 
     m = load_model("model", models=SomeModel)
@@ -383,7 +383,7 @@ def test_environment_asset_load(monkeypatch, assetsmanager_settings):
             assert self.asset_path == "path/to/asset"
             self.data = {"some key": "some data"}
 
-        async def _predict(self, item, **kwargs):
+        def _predict(self, item, **kwargs):
             return self.data
 
     monkeypatch.setenv("MODELKIT_TESTS_TEST_ASSET_FILE", "path/to/asset")
@@ -407,13 +407,13 @@ def test_rename_dependencies():
     class SomeModel(Model):
         CONFIGURATIONS = {"ok": {}}
 
-        async def _predict(self, item):
+        def _predict(self, item):
             return self.configuration_key
 
     class SomeModel2(Model):
         CONFIGURATIONS = {"boomer": {}}
 
-        async def _predict(self, item):
+        def _predict(self, item):
             return self.configuration_key
 
     class FinalModel(Model):
@@ -426,7 +426,7 @@ def test_rename_dependencies():
             },
         }
 
-        async def _predict(self, item):
+        def _predict(self, item):
             return self.model_dependencies["ok"](item)
 
     svc = ModelLibrary(models=[SomeModel, SomeModel2, FinalModel])
@@ -436,7 +436,7 @@ def test_rename_dependencies():
 
 def test_override_prefix(assetsmanager_settings):
     class TestModel(Model):
-        async def _predict(self, item, **kwargs):
+        def _predict(self, item, **kwargs):
             return self.asset_path
 
     prediction_service = ModelLibrary(
@@ -488,7 +488,7 @@ async def _do_async(model, item):
 
 
 def test_async_predict():
-    class SomeModel(Model):
+    class SomeModel(AsyncModel):
         async def _predict(self, item, **kwargs):
             await asyncio.sleep(0.1)
             return item

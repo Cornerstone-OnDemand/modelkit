@@ -11,7 +11,7 @@ from tenacity import (
     wait_random_exponential,
 )
 
-from modelkit.core.model import Model
+from modelkit.core.model import AsyncModel
 from modelkit.core.types import ItemType, ReturnType
 
 logger = get_logger(__name__)
@@ -46,7 +46,7 @@ SERVICE_MODEL_RETRY_POLICY = {
 }
 
 
-class DistantHTTPModel(Model[ItemType, ReturnType]):
+class DistantHTTPModel(AsyncModel[ItemType, ReturnType]):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
         self.endpoint = self.model_settings["endpoint"]

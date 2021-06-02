@@ -24,7 +24,7 @@ def api_no_type(event_loop):
 
         CONFIGURATIONS = {"some_model": {}}
 
-        async def _predict(self, item):
+        def _predict(self, item):
             return item
 
     class ItemModel(pydantic.BaseModel):
@@ -42,19 +42,19 @@ def api_no_type(event_loop):
 
         CONFIGURATIONS = {"some_complex_model": {}}
 
-        async def _predict(self, item):
+        def _predict(self, item):
             return {"sorted": "".join(sorted(item.string))}
 
     class NotValidatedModel(Model):
         CONFIGURATIONS = {"unvalidated_model": {}}
 
-        async def _predict(self, item):
+        def _predict(self, item):
             return item
 
     class ValidationNotSupported(Model[np.ndarray, np.ndarray]):
         CONFIGURATIONS = {"no_supported_model": {}}
 
-        async def _predict(self, item):
+        def _predict(self, item):
             return item
 
     class SomeAsset(Asset):
@@ -64,7 +64,7 @@ def api_no_type(event_loop):
 
         CONFIGURATIONS = {"some_asset": {}}
 
-        async def _predict(self, item):
+        def _predict(self, item):
             return {"sorted": "".join(sorted(item.string))}
 
     router = ModelkitAutoAPIRouter(
@@ -100,7 +100,9 @@ def test_api_simple_type(item, api_no_type):
     assert res.json() == item
 
     res = api_no_type.post(
-        "/predict/batch/some_model", headers={"Content-Type": "application/json"}, json=[item]
+        "/predict/batch/some_model",
+        headers={"Content-Type": "application/json"},
+        json=[item],
     )
     assert res.status_code == 200
     assert res.json() == [item]
