@@ -198,59 +198,6 @@ class Model(Asset, Generic[ItemType, ReturnType]):
             )
         return self._model_dependencies
 
-    def item_cache_key(self, item: Any, kwargs: Dict[str, Any]):
-        if not self._model_cache_key:
-            self._model_cache_key = (
-                self.configuration_key + modelkit.__version__
-            ).encode()
-        pickled = pickle.dumps((item, kwargs))  # nosec: only used to build a hash
-        return hashlib.sha256(self._model_cache_key + pickled).digest()
-
-    def __call__(
-        self,
-        item: ItemType,
-        _force_compute: bool = False,
-        _return_info: bool = False,
-        **kwargs,
-    ) -> ReturnType:
-        return self.predict(
-            item, _force_compute=_force_compute, _return_info=_return_info, **kwargs
-        )
-
-    def predict(
-        self,
-        item: ItemType,
-        _force_compute: bool = False,
-        _return_info: bool = False,
-        **kwargs,
-    ) -> ReturnType:
-        return _run_secretly_sync_async_fn(
-            self.predict_async,
-            item,
-            _force_compute=_force_compute,
-            _return_info=_return_info,
-            **kwargs,
-        )
-
-    def predict_batch(
-        self,
-        items: List[ItemType],
-        callback: Callable = None,
-        batch_size: int = None,
-        _force_compute: bool = False,
-        _return_info: bool = False,
-        **kwargs,
-    ) -> List[ReturnType]:
-        return _run_secretly_sync_async_fn(
-            self.predict_batch_async,
-            items,
-            _force_compute=_force_compute,
-            _return_info=_return_info,
-            callback=callback,
-            batch_size=batch_size,
-            **kwargs,
-        )
-
     def initialize_validation_models(self):
         try:
             # Get the values of the T and V types
@@ -296,6 +243,44 @@ class Model(Asset, Generic[ItemType, ReturnType]):
     def __setstate__(self, state):
         self.__dict__ = state
         self.initialize_validation_models()
+
+    def item_cache_key(self, item: Any, kwargs: Dict[str, Any]):
+        if not self._model_cache_key:
+            self._model_cache_key = (
+                self.configuration_key + modelkit.__version__
+            ).encode()
+        pickled = pickle.dumps((item, kwargs))  # nosec: only used to build a hash
+        return hashlib.sha256(self._model_cache_key + pickled).digest()
+
+    def __call__(
+        self,
+        item: ItemType,
+        _force_compute: bool = False,
+        _return_info: bool = False,
+        **kwargs,
+    ) -> ReturnType:
+        return self.predict(
+            item, _force_compute=_force_compute, _return_info=_return_info, **kwargs
+        )
+
+    def predict(
+        self,
+        item: ItemType,
+        _force_compute: bool = False,
+        _return_info: bool = False,
+        **kwargs,
+    ) -> ReturnType:
+        return _run_secretly_sync_async_fn(
+            self.predict_async,
+            item,
+            _force_compute=_force_compute,
+            _return_info=_return_info,
+            **kwargs,
+        )
+
+    async def _predict(self, item: ItemType, **kwargs) -> ReturnType:
+        result = await self._predict_batch([item], **kwargs)
+        return result[0]
 
     async def predict_async(
         self,
@@ -350,6 +335,25 @@ class Model(Asset, Generic[ItemType, ReturnType]):
         if _return_info:
             return results, from_cache
         return results
+
+    def predict_batch(
+        self,
+        items: List[ItemType],
+        callback: Callable = None,
+        batch_size: int = None,
+        _force_compute: bool = False,
+        _return_info: bool = False,
+        **kwargs,
+    ) -> List[ReturnType]:
+        return _run_secretly_sync_async_fn(
+            self.predict_batch_async,
+            items,
+            _force_compute=_force_compute,
+            _return_info=_return_info,
+            callback=callback,
+            batch_size=batch_size,
+            **kwargs,
+        )
 
     async def predict_batch_async(
         self,
@@ -449,10 +453,6 @@ class Model(Asset, Generic[ItemType, ReturnType]):
             if callback:
                 callback(step, batch, current_predictions)
         return predictions
-
-    async def _predict(self, item: ItemType, **kwargs) -> ReturnType:
-        result = await self._predict_batch([item], **kwargs)
-        return result[0]
 
     async def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
         return [await self._predict(p, **kwargs) for p in items]
