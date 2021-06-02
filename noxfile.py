@@ -7,6 +7,15 @@ def test(session):
     session.install("-r", "requirements-dev.txt")
 
     session.run(
+        "pytest"
+    )
+
+@nox.session(python=["3.7"])
+def coverage(session):
+    # Install deps and the package itself.
+    session.install("-r", "requirements-dev.txt")
+
+    session.run(
         "coverage",
         "run",
         "-m",
