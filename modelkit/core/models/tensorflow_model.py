@@ -323,7 +323,7 @@ def connect_tf_serving(model_name, host, port, mode):
         if version != 1:
             raise TFServingError(f"Bad model version: {version}!=1")
         return stub
-    elif mode in {"rest", "rest-async"}:
+    elif mode in {"rest", "rest"}:
         response = requests.get(f"http://{host}:{port}/v1/models/{model_name}")
         if response.status_code != 200:
             raise TFServingError("Error connecting to TF serving")

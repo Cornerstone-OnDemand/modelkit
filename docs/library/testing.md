@@ -38,7 +38,7 @@ class TestableModel(Model[ModelItemType, ModelItemType]):
         ]
     }
 
-    async def _predict(self, item):
+    def _predict(self, item):
         return item
 
 ```

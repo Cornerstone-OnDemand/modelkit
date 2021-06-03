@@ -42,8 +42,7 @@ Several parameters control how `modelkit` requests predictions from TF serving.
 -   `enable_tf_serving`: Controls wether to use TF serving or use TF locally as a lib
 -   `tf_serving_host`: Host to connect to to request TF predictions
 -   `tf_serving_port`: Port to connect to to request TF predictions
--   `tf_serving_mode`: Can be `grpc` (with `grpc`) or `rest` (with `requests`)
-    or `rest-async` (with `aiohttp`)
+-   `tf_serving_mode`: Can be `grpc` (with `grpc`) or `rest` (with `requests` for `TensorflowModel`, or with `aiohttp` for `AsyncTensorflowModel`)
 -   `tf_serving_timeout_s`: timeout to wait for the first TF serving response
 
 All of these parameters can be set programmatically (and passed to the `ModelLibrary`'s settings),
@@ -66,7 +65,7 @@ tensors predicted by the TF model:
 Typically, inside a `_predict_batch`, one would do something like:
 
 ```python
-async def _predict_batch(self, items):
+def _predict_batch(self, items):
     data = await self._tensorflow_predict(
             {
                 key: np.stack([item[key] for item in items], axis=0)
@@ -105,7 +104,7 @@ In this case we use the following pattern, wherein we leverage the method
 `TensorflowModel._rebuild_predictions_with_mask`:
 
 ```python
-async def _predict_batch(
+def _predict_batch(
     self, items: List[Dict[str, str]], **kwargs
 ) -> List[Tuple[np.ndarray, List[str]]]:
     treated_items = self.treat(items)
