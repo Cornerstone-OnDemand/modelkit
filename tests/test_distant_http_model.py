@@ -1,4 +1,3 @@
-import asyncio
 import json
 import os
 import subprocess
@@ -8,7 +7,7 @@ import pytest
 import requests
 
 from modelkit.core.library import ModelLibrary
-from modelkit.core.models.distant_model import DistantHTTPModel
+from modelkit.core.models.distant_model import AsyncDistantHTTPModel, DistantHTTPModel
 from tests import TEST_DIR
 
 
@@ -36,25 +35,14 @@ def run_mocked_service():
 
 
 async def _check_service_async(model, item):
-    res = await model.predict_async(item)
+    res = await model.predict(item)
     assert item == res
 
 
 @pytest.mark.asyncio
-def test_distant_http_model(run_mocked_service):
+async def test_distant_http_model(run_mocked_service, event_loop):
     class SomeDistantHTTPModel(DistantHTTPModel):
         CONFIGURATIONS = {
-            "some_model": {
-                "model_settings": {
-                    "endpoint": "http://127.0.0.1:8000/api/path/endpoint"
-                }
-            },
-            "some_model_async": {
-                "model_settings": {
-                    "endpoint": "http://127.0.0.1:8000/api/path/endpoint",
-                    "async_mode": True,
-                }
-            },
             "some_model_sync": {
                 "model_settings": {
                     "endpoint": "http://127.0.0.1:8000/api/path/endpoint",
@@ -63,28 +51,26 @@ def test_distant_http_model(run_mocked_service):
             },
         }
 
-    svc = ModelLibrary(models=SomeDistantHTTPModel)
+    class SomeAsyncDistantHTTPModel(AsyncDistantHTTPModel):
+        CONFIGURATIONS = {
+            "some_model_async": {
+                "model_settings": {
+                    "endpoint": "http://127.0.0.1:8000/api/path/endpoint",
+                    "async_mode": True,
+                }
+            }
+        }
+
+    svc = ModelLibrary(models=[SomeDistantHTTPModel, SomeAsyncDistantHTTPModel])
     ITEM = {"some_content": "something"}
-    loop = asyncio.get_event_loop()
 
-    # Test with automatic detection of asynchronous mode
-    m = svc.get("some_model")
-    assert m._async_mode is None
-    assert ITEM == m(ITEM)
-    loop.run_until_complete(_check_service_async(m, ITEM))
-    loop.run_until_complete(svc.close_connections())
-
-    # Test with forced asynchronous mode
+    # Test with asynchronous mode
     m = svc.get("some_model_async")
-    assert m._async_mode
-    with pytest.raises(RuntimeError):
+    with pytest.raises(AssertionError):
         assert ITEM == m(ITEM)
-    loop.run_until_complete(_check_service_async(m, ITEM))
-    loop.run_until_complete(svc.close_connections())
+    await _check_service_async(m, ITEM)
+    await svc.close_connections()
 
-    # Test with forced synchronous mode
+    # Test with synchronous mode
     m = svc.get("some_model_sync")
-    assert m._async_mode is False
     assert ITEM == m(ITEM)
-    loop.run_until_complete(_check_service_async(m, ITEM))
-    loop.run_until_complete(svc.close_connections())

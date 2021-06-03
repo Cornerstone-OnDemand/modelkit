@@ -8,7 +8,7 @@ class ItemModel(pydantic.BaseModel):
 
 
 class SomeValidatedModel(Model[ItemModel, ItemModel]):
-    async def _predict(self, item):
+    def _predict(self, item):
         return item
 
 
