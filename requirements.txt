@@ -8,6 +8,8 @@
 
 aiohttp==3.7.3
     # via -r requirements.in
+asgiref==3.3.4
+    # via -r requirements.in
 async-timeout==3.0.1
     # via aiohttp
 attrs==20.3.0
@@ -116,6 +118,8 @@ six==1.15.0
     #   python-dateutil
     #   structlog
     #   tenacity
+sniffio==1.2.0
+    # via -r requirements.in
 structlog==20.1.0
     # via -r requirements.in
 tenacity==6.3.0
@@ -126,6 +130,7 @@ typing-extensions==3.7.4.3 ; python_version < "3.8"
     # via
     #   -r requirements.in
     #   aiohttp
+    #   asgiref
     #   importlib-metadata
     #   rich
     #   yarl

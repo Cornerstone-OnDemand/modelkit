@@ -9,6 +9,8 @@ pydantic
 python-dateutil
 redis
 rich
+sniffio
+asgiref
 structlog
 tenacity
 tqdm
