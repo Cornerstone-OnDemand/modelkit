@@ -4,7 +4,7 @@ import pydantic
 import pytest
 
 from modelkit.core.library import ModelLibrary
-from modelkit.core.model import AsyncModel, Model
+from modelkit.core.model import AsyncModel, Model, WrappedAsyncModel
 
 
 def test_compose_sync_async():
@@ -23,6 +23,7 @@ def test_compose_sync_async():
 
     library = ModelLibrary(models=[SomeAsyncModel, ComposedModel])
     m = library.get("composed_model")
+    assert isinstance(m.model_dependencies["async_model"], WrappedAsyncModel)
     assert m.predict({"hello": "world"}) == {"hello": "world"}
 
 
