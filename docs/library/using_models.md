@@ -50,24 +50,43 @@ model = library.get("my_favorite_model")
 
     If you have set the `MODELKIT_DEFAULT_PACKAGE` environment variable, you can also skip the `models=...` part.
 
+### Predictions for single items
+
 Predictions can be obtained by calling the object:
 
 ```python
-# This runs the Model method
 prediction = model(item) # or model.predict(item)
-# or
-prediction = await model.predict_async(item)
 ```
+
+This will call whichever one of `_predict` or `_predict_batch` was implemented in the `Model`.
+
+### Predictions for lists of items
 
 Predictions for list of items can be obtained by using `predict_batch`:
 
 ```python
 predictions = model.predict_batch(items)
-# or
-predictions = await model.predict_batch_async(items)
 ```
 
-Which allows the user to leverage vectorized code by implementing `_predict_batch` instead of `_predict`.
+This will call whichever one of `_predict` or `_predict_batch` was implemented in the `Model`. 
+But in the case in which `_predict_batch` is implemented, you may see speed ups due to vectorization.
+
+### Predictions from iterators
+
+It is also possible to iterate through predictions with an iterator, which is convenient to avoid having to load all items to memory before getting predictions.
+
+```python
+def generate_items():
+    ...
+    yield item
+for prediction in model.predict_gen(generate_items()):
+     # use prediction
+    ...
+```
+
+A typical use case is to iterate through the lines of a file, perform some processing and write it straight back to another file
+
+
 
 # CLIs
 
