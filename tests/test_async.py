@@ -12,7 +12,7 @@ def test_compose_sync_async():
         CONFIGURATIONS = {"async_model": {}}
 
         async def _predict(self, item, **kwargs):
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0)
             return item
 
     class ComposedModel(Model):
@@ -33,7 +33,7 @@ async def test_compose_async_sync_async(event_loop):
         CONFIGURATIONS = {"async_model": {}}
 
         async def _predict(self, item):
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0)
             return item
 
     class ComposedModel(Model):
@@ -48,7 +48,7 @@ async def test_compose_async_sync_async(event_loop):
         }
 
         async def _predict(self, item):
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0)
             return await self.model_dependencies["composed_model"].predict(item)
 
     library = ModelLibrary(
@@ -72,7 +72,7 @@ async def _do_async(model, item, expected=None):
 async def test_async_predict(event_loop):
     class SomeModel(AsyncModel):
         async def _predict(self, item, **kwargs):
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0)
             return item
 
     m = SomeModel()
@@ -88,7 +88,7 @@ async def test_async_predict(event_loop):
 
     class SomeModel(AsyncModel[Item, Item]):
         async def _predict(self, item, **kwargs):
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0)
             return item
 
     m = SomeModel()
