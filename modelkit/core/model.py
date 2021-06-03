@@ -364,7 +364,7 @@ class BaseModel(Asset, Generic[ItemType, ReturnType]):
 class Model(BaseModel[ItemType, ReturnType]):
     def load(self):
         super().load()
-        """For Model instances, there may be a need to also load the dependencies"""
+        # For asynchronous models, we wrap it to be able to evaluate `.predict`
         for model_name, m in self._model_dependencies.items():
             if isinstance(m, AsyncModel):
                 self._model_dependencies[model_name] = WrappedAsyncModel(m)
