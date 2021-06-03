@@ -19,7 +19,7 @@ At initialization time, a `TensorflowModel` has to be provided with definitions 
 Typically, inside a `_predict_batch`, one would do something like:
 
 ```python
-async def _predict_batch(self, items):
+def _predict_batch(self, items):
     data = await self._tensorflow_predict(
             {
                 key: np.stack([item[key] for item in items], axis=0)
@@ -54,7 +54,7 @@ Oftentimes we manipulate the item before feeding it to TF, e.g. doing text clean
 In this case we use the following pattern, wherein we leverage the method `TensorflowModel._rebuild_predictions_with_mask`:
 
 ```python
-async def _predict_batch(
+def _predict_batch(
     self, items: List[Dict[str, str]], **kwargs
 ) -> List[Tuple[np.ndarray, List[str]]]:
     treated_items = self.treat(items)
@@ -123,7 +123,7 @@ Several environment variables control how `modelkit` requests predictions from T
 - `ENABLE_TF_SERVING`: Controls whether to use TF serving or use TF locally as a lib
 - `TF_SERVING_HOST`: Host to connect to to request TF predictions
 - `TF_SERVING_PORT`: Port to connect to to request TF predictions
-- `TF_SERVING_MODE`: Can be `grpc` (with `grpc`) or `rest` (with `requests`) or `rest-async` (with `aiohttp`)
+- `TF_SERVING_MODE`: Can be `grpc` (with `grpc`) or `rest` (with `requests` for `TensorflowModel`, or with `aiohttp` for `AsyncTensorflowModel`)
 - `TF_SERVING_TIMEOUT_S`: timeout to wait for the first TF serving response
 
 All of these parameters can be set programmatically (and passed to the `ModelLibrary`'s settings):

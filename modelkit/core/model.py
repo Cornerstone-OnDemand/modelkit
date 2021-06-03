@@ -1,4 +1,3 @@
-import asyncio
 import copy
 import hashlib
 import pickle  # nosec
@@ -7,6 +6,8 @@ from typing import Any, Callable, Dict, Generic, List, Type, Union
 
 import humanize
 import pydantic
+import sniffio
+from asgiref.sync import AsyncToSync, SyncToAsync
 from rich.markup import escape
 from rich.tree import Tree
 from structlog import get_logger
@@ -364,10 +365,15 @@ class BaseModel(Asset, Generic[ItemType, ReturnType]):
 class Model(BaseModel[ItemType, ReturnType]):
     def load(self):
         super().load()
-        # For asynchronous models, we wrap it to be able to evaluate `.predict`
-        for model_name, m in self._model_dependencies.items():
-            if isinstance(m, AsyncModel):
-                self._model_dependencies[model_name] = WrappedAsyncModel(m)
+        try:
+            sniffio.current_async_library()
+        except sniffio.AsyncLibraryNotFoundError:
+            # In a synchronous context, we wrap asynchronous models
+            # such that we can evaluate `.predict`
+            # Otherwise, they will have to be awaited
+            for model_name, m in self._model_dependencies.items():
+                if isinstance(m, AsyncModel):
+                    self._model_dependencies[model_name] = WrappedAsyncModel(m)
 
     def __call__(
         self,
@@ -613,9 +619,12 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
 class WrappedAsyncModel:
     def __init__(self, async_model: AsyncModel):
         self.async_model = async_model
+        self.predict = AsyncToSync(self.async_model.predict)
+        self.predict_batch = AsyncToSync(self.async_model.predict_batch)
 
-    def predict(self, item, **kwargs):
-        return asyncio.run(self.async_model.predict(item, **kwargs))
 
-    def predict_batch(self, items, **kwargs):
-        return asyncio.run(self.async_model.predict_batch(items, **kwargs))
+class WrappedSyncModel:
+    def __init__(self, async_model: AsyncModel):
+        self.async_model = async_model
+        self.predict = SyncToAsync(self.async_model.predict)
+        self.predict_batch = SyncToAsync(self.async_model.predict_batch)

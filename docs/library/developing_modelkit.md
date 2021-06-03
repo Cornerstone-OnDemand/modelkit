@@ -27,7 +27,7 @@ This simple model class will always return `"something"`:
 from modelkit.core.model import Model
 
 class SimpleModel(Model):
-    async def _predict(self, item) -> str:
+    def _predict(self, item) -> str:
         return "something"
 ```
 
@@ -51,12 +51,9 @@ class SimpleModel(Model):
     CONFIGURATIONS = {
         "simple": {}
     }
-    async def _predict(self, item):
+    def _predict(self, item):
         return "something"
 ```
-
-!!! important
-    You have to `async def` when implementing `_predict` and `_predict_batch`, even if the function is synchronous.
 
 Right now, we have only given it a name `"simple"` which makes the model available to other models via the `ModelLibrary`.
 
@@ -86,7 +83,7 @@ class SimpleModel(Model):
         "simple": {"model_settings": {"value" : "something"}},
         "simple2": {"model_settings": {"value" : "something2"}}
     }
-    async def _predict(self, item):
+    def _predict(self, item):
         return self.model_settings["value"]
 ```
 
@@ -138,7 +135,7 @@ class ModelWithAsset(Model):
         with bz2.BZ2File(self.asset_path, "rb") as f:
             self.data_structure = pickle.load(f) # loads {"response": "YOLO les simpsons"}
 
-    async def _predict(self, item: Dict[str, str], **kwargs) -> float:
+    def _predict(self, item: Dict[str, str], **kwargs) -> float:
         return self.data_structure["response"] # returns "YOLO les simpsons"
 ```
 
@@ -168,7 +165,7 @@ class SomeModel(Model):
 The `ModelLibrary` ensures that whenever `_load` or the `_predict_*` function are called, these models are loaded and present in the `model_dependencies` dictionary:
 
 ```python
-async def _predict(self, item):
+def _predict(self, item):
     cleaned = self.models_dependencies["sentence_piece_cleaner"](item["text"])
     ...
 
@@ -256,7 +253,7 @@ class ReturnModel(pydantic.BaseModel):
     x: int
 
 class SomeValidatedModel(Model[ItemModel, ReturnModel]):
-    async def _predict(self, item):
+    def _predict(self, item):
         # item is guaranteed to be an instance of `ItemModel` even if we feed a dictionary item
         return {"x": item.x}
 
@@ -275,7 +272,7 @@ y : List[ReturnModel] = m([{"x": 1}, {"x": 2}])
 ```python
 
 class Identity(Model)
-    async def _predict(self, item):
+    def _predict(self, item):
         return item
     
 m = Identity()
@@ -290,7 +287,7 @@ batches of inputs at once. In this case, one can override `_predict_batch` inste
 ```python
 
 class IdentityBatched(Model)
-    async def _predict(self, item):
+    def _predict(self, item):
         return item
     
 m_batched = IdentityBatched()
@@ -324,7 +321,7 @@ class IdentityBatched(Model):
             }
         }
     }
-    async def _predict(self, item):
+    def _predict(self, item):
         return item
 ```
 
