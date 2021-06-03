@@ -226,8 +226,8 @@ class ModelLibrary:
         }
 
         self.models[model_name] = configuration.model_type(
-            asset_path=self.assets_info[configuration.asset]["path"]
-            if configuration.asset
+            asset_path=self.assets_info[configuration.asset_path]["path"]
+            if configuration.asset_path
             else "",
             model_dependencies=model_dependencies,
             service_settings=self.settings,
@@ -248,7 +248,7 @@ class ModelLibrary:
         for dep_name in configuration.model_dependencies.values():
             self._resolve_assets(dep_name)
 
-        if not configuration.asset:
+        if not configuration.asset_path:
             # If the model has no asset to load
             return
 
@@ -259,11 +259,11 @@ class ModelLibrary:
 
         # If the asset is overriden in the model_settings
         if "asset_path" in model_settings:
-            self.assets_info[configuration.asset] = {
+            self.assets_info[configuration.asset_path] = {
                 "path": model_settings.pop("asset_path")
             }
 
-        asset_spec = AssetSpec.from_string(configuration.asset)
+        asset_spec = AssetSpec.from_string(configuration.asset_path)
 
         # If the model's asset is overriden with environment variables
         venv = "MODELKIT_{}_FILE".format(
@@ -276,7 +276,7 @@ class ModelLibrary:
                 asset_name=asset_spec.name,
                 path=local_file,
             )
-            self.assets_info[configuration.asset] = {"path": local_file}
+            self.assets_info[configuration.asset_path] = {"path": local_file}
 
         # The assets should be retrieved
         # possibly override version
@@ -290,7 +290,7 @@ class ModelLibrary:
         try:
             if self.override_assets_manager:
                 self.assets_info[
-                    configuration.asset
+                    configuration.asset_path
                 ] = self.override_assets_manager.fetch_asset(
                     spec=AssetSpec(name=asset_spec.name, sub_part=asset_spec.sub_part),
                     return_info=True,
@@ -304,8 +304,8 @@ class ModelLibrary:
                 "Asset not found in overriden prefix",
                 name=asset_spec.name,
             )
-        if configuration.asset not in self.assets_info:
-            self.assets_info[configuration.asset] = self.asset_manager.fetch_asset(
+        if configuration.asset_path not in self.assets_info:
+            self.assets_info[configuration.asset_path] = self.asset_manager.fetch_asset(
                 asset_spec, return_info=True
             )
 

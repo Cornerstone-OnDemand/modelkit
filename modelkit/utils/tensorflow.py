@@ -34,9 +34,9 @@ def deploy_tf_models(svc, mode, config_name="config", verbose=False):
         if not issubclass(model_configuration.model_type, TensorflowModel):
             logger.info(f"Skipping non TF model `{model_name}`")
             continue
-        if not model_configuration.asset:
+        if not model_configuration.asset_path:
             raise ValueError(f"TensorFlow model `{model_name}` does not have an asset")
-        spec = AssetSpec.from_string(model_configuration.asset)
+        spec = AssetSpec.from_string(model_configuration.asset_path)
         if mode == "local-docker":
             model_paths[model_name] = os.path.join(
                 "/config",

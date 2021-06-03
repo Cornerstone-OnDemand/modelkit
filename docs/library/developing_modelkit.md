@@ -123,7 +123,7 @@ Adding the key to the model's configuration:
 ```python
 class ModelWithAsset(Model):
     CONFIGURATIONS = {
-        "model_with_asset": {"asset": "test/yolo:1"}
+        "model_with_asset": {"asset_path": "test/yolo:1"}
     }
 ```
 

@@ -15,12 +15,12 @@ Settings
 Configuration                                                                   
 ├── some_complex_model_a : ModelConfiguration                                   
 │   ├── model_type : Type[Asset] = SomeComplexValidatedModelA type              
-│   ├── asset : str = None                                                      
+│   ├── asset_path : str = None                                                 
 │   ├── model_settings : Dict[str,typing.Any] = {}                              
 │   └── model_dependencies : Dict[str,str] = {}                                 
 └── some_model_a : ModelConfiguration                                           
     ├── model_type : Type[Asset] = SomeSimpleValidatedModelA type               
-    ├── asset : str = None                                                      
+    ├── asset_path : str = None                                                 
     ├── model_settings : Dict[str,typing.Any] = {}                              
     └── model_dependencies : Dict[str,str] = {}                                 
 Assets                                                                          

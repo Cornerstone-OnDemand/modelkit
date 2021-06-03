@@ -37,7 +37,7 @@ def test_override_asset():
     config = {
         "some_asset": ModelConfiguration(
             model_type=TestModel,
-            asset="asset/that/does/not/exist",
+            asset_path="asset/that/does/not/exist",
             model_dependencies={"dep_model"},
         ),
         "dep_model": ModelConfiguration(model_type=TestDepModel),
@@ -63,7 +63,7 @@ def test_override_asset():
     # Finally, it is possible to also specify
     # an asset for the dependent model
     config["dep_model"] = ModelConfiguration(
-        model_type=TestDepModel, asset="cat/someasset"
+        model_type=TestDepModel, asset_path="cat/someasset"
     )
     prediction_service = ModelLibrary(
         required_models={
@@ -130,50 +130,50 @@ def test__configurations_from_objects():
 
 def test_configure_override():
     class SomeModel(Model):
-        CONFIGURATIONS = {"yolo": {"asset": "ok/boomer"}, "les simpsons": {}}
+        CONFIGURATIONS = {"yolo": {"asset_path": "ok/boomer"}, "les simpsons": {}}
 
     class SomeOtherModel(Model):
         pass
 
     configurations = configure(models=SomeModel)
     assert configurations["yolo"].model_type == SomeModel
-    assert configurations["yolo"].asset == "ok/boomer"
+    assert configurations["yolo"].asset_path == "ok/boomer"
     assert configurations["les simpsons"].model_type == SomeModel
-    assert configurations["les simpsons"].asset is None
+    assert configurations["les simpsons"].asset_path is None
 
     configurations = configure(
         models=SomeModel,
         configuration={"somethingelse": ModelConfiguration(model_type=SomeOtherModel)},
     )
     assert configurations["yolo"].model_type == SomeModel
-    assert configurations["yolo"].asset == "ok/boomer"
+    assert configurations["yolo"].asset_path == "ok/boomer"
     assert configurations["les simpsons"].model_type == SomeModel
-    assert configurations["les simpsons"].asset is None
+    assert configurations["les simpsons"].asset_path is None
     assert configurations["somethingelse"].model_type == SomeOtherModel
-    assert configurations["somethingelse"].asset is None
+    assert configurations["somethingelse"].asset_path is None
 
     configurations = configure(
         models=SomeModel,
         configuration={"yolo": ModelConfiguration(model_type=SomeOtherModel)},
     )
     assert configurations["yolo"].model_type == SomeOtherModel
-    assert configurations["yolo"].asset is None
+    assert configurations["yolo"].asset_path is None
 
     configurations = configure(
         models=SomeModel,
-        configuration={"yolo": {"asset": "something/else"}},
+        configuration={"yolo": {"asset_path": "something/else"}},
     )
     assert configurations["yolo"].model_type == SomeModel
-    assert configurations["yolo"].asset == "something/else"
+    assert configurations["yolo"].asset_path == "something/else"
 
     configurations = configure(
         models=SomeModel,
         configuration={"yolo2": {"model_type": SomeOtherModel}},
     )
     assert configurations["yolo"].model_type == SomeModel
-    assert configurations["yolo"].asset == "ok/boomer"
+    assert configurations["yolo"].asset_path == "ok/boomer"
     assert configurations["yolo2"].model_type == SomeOtherModel
-    assert configurations["yolo2"].asset is None
+    assert configurations["yolo2"].asset_path is None
 
 
 def test_modellibrary_required_models():
@@ -250,21 +250,21 @@ def test_dependencies_not_in_init():
 
 def test_list_assets():
     class SomeModel(Asset):
-        CONFIGURATIONS = {"model0": {"asset": "some/asset"}}
+        CONFIGURATIONS = {"model0": {"asset_path": "some/asset"}}
 
     class SomeOtherModel(Asset):
-        CONFIGURATIONS = {"model1": {"asset": "some/asset"}}
+        CONFIGURATIONS = {"model1": {"asset_path": "some/asset"}}
 
     assert {"some/asset"} == list_assets(SomeModel)
     assert {"some/asset"} == list_assets([SomeModel, SomeOtherModel])
     assert {"some/asset", "some/otherasset"} == list_assets(
         [SomeModel, SomeOtherModel],
-        configuration={"model1": {"asset": "some/otherasset"}},
+        configuration={"model1": {"asset_path": "some/otherasset"}},
     )
     assert {"some/asset"} == list_assets(
         [SomeModel, SomeOtherModel],
         required_models=["model0"],
-        configuration={"model1": {"asset": "some/otherasset"}},
+        configuration={"model1": {"asset_path": "some/otherasset"}},
     )
 
 
@@ -284,7 +284,7 @@ def assetsmanager_settings(working_dir):
 
 def test_download_assets_version(assetsmanager_settings):
     class SomeModel(Asset):
-        CONFIGURATIONS = {"model0": {"asset": "category/asset:0.0"}}
+        CONFIGURATIONS = {"model0": {"asset_path": "category/asset:0.0"}}
 
     model_assets, assets_info = download_assets(
         assetsmanager_settings=assetsmanager_settings,
@@ -294,7 +294,7 @@ def test_download_assets_version(assetsmanager_settings):
     assert assets_info["category/asset:0.0"]["version"] == "0.0"
 
     class SomeModel(Asset):
-        CONFIGURATIONS = {"model0": {"asset": "category/asset"}}
+        CONFIGURATIONS = {"model0": {"asset_path": "category/asset"}}
 
     model_assets, assets_info = download_assets(
         assetsmanager_settings=assetsmanager_settings,
@@ -304,7 +304,7 @@ def test_download_assets_version(assetsmanager_settings):
     assert assets_info["category/asset"]["version"] == "1.0"
 
     class SomeModel(Asset):
-        CONFIGURATIONS = {"model0": {"asset": "category/asset:0"}}
+        CONFIGURATIONS = {"model0": {"asset_path": "category/asset:0"}}
 
     model_assets, assets_info = download_assets(
         assetsmanager_settings=assetsmanager_settings,
@@ -316,11 +316,11 @@ def test_download_assets_version(assetsmanager_settings):
 
 def test_download_assets_dependencies(assetsmanager_settings):
     class SomeModel(Asset):
-        CONFIGURATIONS = {"model0": {"asset": "category/asset"}}
+        CONFIGURATIONS = {"model0": {"asset_path": "category/asset"}}
 
     class SomeOtherModel(Asset):
         CONFIGURATIONS = {
-            "model1": {"asset": "category/asset:0", "model_dependencies": {"model0"}}
+            "model1": {"asset_path": "category/asset:0", "model_dependencies": {"model0"}}
         }
 
     model_assets, assets_info = download_assets(
@@ -392,7 +392,7 @@ def test_environment_asset_load(monkeypatch, assetsmanager_settings):
         required_models=["some_asset"],
         configuration={
             "some_asset": ModelConfiguration(
-                model_type=TestModel, asset="tests/test_asset"
+                model_type=TestModel, asset_path="tests/test_asset"
             )
         },
         assetsmanager_settings=assetsmanager_settings,
@@ -443,10 +443,10 @@ def test_override_prefix(assetsmanager_settings):
         required_models=["my_model", "my_override_model"],
         configuration={
             "my_model": ModelConfiguration(
-                model_type=TestModel, asset="category/asset"
+                model_type=TestModel, asset_path="category/asset"
             ),
             "my_override_model": ModelConfiguration(
-                model_type=TestModel, asset="category/override-asset"
+                model_type=TestModel, asset_path="category/override-asset"
             ),
         },
         assetsmanager_settings=assetsmanager_settings,
@@ -462,10 +462,10 @@ def test_override_prefix(assetsmanager_settings):
         required_models=["my_model", "my_override_model"],
         configuration={
             "my_model": ModelConfiguration(
-                model_type=TestModel, asset="category/asset"
+                model_type=TestModel, asset_path="category/asset"
             ),
             "my_override_model": ModelConfiguration(
-                model_type=TestModel, asset="category/override-asset"
+                model_type=TestModel, asset_path="category/override-asset"
             ),
         },
         settings={"override_storage_prefix": "override-assets-prefix"},

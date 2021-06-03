@@ -48,7 +48,7 @@ In this case it returns a dictionary with:
 
 ```
 {
-  "path": "/local/path/to/asset",
+  "asset_path": "/local/path/to/asset",
   "from_cache": whether the asset was pulled from cache,
   "meta": {contents of the meta JSON object},
   "version": "returned asset version",

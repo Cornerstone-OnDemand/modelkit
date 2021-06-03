@@ -15,7 +15,7 @@ from tests.conftest import skip_unless
 class DummyTFModel(TensorflowModel):
     CONFIGURATIONS = {
         "dummy_tf_model": {
-            "asset": "dummy_tf_model:0.0",
+            "asset_path": "dummy_tf_model:0.0",
             "model_settings": {
                 "output_dtypes": {"lambda": np.float32},
                 "output_tensor_mapping": {"lambda": "nothing"},

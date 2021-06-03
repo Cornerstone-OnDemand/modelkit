@@ -13,7 +13,7 @@ from modelkit.core.model import Asset
 
 class ModelConfiguration(pydantic.BaseSettings):
     model_type: Type[Asset]
-    asset: Optional[str]
+    asset_path: Optional[str]
     model_settings: Optional[Dict[str, Any]] = {}
     model_dependencies: Optional[Dict[str, str]]
 
@@ -102,8 +102,8 @@ def list_assets(
     assets: Set[str] = set()
     for model in required_models or merged_configuration.keys():
         model_configuration = merged_configuration[model]
-        if model_configuration.asset:
-            assets.add(model_configuration.asset)
+        if model_configuration.asset_path:
+            assets.add(model_configuration.asset_path)
         if model_configuration.model_dependencies:
             assets |= list_assets(
                 configuration=merged_configuration,
