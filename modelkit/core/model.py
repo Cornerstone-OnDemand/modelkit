@@ -614,8 +614,8 @@ class WrappedAsyncModel:
     def __init__(self, async_model: AsyncModel):
         self.async_model = async_model
 
-    def predict(self, item):
-        return asyncio.run(self.async_model.predict(item))
+    def predict(self, item, **kwargs):
+        return asyncio.run(self.async_model.predict(item, **kwargs))
 
-    def predict_batch(self, items):
-        return asyncio.run(self.async_model.predict_batch(items))
+    def predict_batch(self, items, **kwargs):
+        return asyncio.run(self.async_model.predict_batch(items, **kwargs))
