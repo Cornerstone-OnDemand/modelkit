@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, Generic, Iterator, List, Type, Union
 import humanize
 import pydantic
 import sniffio
-from asgiref.sync import AsyncToSync, SyncToAsync
+from asgiref.sync import AsyncToSync
 from rich.markup import escape
 from rich.tree import Tree
 from structlog import get_logger
@@ -643,10 +643,3 @@ class WrappedAsyncModel:
         self.async_model = async_model
         self.predict = AsyncToSync(self.async_model.predict)
         self.predict_batch = AsyncToSync(self.async_model.predict_batch)
-
-
-class WrappedSyncModel:
-    def __init__(self, async_model: AsyncModel):
-        self.async_model = async_model
-        self.predict = SyncToAsync(self.async_model.predict)
-        self.predict_batch = SyncToAsync(self.async_model.predict_batch)
