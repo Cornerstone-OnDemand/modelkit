@@ -6,9 +6,9 @@ nav:
   - Home: 'index.md'
   - Tutorial:
     - Models: 'library/overview.md'
+    - Getting predictions: 'library/using_models.md'
     - Developing models: 'library/developing_modelkit.md'
     - Organizing models: 'library/organizing.md'
-    - Consuming models: 'library/using_models.md'
     - Prediction service: 'library/model_library.md'
     - Testing: 'library/testing.md'
     - Specific models:
@@ -32,6 +32,7 @@ theme:
 markdown_extensions:
   - pymdownx.highlight
   - pymdownx.superfences
+  - pymdownx.details
   - meta
   - admonition
   - toc:

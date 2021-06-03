@@ -28,7 +28,7 @@ class MyModel(Model):
 library = ModelLibrary(models=MyModel)
 
 # This is only a dictionary lookup
-model = library.get_model("my_favorite_model")
+model = library.get("my_favorite_model")
 
 model("hello world") # returns hello world
 ```
