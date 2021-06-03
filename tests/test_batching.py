@@ -28,9 +28,9 @@ def test_identitybatch_batch_process(func, items, batch_size, expected, monkeypa
     m = Model()
     monkeypatch.setattr(m, "_predict_batch", func)
     if batch_size:
-        assert m._predict_by_batch(items, batch_size=batch_size) == expected
+        assert m.predict_batch(items, batch_size=batch_size) == expected
     else:
-        assert m._predict_by_batch(items) == expected
+        assert m.predict_batch(items) == expected
 
 
 @pytest.mark.parametrize(
@@ -58,5 +58,36 @@ def test_callback_batch_process(items, batch_size, expected_steps, monkeypatch):
 
     m = Model()
     monkeypatch.setattr(m, "_predict_batch", func)
-    m._predict_by_batch(items, batch_size=batch_size, callback=callback)
+    m.predict_batch(items, batch_size=batch_size, callback=callback)
     assert steps == expected_steps
+
+
+def _do_gen_test(m, batch_size, n_items):
+    def item_iterator():
+        for x in range(n_items):
+            yield x
+
+    for value, position_in_batch, batch_len in m.predict_gen(
+        item_iterator(), batch_size=batch_size
+    ):
+        assert position_in_batch == value % batch_size
+        if value < (n_items // batch_size) * batch_size:
+            assert batch_len == batch_size
+        else:
+            assert batch_len == n_items - n_items // batch_size * batch_size
+
+
+def test_predict_gen():
+    class GeneratorTestModel(Model):
+        def _predict_batch(self, items):
+            # returns the size of the batch
+            return [
+                (item, position_in_batch, len(items))
+                for (position_in_batch, item) in enumerate(items)
+            ]
+
+    m = GeneratorTestModel()
+
+    _do_gen_test(m, 16, 66)
+    _do_gen_test(m, 10, 8)
+    _do_gen_test(m, 100, 5)
