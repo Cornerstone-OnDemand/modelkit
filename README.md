@@ -26,7 +26,6 @@ Install with `pip`:
 pip install modelkit
 ```
 
-## Documentation
+## Documentation
 
 Refer to the [documentation](https://clustree.github.io/modelkit/) for more information.
-
