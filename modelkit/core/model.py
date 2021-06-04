@@ -1,5 +1,4 @@
 import copy
-import enum
 import hashlib
 import pickle  # nosec
 import typing
@@ -27,6 +26,7 @@ from structlog import get_logger
 import modelkit
 from modelkit.core.settings import LibrarySettings
 from modelkit.core.types import ItemType, ModelTestingConfiguration, ReturnType
+from modelkit.utils.cache import CacheItem
 from modelkit.utils.memory import PerformanceTracker
 from modelkit.utils.pretty import describe, pretty_print_type
 from modelkit.utils.pydantic import construct_recursive
@@ -62,7 +62,7 @@ class Asset:
         self.service_settings = kwargs.get("service_settings") or LibrarySettings()
         self.batch_size = kwargs.get("model_settings", {}).get("batch_size", 64)
         self.asset_path = kwargs.pop("asset_path", "")
-        self.redis_cache = kwargs.pop("redis_cache", None)
+        self.cache = kwargs.pop("cache", None)
         self._loaded = False
         self._deserializing = False
         self.model_settings = kwargs.pop("model_settings", {})
@@ -383,10 +383,6 @@ class BaseModel(Asset, Generic[ItemType, ReturnType]):
                 raise
 
 
-class CachedStatus(enum.Enum):
-    NOT_CACHED = 1
-
-
 class Model(BaseModel[ItemType, ReturnType]):
     def load(self):
         super().load()
@@ -453,51 +449,62 @@ class Model(BaseModel[ItemType, ReturnType]):
     ) -> Iterator[ReturnType]:
         batch_size = batch_size or self.batch_size
 
-        batch: List[ItemType] = []
-        cached_results: List[Union[ItemType, CachedStatus]] = []
+        n_items_to_compute = 0
+        cache_items: List[CacheItem] = []
         step = 0
         while True:
             try:
-                if len(batch) == batch_size:
+                if n_items_to_compute == batch_size:
                     yield from self._predict_from_batch_and_cache(
-                        step, batch, cached_results, _callback=_callback, **kwargs
+                        step, cache_items, _callback=_callback, **kwargs
                     )
-                    batch = []
-                    cached_results = []
+                    cache_items = []
+                    n_items_to_compute = 0
                     step += batch_size
                 else:
                     current_item = self._validate(
                         next(items), self._item_model, ItemValidationException
                     )
-                    if (
-                        self.redis_cache
-                        and self.model_settings.get("cache_predictions")
-                        and not _force_compute
-                    ):
-                        cached_results.append(
-                            self.redis_cache.get(current_item, CachedStatus.NOT_CACHED)
-                        )
+                    if self.cache and self.model_settings.get("cache_predictions"):
+                        if not _force_compute:
+                            cache_item = self.cache.get(
+                                self.configuration_key, current_item, kwargs
+                            )
+                        else:
+                            cache_item = CacheItem(
+                                cache_key=self.cache.hash_key(
+                                    self.configuration_key, current_item, kwargs
+                                ),
+                                item=current_item,
+                            )
+                        if cache_item.missing:
+                            n_items_to_compute += 1
+                        cache_items.append(cache_item)
                     else:
-                        cached_results.append(CachedStatus.NOT_CACHED)
-                    batch.append(current_item)
+                        cache_items.append(CacheItem(item=current_item))
+                        n_items_to_compute += 1
             except StopIteration:
                 break
 
-        if batch:
+        if cache_items:
             yield from self._predict_from_batch_and_cache(
-                step, batch, cached_results, _callback=_callback, **kwargs
+                step, cache_items, _callback=_callback, **kwargs
             )
 
     def _predict_from_batch_and_cache(
-        self, _step: int, batch, cached_results, _callback: Callable = None, **kwargs
+        self,
+        _step: int,
+        cache_items: List[CacheItem],
+        _callback: Callable = None,
+        **kwargs,
     ) -> Iterator[ReturnType]:
-        predictions = self._predict_batch(batch, **kwargs)
-        items_and_predictions = zip(batch, predictions)
-        for res in cached_results:
-            if res == CachedStatus.NOT_CACHED:
-                item, r = next(items_and_predictions)
-                if self.redis_cache and self.model_settings.get("cache_predictions"):
-                    self.redis_cache.setdefault(item, r)
+        batch = [res.item for res in cache_items if res.missing]
+        predictions = iter(self._predict_batch(batch, **kwargs))
+        for cache_item in cache_items:
+            if cache_item.missing:
+                r = next(predictions)
+                if self.cache and self.model_settings.get("cache_predictions"):
+                    self.cache.set(cache_item.cache_key, r)
                 yield self._validate(
                     r,
                     self._return_model,
@@ -505,7 +512,7 @@ class Model(BaseModel[ItemType, ReturnType]):
                 )
             else:
                 yield self._validate(
-                    res,
+                    cache_item.cache_value,
                     self._return_model,
                     ReturnValueValidationException,
                 )
@@ -570,62 +577,64 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
     ) -> AsyncIterator[ReturnType]:
         batch_size = batch_size or self.batch_size
 
-        batch: List[ItemType] = []
-        cached_results: List[Union[ItemType, CachedStatus]] = []
+        n_items_to_compute = 0
+        cache_items: List[CacheItem] = []
         step = 0
         while True:
             try:
-                if len(batch) == batch_size:
+                if n_items_to_compute == batch_size:
                     async for r in self._predict_from_batch_and_cache(
-                        step,
-                        batch,
-                        cached_results,
-                        _callback=_callback,
-                        **kwargs,
+                        step, cache_items, _callback=_callback, **kwargs
                     ):
                         yield r
-
-                    batch = []
-                    cached_results = []
+                    cache_items = []
+                    n_items_to_compute = 0
                     step += batch_size
                 else:
                     current_item = self._validate(
                         next(items), self._item_model, ItemValidationException
                     )
-                    if (
-                        self.redis_cache
-                        and self.model_settings.get("cache_predictions")
-                        and not _force_compute
-                    ):
-                        cached_results.append(
-                            self.redis_cache.get(current_item, CachedStatus.NOT_CACHED)
-                        )
+                    if self.cache and self.model_settings.get("cache_predictions"):
+                        if not _force_compute:
+                            cache_item = self.cache.get(
+                                self.configuration_key, current_item, kwargs
+                            )
+                        else:
+                            cache_item = CacheItem(
+                                cache_key=self.cache.hash_key(
+                                    self.configuration_key, current_item, kwargs
+                                ),
+                                item=current_item,
+                            )
+                        if cache_item.missing:
+                            n_items_to_compute += 1
+                        cache_items.append(cache_item)
                     else:
-                        cached_results.append(CachedStatus.NOT_CACHED)
-                    batch.append(current_item)
+                        cache_items.append(CacheItem(item=current_item))
+                        n_items_to_compute += 1
             except StopIteration:
                 break
 
-        if batch:
+        if cache_items:
             async for r in self._predict_from_batch_and_cache(
-                step,
-                batch,
-                cached_results,
-                _callback=_callback,
-                **kwargs,
+                step, cache_items, _callback=_callback, **kwargs
             ):
                 yield r
 
     async def _predict_from_batch_and_cache(
-        self, _step: int, batch, cached_results, _callback: Callable = None, **kwargs
+        self,
+        _step: int,
+        cache_items: List[CacheItem],
+        _callback: Callable = None,
+        **kwargs,
     ) -> AsyncIterator[ReturnType]:
-        predictions = await self._predict_batch(batch, **kwargs)
-        items_and_predictions = zip(batch, predictions)
-        for res in cached_results:
-            if res == CachedStatus.NOT_CACHED:
-                item, r = next(items_and_predictions)
-                if self.redis_cache and self.model_settings.get("cache_predictions"):
-                    self.redis_cache.setdefault(item, r)
+        batch = [res.item for res in cache_items if res.missing]
+        predictions = iter(await self._predict_batch(batch, **kwargs))
+        for cache_item in cache_items:
+            if cache_item.missing:
+                r = next(predictions)
+                if self.cache and self.model_settings.get("cache_predictions"):
+                    self.cache.set(cache_item.cache_key, r)
                 yield self._validate(
                     r,
                     self._return_model,
@@ -633,7 +642,7 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
                 )
             else:
                 yield self._validate(
-                    res,
+                    cache_item.cache_value,
                     self._return_model,
                     ReturnValueValidationException,
                 )

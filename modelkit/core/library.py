@@ -81,10 +81,10 @@ class ModelLibrary:
         if isinstance(self.required_models, list):
             self.required_models = {r: {} for r in self.required_models}
 
-        self.redis_cache = None
+        self.cache = None
         if self.settings.redis.enable:
             try:
-                self.redis_cache = RedisCache(
+                self.cache = RedisCache(
                     self.settings.redis.host, self.settings.redis.port
                 )
             except (ConnectionError, redis.ConnectionError):
@@ -234,7 +234,7 @@ class ModelLibrary:
             service_settings=self.settings,
             model_settings=model_settings or {},
             configuration_key=model_name,
-            redis_cache=self.redis_cache,
+            cache=self.cache,
         )
         if not self.settings.lazy_loading:
             self.models[model_name].load()

@@ -6,12 +6,14 @@ import modelkit
 from modelkit.utils.redis import connect_redis
 
 
-class Cache:
-    def get(self, key, default):
-        pass
-
-    def setdefault(self, key, value):
-        pass
+class CacheItem:
+    def __init__(
+        self, item=None, cache_key=None, cache_value=None, missing: bool = True
+    ):
+        self.item = item
+        self.cache_key = cache_key
+        self.cache_value = cache_value
+        self.missing = missing
 
 
 class RedisCache:
@@ -27,11 +29,15 @@ class RedisCache:
         pickled = pickle.dumps((item, kwargs))  # nosec: only used to build a hash
         return hashlib.sha256(cache_key + pickled).digest()
 
-    def get(self, k, d):
-        r = self.redis.get(k)
+    def get(self, model_key, item, kwargs):
+        cache_key = self.hash_key(model_key, item, kwargs)
+        r = self.redis.get(cache_key)
         if r is None:
-            return d
-        return pickle.loads(r)
+            return CacheItem(cache_key=cache_key, item=item, missing=True)
+        return CacheItem(
+            cache_key=cache_key, cache_value=pickle.loads(r), missing=False
+        )
 
-    def setdefault(self, k, d):
+    def set(self, k, d):
+        print("set", k, d)
         self.redis.set(k, pickle.dumps(d))
