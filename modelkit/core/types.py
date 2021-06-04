@@ -1,24 +1,9 @@
-from typing import (
-    Any,
-    ByteString,
-    Dict,
-    Generic,
-    List,
-    Mapping,
-    Optional,
-    Set,
-    TypeVar,
-    Union,
-)
+from typing import Any, Dict, Generic, List, Optional, TypeVar
 
 import pydantic
 import pydantic.generics
 
-ALLOWED_ITEM_TYPES = Union[
-    str, int, float, Mapping, Set, ByteString, pydantic.BaseModel
-]
-
-ItemType = TypeVar("ItemType", bound=ALLOWED_ITEM_TYPES)
+ItemType = TypeVar("ItemType")
 ReturnType = TypeVar("ReturnType")
 
 
