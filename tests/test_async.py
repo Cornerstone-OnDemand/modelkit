@@ -19,6 +19,13 @@ def test_compose_sync_async():
         CONFIGURATIONS = {"composed_model": {"model_dependencies": {"async_model"}}}
 
         def _predict(self, item, **kwargs):
+            # The following does not currently work, because AsyncToSync does not
+            # seem to correctly wrap asynchronous generators
+            # for r in self.model_dependencies["async_model"].predict_gen(
+            #           iter((item,))
+            #       ):
+            #     pass
+            self.model_dependencies["async_model"].predict_batch([item])
             return self.model_dependencies["async_model"].predict(item)
 
     library = ModelLibrary(models=[SomeAsyncModel, ComposedModel])
@@ -57,6 +64,10 @@ async def test_compose_async_sync_async(event_loop):
     m = library.get("async_composed_model")
     res = await m.predict({"hello": "world"})
     assert res == {"hello": "world"}
+    async for res in m.predict_gen(iter(({"hello": "world"},))):
+        assert res == {"hello": "world"}
+    res = await m.predict_batch([{"hello": "world"}])
+    assert res == [{"hello": "world"}]
 
 
 async def _do_async(model, item, expected=None):

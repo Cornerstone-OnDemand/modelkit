@@ -692,3 +692,6 @@ class WrappedAsyncModel:
         self.async_model = async_model
         self.predict = AsyncToSync(self.async_model.predict)
         self.predict_batch = AsyncToSync(self.async_model.predict_batch)
+        # The following does not currently work, because AsyncToSync does not
+        # seem to correctly wrap asynchronous generators
+        # self.predict_gen = AsyncToSync(self.async_model.predict_gen)
