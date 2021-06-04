@@ -52,3 +52,38 @@ def test_function(model_key, item, result, testing_prediction_service):
     assert svc.get(model_key)(item) == result
 
 ```
+
+
+The easiest way to carry out test cases in interactive programming (ipython, jupyter notebook etc.) is to use the `.test()` method inherited from BaseModel.
+
+This way, one could easily test its brand new model:
+
+
+```python
+# Define your brand new model
+from modelkit import Model
+class NOTModel(Model):
+    CONFIGURATIONS = {"not_model": {}}
+    TEST_CASES = {
+        "cases": [
+            {"item": True, "result": False},
+            {"item": False, "result": False}  # this should raise an error
+        ]
+    }
+    def predict(self, item: bool, **_) -> bool:
+        return not item
+
+# Execute tests
+NOTModel().test()
+```
+
+```bash
+TEST 1: SUCCESS
+TEST 2: FAILED test failed on item
+item = False                                                                                                                                                                                                            
+expected = False                                                                                                                                                                                                        
+result = True
+```
+
+
+
