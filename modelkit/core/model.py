@@ -402,16 +402,23 @@ class Model(BaseModel[ItemType, ReturnType]):
         items: Iterator[ItemType],
         batch_size: int = None,
         _force_compute: bool = False,
+        _callback: Callable = None,
         **kwargs,
     ) -> Iterator[ReturnType]:
         batch_size = batch_size or self.batch_size
         batch: List[ItemType] = []
+        step = 0
         while True:
             try:
                 if len(batch) == batch_size:
                     yield from self._predict_single_batch_gen(
-                        batch, _force_compute=_force_compute, **kwargs
+                        step,
+                        batch,
+                        _force_compute=_force_compute,
+                        _callback=_callback,
+                        **kwargs,
                     )
+                    step += batch_size
                     batch = []
                 else:
                     batch.append(next(items))
@@ -419,7 +426,11 @@ class Model(BaseModel[ItemType, ReturnType]):
                 break
         if batch:
             yield from self._predict_single_batch_gen(
-                batch, _force_compute=_force_compute, **kwargs
+                step,
+                batch,
+                _force_compute=_force_compute,
+                _callback=_callback,
+                **kwargs,
             )
 
     def predict_batch(
@@ -436,7 +447,7 @@ class Model(BaseModel[ItemType, ReturnType]):
             batch = items[step : step + batch_size]
             current_predictions = list(
                 self._predict_single_batch_gen(
-                    batch, _force_compute=_force_compute, **kwargs
+                    step, batch, _force_compute=_force_compute, **kwargs
                 )
             )
             predictions.extend(current_predictions)
@@ -446,8 +457,10 @@ class Model(BaseModel[ItemType, ReturnType]):
 
     def _predict_single_batch_gen(
         self,
+        _step: int,
         items: List[ItemType],
         _force_compute: bool = False,
+        _callback: Callable = None,
         **kwargs,
     ) -> Iterator[ReturnType]:
         items = self._validate_batch(items, self._item_model, ItemValidationException)
@@ -478,12 +491,11 @@ class Model(BaseModel[ItemType, ReturnType]):
                 from_cache=(len(results) - len(computed_results)),
                 model=self.configuration_key,
             )
-            yield from results
         else:
             # general case: items is a list of items to treat
             # if there are multiple examples but no batching
             # or if there are multiple examples and batching
-            yield from self._validate_batch(
+            results = self._validate_batch(
                 self._predict_batch(
                     items,
                     **kwargs,
@@ -491,6 +503,9 @@ class Model(BaseModel[ItemType, ReturnType]):
                 self._return_model,
                 ReturnValueValidationException,
             )
+        if _callback:
+            _callback(_step, items, results)
+        yield from results
 
     def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
         return [self._predict(p, **kwargs) for p in items]

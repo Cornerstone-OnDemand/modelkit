@@ -59,6 +59,7 @@ def test_callback_batch_process(items, batch_size, expected_steps, monkeypatch):
     m = Model()
     monkeypatch.setattr(m, "_predict_batch", func)
     m.predict_batch(items, batch_size=batch_size, _callback=_callback)
+    m.predict_gen(items, batch_size=batch_size, _callback=_callback)
     assert steps == expected_steps
 
 
