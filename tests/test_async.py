@@ -2,6 +2,7 @@ import asyncio
 
 import pydantic
 import pytest
+from asgiref.sync import AsyncToSync
 
 from modelkit.core.library import ModelLibrary
 from modelkit.core.model import AsyncModel, Model, WrappedAsyncModel
@@ -19,12 +20,6 @@ def test_compose_sync_async():
         CONFIGURATIONS = {"composed_model": {"model_dependencies": {"async_model"}}}
 
         def _predict(self, item, **kwargs):
-            # The following does not currently work, because AsyncToSync does not
-            # seem to correctly wrap asynchronous generators
-            # for r in self.model_dependencies["async_model"].predict_gen(
-            #           iter((item,))
-            #       ):
-            #     pass
             self.model_dependencies["async_model"].predict_batch([item])
             return self.model_dependencies["async_model"].predict(item)
 
@@ -32,6 +27,35 @@ def test_compose_sync_async():
     m = library.get("composed_model")
     assert isinstance(m.model_dependencies["async_model"], WrappedAsyncModel)
     assert m.predict({"hello": "world"}) == {"hello": "world"}
+
+
+def test_compose_sync_async_generator_fail():
+    class SomeAsyncModel(AsyncModel):
+        CONFIGURATIONS = {"async_model": {}}
+
+        async def _predict(self, item, **kwargs):
+            await asyncio.sleep(0)
+            return item
+
+    class ComposedModel(Model):
+        CONFIGURATIONS = {"composed_model": {"model_dependencies": {"async_model"}}}
+
+        def _predict(self, item, **kwargs):
+            # The following does not currently work, because AsyncToSync does not
+            # seem to correctly wrap asynchronous generators
+            for r in AsyncToSync(
+                self.model_dependencies["async_model"].async_model.predict_gen
+            )(iter((item,))):
+                break
+            return r
+
+    library = ModelLibrary(models=[SomeAsyncModel, ComposedModel])
+    m = library.get("composed_model")
+    assert isinstance(m.model_dependencies["async_model"], WrappedAsyncModel)
+    with pytest.raises(TypeError):
+        # raises
+        # TypeError: object async_generator can't be used in 'await' expression
+        assert m.predict({"hello": "world"}) == {"hello": "world"}
 
 
 @pytest.mark.asyncio
