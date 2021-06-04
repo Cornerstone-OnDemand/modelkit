@@ -9,9 +9,9 @@ from tests import TEST_DIR
 def _mypy_check_file(fn, raises):
     result = mypy.api.run([os.path.join(TEST_DIR, "testdata", "typing", fn)])
     if raises:
-        assert result[2] != 0
+        assert result[2] != 0, result
     else:
-        assert result[2] == 0
+        assert result[2] == 0, result
 
 
 TEST_CASES = [
@@ -19,6 +19,7 @@ TEST_CASES = [
     ("predict_bad.py", True),
     ("predict_pydantic_ok.py", False),
     ("predict_pydantic_bad.py", True),
+    ("predict_list.py", False),
 ]
 
 
