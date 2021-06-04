@@ -393,29 +393,8 @@ class Model(BaseModel[ItemType, ReturnType]):
         _force_compute: bool = False,
         **kwargs,
     ) -> ReturnType:
-        item = self._validate(item, self._item_model, ItemValidationException)
-        if self.redis_cache and self.model_settings.get("cache_predictions"):
-            key = self.item_cache_key(item, kwargs)
-            if not _force_compute and self.redis_cache.exists(key):
-                logger.debug(
-                    "Prediction result fetched from cache",
-                    key=key,
-                    model=self.configuration_key,
-                )
-                result = pickle.loads(self.redis_cache.get(key))  # nosec
-            else:
-                logger.debug(
-                    "No cached prediction result found",
-                    key=key,
-                    model=self.configuration_key,
-                )
-                result = self._predict(item, **kwargs)
-                self.redis_cache.set(key, pickle.dumps(result))
-        else:
-            result = self._predict(item, **kwargs)
-
-        return self._validate(
-            result, self._return_model, ReturnValueValidationException
+        return next(
+            self.predict_gen(iter((item,)), _force_compute=_force_compute, **kwargs)
         )
 
     def predict_gen(
