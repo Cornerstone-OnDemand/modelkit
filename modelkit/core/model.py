@@ -332,25 +332,6 @@ class BaseModel(Asset, Generic[ItemType, ReturnType]):
 
         return t
 
-    def _validate(
-        self,
-        item: Any,
-        model: Union[Type[InternalDataModel], None],
-        exception: Type[ModelkitDataValidationException],
-    ):
-        if model:
-            try:
-                if self.service_settings.enable_validation:
-                    return model(data=item).data
-                else:
-                    return construct_recursive(model, data=item).data
-            except pydantic.error_wrappers.ValidationError as exc:
-                raise exception(
-                    f"{self.__class__.__name__}[{self.configuration_key}]",
-                    pydantic_exc=exc,
-                )
-        return item
-
     def _validate_batch(
         self,
         items: List[Any],
