@@ -446,7 +446,7 @@ class Model(BaseModel[ItemType, ReturnType]):
     def predict_batch(
         self,
         items: List[ItemType],
-        callback: Callable = None,
+        _callback: Callable = None,
         batch_size: int = None,
         _force_compute: bool = False,
         **kwargs,
@@ -461,8 +461,8 @@ class Model(BaseModel[ItemType, ReturnType]):
                 )
             )
             predictions.extend(current_predictions)
-            if callback:
-                callback(step, batch, current_predictions)
+            if _callback:
+                _callback(step, batch, current_predictions)
         return predictions
 
     def _predict_single_batch_gen(
@@ -564,7 +564,7 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
     async def predict_batch(
         self,
         items: List[ItemType],
-        callback: Callable = None,
+        _callback: Callable = None,
         batch_size: int = None,
         _force_compute: bool = False,
         _return_info: bool = False,
@@ -591,7 +591,7 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
             computed_results = await self._predict_by_batch(
                 [item[2] for item in to_compute],
                 batch_size=batch_size or self.batch_size,
-                callback=callback,
+                _callback=_callback,
                 **kwargs,
             )
             for ((kitem, key, _), result) in zip(to_compute, computed_results):
@@ -614,7 +614,7 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
             results = await self._predict_by_batch(
                 items,
                 batch_size=batch_size or self.batch_size,
-                callback=callback,
+                _callback=_callback,
                 **kwargs,
             )
 
@@ -623,15 +623,15 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
         )
 
     async def _predict_by_batch(
-        self, items: List[ItemType], batch_size=64, callback=None, **kwargs
+        self, items: List[ItemType], batch_size=64, _callback=None, **kwargs
     ) -> List[ReturnType]:
         predictions = []
         for step in range(0, len(items), batch_size):
             batch = items[step : step + batch_size]
             current_predictions = await self._predict_batch(batch, **kwargs)
             predictions.extend(current_predictions)
-            if callback:
-                callback(step, batch, current_predictions)
+            if _callback:
+                _callback(step, batch, current_predictions)
         return predictions
 
     async def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
