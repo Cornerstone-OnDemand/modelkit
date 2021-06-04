@@ -400,6 +400,13 @@ class Model(BaseModel[ItemType, ReturnType]):
                 if isinstance(m, AsyncModel):
                     self._model_dependencies[model_name] = WrappedAsyncModel(m)
 
+    def _predict(self, item: ItemType, **kwargs) -> ReturnType:
+        result = self._predict_batch([item], **kwargs)
+        return result[0]
+
+    def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
+        return [self._predict(p, **kwargs) for p in items]
+
     def __call__(
         self,
         item: ItemType,
@@ -407,10 +414,6 @@ class Model(BaseModel[ItemType, ReturnType]):
         **kwargs,
     ) -> ReturnType:
         return self.predict(item, _force_compute=_force_compute, **kwargs)
-
-    def _predict(self, item: ItemType, **kwargs) -> ReturnType:
-        result = self._predict_batch([item], **kwargs)
-        return result[0]
 
     def predict(
         self,
@@ -420,6 +423,24 @@ class Model(BaseModel[ItemType, ReturnType]):
     ) -> ReturnType:
         return next(
             self.predict_gen(iter((item,)), _force_compute=_force_compute, **kwargs)
+        )
+
+    def predict_batch(
+        self,
+        items: List[ItemType],
+        _callback: Callable = None,
+        batch_size: int = None,
+        _force_compute: bool = False,
+        **kwargs,
+    ) -> List[ReturnType]:
+        return list(
+            self.predict_gen(
+                iter(items),
+                _callback=_callback,
+                batch_size=batch_size,
+                _force_compute=_force_compute,
+                **kwargs,
+            )
         )
 
     def predict_gen(
@@ -464,30 +485,8 @@ class Model(BaseModel[ItemType, ReturnType]):
 
         if batch:
             yield from self._predict_from_batch_and_cache(
-                step,
-                batch,
-                cached_results,
-                _callback=_callback,
-                **kwargs
+                step, batch, cached_results, _callback=_callback, **kwargs
             )
-
-    def predict_batch(
-        self,
-        items: List[ItemType],
-        _callback: Callable = None,
-        batch_size: int = None,
-        _force_compute: bool = False,
-        **kwargs,
-    ) -> List[ReturnType]:
-        return list(
-            self.predict_gen(
-                iter(items),
-                _callback=_callback,
-                batch_size=batch_size,
-                _force_compute=_force_compute,
-                **kwargs,
-            )
-        )
 
     def _predict_from_batch_and_cache(
         self, _step: int, batch, cached_results, _callback: Callable = None, **kwargs
@@ -513,11 +512,15 @@ class Model(BaseModel[ItemType, ReturnType]):
         if _callback:
             _callback(_step, batch, predictions)
 
-    def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
-        return [self._predict(p, **kwargs) for p in items]
-
 
 class AsyncModel(BaseModel[ItemType, ReturnType]):
+    async def _predict(self, item: ItemType, **kwargs) -> ReturnType:
+        result = await self._predict_batch([item], **kwargs)
+        return result[0]
+
+    async def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
+        return [await self._predict(p, **kwargs) for p in items]
+
     async def __call__(
         self,
         item: ItemType,
@@ -525,10 +528,6 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
         **kwargs,
     ) -> ReturnType:
         return await self.predict(item, _force_compute=_force_compute, **kwargs)
-
-    async def _predict(self, item: ItemType, **kwargs) -> ReturnType:
-        result = await self._predict_batch([item], **kwargs)
-        return result[0]
 
     async def predict(
         self,
@@ -541,6 +540,25 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
         ):
             break
         return r
+
+    async def predict_batch(
+        self,
+        items: List[ItemType],
+        _callback: Callable = None,
+        batch_size: int = None,
+        _force_compute: bool = False,
+        **kwargs,
+    ) -> List[ReturnType]:
+        return [
+            r
+            async for r in self.predict_gen(
+                iter(items),
+                _callback=_callback,
+                batch_size=batch_size,
+                _force_compute=_force_compute,
+                **kwargs,
+            )
+        ]
 
     async def predict_gen(
         self,
@@ -579,25 +597,6 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
                 **kwargs,
             ):
                 yield r
-
-    async def predict_batch(
-        self,
-        items: List[ItemType],
-        _callback: Callable = None,
-        batch_size: int = None,
-        _force_compute: bool = False,
-        **kwargs,
-    ) -> List[ReturnType]:
-        return [
-            r
-            async for r in self.predict_gen(
-                iter(items),
-                _callback=_callback,
-                batch_size=batch_size,
-                _force_compute=_force_compute,
-                **kwargs,
-            )
-        ]
 
     async def _predict_single_batch_gen(
         self,
@@ -652,9 +651,6 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
             _callback(_step, items, results)
         for r in results:
             yield r
-
-    async def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
-        return [await self._predict(p, **kwargs) for p in items]
 
 
 class WrappedAsyncModel:
