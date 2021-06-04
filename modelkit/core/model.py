@@ -455,16 +455,14 @@ class Model(BaseModel[ItemType, ReturnType]):
         while True:
             try:
                 if n_items_to_compute == batch_size:
-                    yield from self._predict_from_batch_and_cache(
+                    yield from self._predict_cache_items(
                         step, cache_items, _callback=_callback, **kwargs
                     )
                     cache_items = []
                     n_items_to_compute = 0
                     step += batch_size
                 else:
-                    current_item = self._validate(
-                        next(items), self._item_model, ItemValidationException
-                    )
+                    current_item = next(items)
                     if self.cache and self.model_settings.get("cache_predictions"):
                         if not _force_compute:
                             cache_item = self.cache.get(
@@ -487,18 +485,23 @@ class Model(BaseModel[ItemType, ReturnType]):
                 break
 
         if cache_items:
-            yield from self._predict_from_batch_and_cache(
+            yield from self._predict_cache_items(
                 step, cache_items, _callback=_callback, **kwargs
             )
 
-    def _predict_from_batch_and_cache(
+    def _predict_cache_items(
         self,
         _step: int,
         cache_items: List[CacheItem],
         _callback: Callable = None,
         **kwargs,
     ) -> Iterator[ReturnType]:
-        batch = [res.item for res in cache_items if res.missing]
+
+        batch = [
+            self._validate(res.item, self._item_model, ItemValidationException)
+            for res in cache_items
+            if res.missing
+        ]
         predictions = iter(self._predict_batch(batch, **kwargs))
         for cache_item in cache_items:
             if cache_item.missing:
@@ -583,7 +586,7 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
         while True:
             try:
                 if n_items_to_compute == batch_size:
-                    async for r in self._predict_from_batch_and_cache(
+                    async for r in self._predict_cache_items(
                         step, cache_items, _callback=_callback, **kwargs
                     ):
                         yield r
@@ -591,9 +594,7 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
                     n_items_to_compute = 0
                     step += batch_size
                 else:
-                    current_item = self._validate(
-                        next(items), self._item_model, ItemValidationException
-                    )
+                    current_item = next(items)
                     if self.cache and self.model_settings.get("cache_predictions"):
                         if not _force_compute:
                             cache_item = self.cache.get(
@@ -616,19 +617,23 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
                 break
 
         if cache_items:
-            async for r in self._predict_from_batch_and_cache(
+            async for r in self._predict_cache_items(
                 step, cache_items, _callback=_callback, **kwargs
             ):
                 yield r
 
-    async def _predict_from_batch_and_cache(
+    async def _predict_cache_items(
         self,
         _step: int,
         cache_items: List[CacheItem],
         _callback: Callable = None,
         **kwargs,
     ) -> AsyncIterator[ReturnType]:
-        batch = [res.item for res in cache_items if res.missing]
+        batch = [
+            self._validate(res.item, self._item_model, ItemValidationException)
+            for res in cache_items
+            if res.missing
+        ]
         predictions = iter(await self._predict_batch(batch, **kwargs))
         for cache_item in cache_items:
             if cache_item.missing:

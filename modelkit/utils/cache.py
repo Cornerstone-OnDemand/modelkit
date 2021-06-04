@@ -2,6 +2,8 @@ import hashlib
 import pickle
 from typing import Any, Dict
 
+import pydantic
+
 import modelkit
 from modelkit.utils.redis import connect_redis
 
@@ -39,5 +41,7 @@ class RedisCache:
         )
 
     def set(self, k, d):
-        print("set", k, d)
-        self.redis.set(k, pickle.dumps(d))
+        if isinstance(d, pydantic.BaseModel):
+            self.redis.set(k, pickle.dumps(d.dict()))
+        else:
+            self.redis.set(k, pickle.dumps(d))

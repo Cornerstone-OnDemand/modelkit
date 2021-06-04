@@ -1,7 +1,10 @@
+import asyncio
 import os
 import subprocess
 import time
+from typing import List, Union
 
+import pydantic
 import pytest
 import redis
 
@@ -45,7 +48,9 @@ def _do_model_test(model, ITEMS):
 
     assert model.predict_batch(ITEMS) == ITEMS
 
-    assert ITEMS + [{"new": "item"}] == model.predict_batch(ITEMS + [{"new": "item"}])
+    assert ITEMS + [{"ok": {"boomer": [-1]}}] == model.predict_batch(
+        ITEMS + [{"ok": {"boomer": [-1]}}]
+    )
 
 
 @skip_unless("ENABLE_REDIS_TEST", "True")
@@ -64,8 +69,22 @@ def test_redis_cache(redis_service):
         def _predict_batch(self, items):
             return items
 
+    class Item(pydantic.BaseModel):
+        class SubItem(pydantic.BaseModel):
+            boomer: Union[int, List[int]]
+
+        ok: SubItem
+
+    class SomeModelValidated(Model[Item, Item]):
+        CONFIGURATIONS = {
+            "model_validated": {"model_settings": {"cache_predictions": True}}
+        }
+
+        def _predict_batch(self, items):
+            return items
+
     svc = ModelLibrary(
-        models=[SomeModel, SomeModelMultiple],
+        models=[SomeModel, SomeModelMultiple, SomeModelValidated],
         settings={"redis": {"enable": True}},
     )
 
@@ -76,6 +95,9 @@ def test_redis_cache(redis_service):
 
     _do_model_test(m, ITEMS)
     _do_model_test(m_multi, ITEMS)
+
+    m_validated = svc.get("model_validated")
+    _do_model_test(m_validated, ITEMS)
 
 
 async def _do_model_test_async(model, ITEMS):
@@ -97,6 +119,7 @@ async def test_redis_cache_async(redis_service, event_loop):
         CONFIGURATIONS = {"model": {"model_settings": {"cache_predictions": True}}}
 
         async def _predict(self, item):
+            await asyncio.sleep(0)
             return item
 
     class SomeModelMultiple(AsyncModel):
@@ -105,10 +128,26 @@ async def test_redis_cache_async(redis_service, event_loop):
         }
 
         async def _predict_batch(self, items):
+            await asyncio.sleep(0)
+            return items
+
+    class Item(pydantic.BaseModel):
+        class SubItem(pydantic.BaseModel):
+            boomer: Union[int, List[int]]
+
+        ok: SubItem
+
+    class SomeModelValidated(AsyncModel[Item, Item]):
+        CONFIGURATIONS = {
+            "model_validated": {"model_settings": {"cache_predictions": True}}
+        }
+
+        async def _predict_batch(self, items):
+            await asyncio.sleep(0)
             return items
 
     svc = ModelLibrary(
-        models=[SomeModel, SomeModelMultiple],
+        models=[SomeModel, SomeModelMultiple, SomeModelValidated],
         settings={"redis": {"enable": True}},
     )
 
@@ -120,3 +159,6 @@ async def test_redis_cache_async(redis_service, event_loop):
     await _do_model_test_async(m, ITEMS)
     await _do_model_test_async(m_multi, ITEMS)
     await svc.close_connections()
+
+    m_validated = svc.get("model_validated")
+    await _do_model_test_async(m_validated, ITEMS)
