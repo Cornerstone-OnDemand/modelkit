@@ -441,19 +441,15 @@ class Model(BaseModel[ItemType, ReturnType]):
         _force_compute: bool = False,
         **kwargs,
     ) -> List[ReturnType]:
-        batch_size = batch_size or self.batch_size
-        predictions = []
-        for step in range(0, len(items), batch_size):
-            batch = items[step : step + batch_size]
-            current_predictions = list(
-                self._predict_single_batch_gen(
-                    step, batch, _force_compute=_force_compute, **kwargs
-                )
+        return list(
+            self.predict_gen(
+                iter(items),
+                _callback=_callback,
+                batch_size=batch_size,
+                _force_compute=_force_compute,
+                **kwargs,
             )
-            predictions.extend(current_predictions)
-            if _callback:
-                _callback(step, batch, current_predictions)
-        return predictions
+        )
 
     def _predict_single_batch_gen(
         self,
