@@ -1,6 +1,8 @@
+import asyncio
+
 import pytest
 
-from modelkit.core.model import Model
+from modelkit.core.model import AsyncModel, Model
 
 
 def _identity(x):
@@ -33,16 +35,19 @@ def test_identitybatch_batch_process(func, items, batch_size, expected, monkeypa
         assert m.predict_batch(items) == expected
 
 
+CALLBACK_TEST_CASES = [
+    ([], 1, 0),
+    (list(range(3)), 1, 3),
+    (list(range(3)), 64, 1),
+    (list(range(128)), 1, 128),
+    (list(range(128)), 64, 2),
+    (list(range(128)), 63, 3),
+]
+
+
 @pytest.mark.parametrize(
     "items,batch_size,expected_steps",
-    [
-        ([], 1, 0),
-        (list(range(3)), 1, 3),
-        (list(range(3)), 64, 1),
-        (list(range(128)), 1, 128),
-        (list(range(128)), 64, 2),
-        (list(range(128)), 63, 3),
-    ],
+    CALLBACK_TEST_CASES,
 )
 def test_callback_batch_process(items, batch_size, expected_steps, monkeypatch):
     steps = 0
@@ -60,6 +65,36 @@ def test_callback_batch_process(items, batch_size, expected_steps, monkeypatch):
     monkeypatch.setattr(m, "_predict_batch", func)
     m.predict_batch(items, batch_size=batch_size, _callback=_callback)
     m.predict_gen(items, batch_size=batch_size, _callback=_callback)
+    assert steps == expected_steps
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "items,batch_size,expected_steps",
+    CALLBACK_TEST_CASES,
+)
+async def test_callback_batch_process_async(items, batch_size, expected_steps):
+    steps = 0
+
+    class SomeAsyncModel(AsyncModel):
+        async def _predict_batch(self, items):
+            await asyncio.sleep(0)
+            return [item + 1 for item in items]
+
+    def _callback(batch_step, batch_items, batch_results):
+        nonlocal steps
+        nonlocal items
+        assert items[batch_step : batch_step + batch_size] == batch_items
+        steps += 1
+
+    m = SomeAsyncModel()
+    await m.predict_batch(items, batch_size=batch_size, _callback=_callback)
+    assert steps == expected_steps
+    steps = 0
+    async for _ in m.predict_gen(
+        iter(items), batch_size=batch_size, _callback=_callback
+    ):
+        pass
     assert steps == expected_steps
 
 
@@ -92,3 +127,36 @@ def test_predict_gen():
     _do_gen_test(m, 16, 66)
     _do_gen_test(m, 10, 8)
     _do_gen_test(m, 100, 5)
+
+
+async def _do_gen_test_async(m, batch_size, n_items):
+    def item_iterator():
+        for x in range(n_items):
+            yield x
+
+    async for value, position_in_batch, batch_len in m.predict_gen(
+        item_iterator(), batch_size=batch_size
+    ):
+        assert position_in_batch == value % batch_size
+        if value < (n_items // batch_size) * batch_size:
+            assert batch_len == batch_size
+        else:
+            assert batch_len == n_items - n_items // batch_size * batch_size
+
+
+@pytest.mark.asyncio
+async def test_predict_gen_async():
+    class AsyncGeneratorTestModel(AsyncModel):
+        async def _predict_batch(self, items):
+            await asyncio.sleep(0)
+            # returns the size of the batch
+            return [
+                (item, position_in_batch, len(items))
+                for (position_in_batch, item) in enumerate(items)
+            ]
+
+    m = AsyncGeneratorTestModel()
+
+    await _do_gen_test_async(m, 16, 66)
+    await _do_gen_test_async(m, 10, 8)
+    await _do_gen_test_async(m, 100, 5)
