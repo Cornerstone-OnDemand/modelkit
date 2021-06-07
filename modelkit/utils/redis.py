@@ -40,7 +40,8 @@ REDIS_RETRY_POLICY = {
 
 
 @retry(**REDIS_RETRY_POLICY)
-def check_redis(host, port):
+def connect_redis(host, port):
     redis_cache = redis.Redis(host=host, port=port)
-    assert redis_cache.ping()
+    if not redis_cache.ping():
+        raise ConnectionError("Cannot connect to redis")
     return redis_cache

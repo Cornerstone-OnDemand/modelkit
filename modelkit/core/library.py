@@ -22,9 +22,10 @@ from modelkit.assets.settings import AssetSpec
 from modelkit.core.model import Model
 from modelkit.core.model_configuration import ModelConfiguration, configure, list_assets
 from modelkit.core.settings import LibrarySettings
+from modelkit.utils.cache import RedisCache
 from modelkit.utils.memory import PerformanceTracker
 from modelkit.utils.pretty import describe
-from modelkit.utils.redis import RedisCacheException, check_redis
+from modelkit.utils.redis import RedisCacheException
 
 logger = get_logger(__name__)
 
@@ -80,13 +81,13 @@ class ModelLibrary:
         if isinstance(self.required_models, list):
             self.required_models = {r: {} for r in self.required_models}
 
-        self.redis_cache = None
+        self.cache = None
         if self.settings.redis.enable:
             try:
-                self.redis_cache = check_redis(
+                self.cache = RedisCache(
                     self.settings.redis.host, self.settings.redis.port
                 )
-            except (AssertionError, redis.ConnectionError):
+            except (ConnectionError, redis.ConnectionError):
                 logger.error(
                     "Cannot ping redis instance",
                     cache_host=self.settings.redis.host,
@@ -233,7 +234,7 @@ class ModelLibrary:
             service_settings=self.settings,
             model_settings=model_settings or {},
             configuration_key=model_name,
-            redis_cache=self.redis_cache,
+            cache=self.cache,
         )
         if not self.settings.lazy_loading:
             self.models[model_name].load()

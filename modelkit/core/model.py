@@ -26,6 +26,7 @@ from structlog import get_logger
 import modelkit
 from modelkit.core.settings import LibrarySettings
 from modelkit.core.types import ItemType, ModelTestingConfiguration, ReturnType
+from modelkit.utils.cache import CacheItem
 from modelkit.utils.memory import PerformanceTracker
 from modelkit.utils.pretty import describe, pretty_print_type
 from modelkit.utils.pydantic import construct_recursive
@@ -61,7 +62,7 @@ class Asset:
         self.service_settings = kwargs.get("service_settings") or LibrarySettings()
         self.batch_size = kwargs.get("model_settings", {}).get("batch_size", 64)
         self.asset_path = kwargs.pop("asset_path", "")
-        self.redis_cache = kwargs.pop("redis_cache", None)
+        self.cache = kwargs.pop("cache", None)
         self._loaded = False
         self._deserializing = False
         self.model_settings = kwargs.pop("model_settings", {})
@@ -332,26 +333,24 @@ class BaseModel(Asset, Generic[ItemType, ReturnType]):
 
         return t
 
-    def _validate_batch(
+    def _validate(
         self,
-        items: List[Any],
+        item: Any,
         model: Union[Type[InternalDataModel], None],
         exception: Type[ModelkitDataValidationException],
     ):
         if model:
             try:
                 if self.service_settings.enable_validation:
-                    items = [model(data=item).data for item in items]
+                    return model(data=item).data
                 else:
-                    items = [
-                        construct_recursive(model, data=item).data for item in items
-                    ]
+                    return construct_recursive(model, data=item).data
             except pydantic.error_wrappers.ValidationError as exc:
                 raise exception(
                     f"{self.__class__.__name__}[{self.configuration_key}]",
                     pydantic_exc=exc,
                 )
-        return items
+        return item
 
     def predict(self, item: ItemType, **kwargs):
         raise NotImplementedError()
@@ -397,6 +396,13 @@ class Model(BaseModel[ItemType, ReturnType]):
                 if isinstance(m, AsyncModel):
                     self._model_dependencies[model_name] = WrappedAsyncModel(m)
 
+    def _predict(self, item: ItemType, **kwargs) -> ReturnType:
+        result = self._predict_batch([item], **kwargs)
+        return result[0]
+
+    def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
+        return [self._predict(p, **kwargs) for p in items]
+
     def __call__(
         self,
         item: ItemType,
@@ -404,10 +410,6 @@ class Model(BaseModel[ItemType, ReturnType]):
         **kwargs,
     ) -> ReturnType:
         return self.predict(item, _force_compute=_force_compute, **kwargs)
-
-    def _predict(self, item: ItemType, **kwargs) -> ReturnType:
-        result = self._predict_batch([item], **kwargs)
-        return result[0]
 
     def predict(
         self,
@@ -418,42 +420,6 @@ class Model(BaseModel[ItemType, ReturnType]):
         return next(
             self.predict_gen(iter((item,)), _force_compute=_force_compute, **kwargs)
         )
-
-    def predict_gen(
-        self,
-        items: Iterator[ItemType],
-        batch_size: int = None,
-        _force_compute: bool = False,
-        _callback: Callable = None,
-        **kwargs,
-    ) -> Iterator[ReturnType]:
-        batch_size = batch_size or self.batch_size
-        batch: List[ItemType] = []
-        step = 0
-        while True:
-            try:
-                if len(batch) == batch_size:
-                    yield from self._predict_single_batch_gen(
-                        step,
-                        batch,
-                        _force_compute=_force_compute,
-                        _callback=_callback,
-                        **kwargs,
-                    )
-                    step += batch_size
-                    batch = []
-                else:
-                    batch.append(next(items))
-            except StopIteration:
-                break
-        if batch:
-            yield from self._predict_single_batch_gen(
-                step,
-                batch,
-                _force_compute=_force_compute,
-                _callback=_callback,
-                **kwargs,
-            )
 
     def predict_batch(
         self,
@@ -473,63 +439,113 @@ class Model(BaseModel[ItemType, ReturnType]):
             )
         )
 
-    def _predict_single_batch_gen(
+    def predict_gen(
+        self,
+        items: Iterator[ItemType],
+        batch_size: int = None,
+        _callback: Callable = None,
+        _force_compute: bool = False,
+        **kwargs,
+    ) -> Iterator[ReturnType]:
+        batch_size = batch_size or self.batch_size
+
+        n_items_to_compute = 0
+        n_items_from_cache = 0
+        cache_items: List[CacheItem] = []
+        step = 0
+        for current_item in items:
+            # This loops creates a list of `CacheItems` which
+            # wrap the items with information as to their
+            # status within the cache.
+            # Whenever `cache_items` has `batch_size` elements that need
+            # to be recomputed, `_predict_cache_items` is called, which will
+            # in turn yield all results in the correct order.
+            # Once we have 2 x batch_size elements available from cache
+            # we yield them to avoid indefinite increase in the cache_item
+            # list size.
+            if self.cache and self.model_settings.get("cache_predictions"):
+                if not _force_compute:
+                    # The cache will return a CacheItem with the information
+                    # as to the stored value (if it exists) and if it is missing
+                    # the cache_key needed to store it
+                    cache_item = self.cache.get(
+                        self.configuration_key, current_item, kwargs
+                    )
+                else:
+                    # When force_recomputing, we still need to get
+                    # the cache key
+                    cache_item = CacheItem(
+                        current_item,
+                        self.cache.hash_key(
+                            self.configuration_key, current_item, kwargs
+                        ),
+                        None,
+                        True,
+                    )
+                if cache_item.missing:
+                    n_items_to_compute += 1
+                else:
+                    n_items_from_cache += 1
+                cache_items.append(cache_item)
+            else:
+                # When no cache is active, all of them should be computed
+                cache_items.append(CacheItem(current_item, None, None, True))
+                n_items_to_compute += 1
+            if n_items_to_compute == batch_size or n_items_from_cache == 2 * batch_size:
+                yield from self._predict_cache_items(
+                    step, cache_items, _callback=_callback, **kwargs
+                )
+                cache_items = []
+                n_items_to_compute = 0
+                n_items_from_cache = 0
+                step += batch_size
+
+        if cache_items:
+            yield from self._predict_cache_items(
+                step, cache_items, _callback=_callback, **kwargs
+            )
+
+    def _predict_cache_items(
         self,
         _step: int,
-        items: List[ItemType],
-        _force_compute: bool = False,
+        cache_items: List[CacheItem],
         _callback: Callable = None,
         **kwargs,
     ) -> Iterator[ReturnType]:
-        items = self._validate_batch(items, self._item_model, ItemValidationException)
-        if self.redis_cache and self.model_settings.get("cache_predictions"):
-            # In the case where cache is activated, sieve through
-            # individual items
-            results = []
-            to_compute = []
-            for kitem, item in enumerate(items):
-                key = self.item_cache_key(item, kwargs)
-                if not _force_compute and self.redis_cache.exists(key):
-                    # We trust the data coming from Redis as it's a local cache
-                    unpickled = pickle.loads(self.redis_cache.get(key))  # nosec
-                    results.append(unpickled)
-                else:
-                    results.append(None)
-                    to_compute.append((kitem, key, item))
-            computed_results = self._predict_batch(
-                [item[2] for item in to_compute],
-                **kwargs,
-            )
-            for ((kitem, key, _), result) in zip(to_compute, computed_results):
-                self.redis_cache.set(key, pickle.dumps(result))
-                results[kitem] = result
-            logger.debug(
-                "Caching digest",
-                recomputed=len(computed_results),
-                from_cache=(len(results) - len(computed_results)),
-                model=self.configuration_key,
-            )
-        else:
-            # general case: items is a list of items to treat
-            # if there are multiple examples but no batching
-            # or if there are multiple examples and batching
-            results = self._validate_batch(
-                self._predict_batch(
-                    items,
-                    **kwargs,
-                ),
-                self._return_model,
-                ReturnValueValidationException,
-            )
+        batch = [
+            self._validate(res.item, self._item_model, ItemValidationException)
+            for res in cache_items
+            if res.missing
+        ]
+        predictions = iter(self._predict_batch(batch, **kwargs))
+        for cache_item in cache_items:
+            if cache_item.missing:
+                r = next(predictions)
+                if self.cache and self.model_settings.get("cache_predictions"):
+                    self.cache.set(cache_item.cache_key, r)
+                yield self._validate(
+                    r,
+                    self._return_model,
+                    ReturnValueValidationException,
+                )
+            else:
+                yield self._validate(
+                    cache_item.cache_value,
+                    self._return_model,
+                    ReturnValueValidationException,
+                )
         if _callback:
-            _callback(_step, items, results)
-        yield from results
-
-    def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
-        return [self._predict(p, **kwargs) for p in items]
+            _callback(_step, batch, predictions)
 
 
 class AsyncModel(BaseModel[ItemType, ReturnType]):
+    async def _predict(self, item: ItemType, **kwargs) -> ReturnType:
+        result = await self._predict_batch([item], **kwargs)
+        return result[0]
+
+    async def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
+        return [await self._predict(p, **kwargs) for p in items]
+
     async def __call__(
         self,
         item: ItemType,
@@ -537,10 +553,6 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
         **kwargs,
     ) -> ReturnType:
         return await self.predict(item, _force_compute=_force_compute, **kwargs)
-
-    async def _predict(self, item: ItemType, **kwargs) -> ReturnType:
-        result = await self._predict_batch([item], **kwargs)
-        return result[0]
 
     async def predict(
         self,
@@ -553,44 +565,6 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
         ):
             break
         return r
-
-    async def predict_gen(
-        self,
-        items: Iterator[ItemType],
-        batch_size: int = None,
-        _force_compute: bool = False,
-        _callback: Callable = None,
-        **kwargs,
-    ) -> AsyncIterator[ReturnType]:
-        batch_size = batch_size or self.batch_size
-        batch: List[ItemType] = []
-        step = 0
-        while True:
-            try:
-                if len(batch) == batch_size:
-                    async for r in self._predict_single_batch_gen(
-                        step,
-                        batch,
-                        _force_compute=_force_compute,
-                        _callback=_callback,
-                        **kwargs,
-                    ):
-                        yield r
-                    step += batch_size
-                    batch = []
-                else:
-                    batch.append(next(items))
-            except StopIteration:
-                break
-        if batch:
-            async for r in self._predict_single_batch_gen(
-                step,
-                batch,
-                _force_compute=_force_compute,
-                _callback=_callback,
-                **kwargs,
-            ):
-                yield r
 
     async def predict_batch(
         self,
@@ -611,61 +585,91 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
             )
         ]
 
-    async def _predict_single_batch_gen(
+    async def predict_gen(
+        self,
+        items: Iterator[ItemType],
+        batch_size: int = None,
+        _callback: Callable = None,
+        _force_compute: bool = False,
+        **kwargs,
+    ) -> AsyncIterator[ReturnType]:
+        batch_size = batch_size or self.batch_size
+
+        n_items_to_compute = 0
+        n_items_from_cache = 0
+        cache_items: List[CacheItem] = []
+        step = 0
+        for current_item in items:
+            if self.cache and self.model_settings.get("cache_predictions"):
+                if not _force_compute:
+                    cache_item = self.cache.get(
+                        self.configuration_key, current_item, kwargs
+                    )
+                else:
+                    cache_item = CacheItem(
+                        current_item,
+                        self.cache.hash_key(
+                            self.configuration_key, current_item, kwargs
+                        ),
+                        None,
+                        True,
+                    )
+                if cache_item.missing:
+                    n_items_to_compute += 1
+                else:
+                    n_items_from_cache += 1
+                cache_items.append(cache_item)
+            else:
+                cache_items.append(CacheItem(current_item, None, None, True))
+                n_items_to_compute += 1
+
+            if n_items_to_compute == batch_size or n_items_from_cache == 2 * batch_size:
+                async for r in self._predict_cache_items(
+                    step, cache_items, _callback=_callback, **kwargs
+                ):
+                    yield r
+                cache_items = []
+                n_items_to_compute = 0
+                n_items_from_cache = 0
+                step += batch_size
+
+        if cache_items:
+            async for r in self._predict_cache_items(
+                step, cache_items, _callback=_callback, **kwargs
+            ):
+                yield r
+
+    async def _predict_cache_items(
         self,
         _step: int,
-        items: List[ItemType],
-        _force_compute: bool = False,
+        cache_items: List[CacheItem],
         _callback: Callable = None,
         **kwargs,
     ) -> AsyncIterator[ReturnType]:
-        items = self._validate_batch(items, self._item_model, ItemValidationException)
-        if self.redis_cache and self.model_settings.get("cache_predictions"):
-            # In the case where cache is activated, sieve through
-            # individual items
-            results = []
-            to_compute = []
-            for kitem, item in enumerate(items):
-                key = self.item_cache_key(item, kwargs)
-                if not _force_compute and self.redis_cache.exists(key):
-                    # We trust the data coming from Redis as it's a local cache
-                    unpickled = pickle.loads(self.redis_cache.get(key))  # nosec
-                    results.append(unpickled)
-                else:
-                    results.append(None)
-                    to_compute.append((kitem, key, item))
-            computed_results = await self._predict_batch(
-                [item[2] for item in to_compute],
-                **kwargs,
-            )
-            for ((kitem, key, _), result) in zip(to_compute, computed_results):
-                self.redis_cache.set(key, pickle.dumps(result))
-                results[kitem] = result
-            logger.debug(
-                "Caching digest",
-                recomputed=len(computed_results),
-                from_cache=(len(results) - len(computed_results)),
-                model=self.configuration_key,
-            )
-        else:
-            # general case: items is a list of items to treat
-            # if there are multiple examples but no batching
-            # or if there are multiple examples and batching
-            results = self._validate_batch(
-                await self._predict_batch(
-                    items,
-                    **kwargs,
-                ),
-                self._return_model,
-                ReturnValueValidationException,
-            )
+        batch = [
+            self._validate(res.item, self._item_model, ItemValidationException)
+            for res in cache_items
+            if res.missing
+        ]
+        predictions = iter(await self._predict_batch(batch, **kwargs))
+        for cache_item in cache_items:
+            if cache_item.missing:
+                r = next(predictions)
+                if self.cache and self.model_settings.get("cache_predictions"):
+                    self.cache.set(cache_item.cache_key, r)
+                yield self._validate(
+                    r,
+                    self._return_model,
+                    ReturnValueValidationException,
+                )
+            else:
+                yield self._validate(
+                    cache_item.cache_value,
+                    self._return_model,
+                    ReturnValueValidationException,
+                )
         if _callback:
-            _callback(_step, items, results)
-        for r in results:
-            yield r
-
-    async def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
-        return [await self._predict(p, **kwargs) for p in items]
+            _callback(_step, batch, predictions)
 
 
 class WrappedAsyncModel:
