@@ -1,6 +1,6 @@
 import hashlib
 import pickle
-from typing import Any, Dict, Generic, Optional
+from typing import Any, Dict, Generic, NamedTuple, Optional
 
 import pydantic
 
@@ -9,18 +9,11 @@ from modelkit.core.types import ItemType
 from modelkit.utils.redis import connect_redis
 
 
-class CacheItem(Generic[ItemType]):
-    def __init__(
-        self,
-        item: Optional[ItemType] = None,
-        cache_key: bytes = None,
-        cache_value=None,
-        missing: bool = True,
-    ):
-        self.item = item
-        self.cache_key = cache_key
-        self.cache_value = cache_value
-        self.missing = missing
+class CacheItem(NamedTuple, Generic[ItemType]):
+    item: Optional[ItemType] = None
+    cache_key: Optional[bytes] = None
+    cache_value: Optional[Any] = None
+    missing: bool = True
 
 
 class RedisCache:
@@ -40,10 +33,8 @@ class RedisCache:
         cache_key = self.hash_key(model_key, item, kwargs)
         r = self.redis.get(cache_key)
         if r is None:
-            return CacheItem(cache_key=cache_key, item=item, missing=True)
-        return CacheItem(
-            cache_key=cache_key, cache_value=pickle.loads(r), missing=False
-        )
+            return CacheItem(item, cache_key, None, True)
+        return CacheItem(item, cache_key, pickle.loads(r), False)
 
     def set(self, k: bytes, d: Any):
         if isinstance(d, pydantic.BaseModel):

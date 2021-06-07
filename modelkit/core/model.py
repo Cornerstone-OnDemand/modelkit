@@ -489,10 +489,12 @@ class Model(BaseModel[ItemType, ReturnType]):
                             # When force_recomputing, we still need to get
                             # the cache key
                             cache_item = CacheItem(
-                                cache_key=self.cache.hash_key(
+                                current_item,
+                                self.cache.hash_key(
                                     self.configuration_key, current_item, kwargs
                                 ),
-                                item=current_item,
+                                None,
+                                True,
                             )
                         if cache_item.missing:
                             n_items_to_compute += 1
@@ -501,7 +503,7 @@ class Model(BaseModel[ItemType, ReturnType]):
                         cache_items.append(cache_item)
                     else:
                         # When no cache is active, all of them should be computed
-                        cache_items.append(CacheItem(item=current_item))
+                        cache_items.append(CacheItem(current_item, None, None, True))
                         n_items_to_compute += 1
             except StopIteration:
                 break
@@ -628,10 +630,12 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
                             )
                         else:
                             cache_item = CacheItem(
-                                cache_key=self.cache.hash_key(
+                                current_item,
+                                self.cache.hash_key(
                                     self.configuration_key, current_item, kwargs
                                 ),
-                                item=current_item,
+                                None,
+                                True,
                             )
                         if cache_item.missing:
                             n_items_to_compute += 1
@@ -639,7 +643,7 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
                             n_items_from_cache += 1
                         cache_items.append(cache_item)
                     else:
-                        cache_items.append(CacheItem(item=current_item))
+                        cache_items.append(CacheItem(current_item, None, None, True))
                         n_items_to_compute += 1
             except StopIteration:
                 break
