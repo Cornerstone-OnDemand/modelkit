@@ -453,7 +453,7 @@ class Model(BaseModel[ItemType, ReturnType]):
         n_items_from_cache = 0
         cache_items: List[CacheItem] = []
         step = 0
-        while True:
+        for current_item in items:
             # This loops creates a list of `CacheItems` which
             # wrap the items with information as to their
             # status within the cache.
@@ -463,50 +463,42 @@ class Model(BaseModel[ItemType, ReturnType]):
             # Once we have 2 x batch_size elements available from cache
             # we yield them to avoid indefinite increase in the cache_item
             # list size.
-            try:
-                if (
-                    n_items_to_compute == batch_size
-                    or n_items_from_cache == 2 * batch_size
-                ):
-                    yield from self._predict_cache_items(
-                        step, cache_items, _callback=_callback, **kwargs
+            if self.cache and self.model_settings.get("cache_predictions"):
+                if not _force_compute:
+                    # The cache will return a CacheItem with the information
+                    # as to the stored value (if it exists) and if it is missing
+                    # the cache_key needed to store it
+                    cache_item = self.cache.get(
+                        self.configuration_key, current_item, kwargs
                     )
-                    cache_items = []
-                    n_items_to_compute = 0
-                    n_items_from_cache = 0
-                    step += batch_size
                 else:
-                    current_item = next(items)
-                    if self.cache and self.model_settings.get("cache_predictions"):
-                        if not _force_compute:
-                            # The cache will return a CacheItem with the information
-                            # as to the stored value (if it exists) and if it is missing
-                            # the cache_key needed to store it
-                            cache_item = self.cache.get(
-                                self.configuration_key, current_item, kwargs
-                            )
-                        else:
-                            # When force_recomputing, we still need to get
-                            # the cache key
-                            cache_item = CacheItem(
-                                current_item,
-                                self.cache.hash_key(
-                                    self.configuration_key, current_item, kwargs
-                                ),
-                                None,
-                                True,
-                            )
-                        if cache_item.missing:
-                            n_items_to_compute += 1
-                        else:
-                            n_items_from_cache += 1
-                        cache_items.append(cache_item)
-                    else:
-                        # When no cache is active, all of them should be computed
-                        cache_items.append(CacheItem(current_item, None, None, True))
-                        n_items_to_compute += 1
-            except StopIteration:
-                break
+                    # When force_recomputing, we still need to get
+                    # the cache key
+                    cache_item = CacheItem(
+                        current_item,
+                        self.cache.hash_key(
+                            self.configuration_key, current_item, kwargs
+                        ),
+                        None,
+                        True,
+                    )
+                if cache_item.missing:
+                    n_items_to_compute += 1
+                else:
+                    n_items_from_cache += 1
+                cache_items.append(cache_item)
+            else:
+                # When no cache is active, all of them should be computed
+                cache_items.append(CacheItem(current_item, None, None, True))
+                n_items_to_compute += 1
+            if n_items_to_compute == batch_size or n_items_from_cache == 2 * batch_size:
+                yield from self._predict_cache_items(
+                    step, cache_items, _callback=_callback, **kwargs
+                )
+                cache_items = []
+                n_items_to_compute = 0
+                n_items_from_cache = 0
+                step += batch_size
 
         if cache_items:
             yield from self._predict_cache_items(
@@ -607,46 +599,39 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
         n_items_from_cache = 0
         cache_items: List[CacheItem] = []
         step = 0
-        while True:
-            try:
-                if (
-                    n_items_to_compute == batch_size
-                    or n_items_from_cache == 2 * batch_size
-                ):
-                    async for r in self._predict_cache_items(
-                        step, cache_items, _callback=_callback, **kwargs
-                    ):
-                        yield r
-                    cache_items = []
-                    n_items_to_compute = 0
-                    n_items_from_cache = 0
-                    step += batch_size
+        for current_item in items:
+            if self.cache and self.model_settings.get("cache_predictions"):
+                if not _force_compute:
+                    cache_item = self.cache.get(
+                        self.configuration_key, current_item, kwargs
+                    )
                 else:
-                    current_item = next(items)
-                    if self.cache and self.model_settings.get("cache_predictions"):
-                        if not _force_compute:
-                            cache_item = self.cache.get(
-                                self.configuration_key, current_item, kwargs
-                            )
-                        else:
-                            cache_item = CacheItem(
-                                current_item,
-                                self.cache.hash_key(
-                                    self.configuration_key, current_item, kwargs
-                                ),
-                                None,
-                                True,
-                            )
-                        if cache_item.missing:
-                            n_items_to_compute += 1
-                        else:
-                            n_items_from_cache += 1
-                        cache_items.append(cache_item)
-                    else:
-                        cache_items.append(CacheItem(current_item, None, None, True))
-                        n_items_to_compute += 1
-            except StopIteration:
-                break
+                    cache_item = CacheItem(
+                        current_item,
+                        self.cache.hash_key(
+                            self.configuration_key, current_item, kwargs
+                        ),
+                        None,
+                        True,
+                    )
+                if cache_item.missing:
+                    n_items_to_compute += 1
+                else:
+                    n_items_from_cache += 1
+                cache_items.append(cache_item)
+            else:
+                cache_items.append(CacheItem(current_item, None, None, True))
+                n_items_to_compute += 1
+
+            if n_items_to_compute == batch_size or n_items_from_cache == 2 * batch_size:
+                async for r in self._predict_cache_items(
+                    step, cache_items, _callback=_callback, **kwargs
+                ):
+                    yield r
+                cache_items = []
+                n_items_to_compute = 0
+                n_items_from_cache = 0
+                step += batch_size
 
         if cache_items:
             async for r in self._predict_cache_items(
