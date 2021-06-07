@@ -1,6 +1,8 @@
-from typing import Optional
+import os
+from typing import Optional, Union
 
 import pydantic
+from pydantic import root_validator
 
 
 class TFServingSettings(pydantic.BaseSettings):
@@ -17,10 +19,44 @@ class TFServingSettings(pydantic.BaseSettings):
         return v
 
 
-class RedisSettings(pydantic.BaseSettings):
-    enable: bool = pydantic.Field(False, env="ENABLE_REDIS_CACHE")
+class CacheSettings(pydantic.BaseSettings):
+    cache_provider: Optional[str] = pydantic.Field(None, env="CACHE_PROVIDER")
+
+
+class RedisSettings(CacheSettings):
     host: str = pydantic.Field("localhost", env="CACHE_HOST")
     port: int = pydantic.Field(6379, env="CACHE_PORT")
+
+    @pydantic.validator("cache_provider")
+    def _validate_type(cls, v):
+        if v != "redis":
+            raise ValueError
+        return v
+
+
+class NativeCacheSettings(CacheSettings):
+    implementation: str = pydantic.Field("LRU", env="CACHE_IMPLEMENTATION")
+    maxsize: int = pydantic.Field(128, env="CACHE_MAX_SIZE")
+
+    @pydantic.validator("cache_provider")
+    def _validate_type(cls, v):
+        if v != "native":
+            raise ValueError
+        return v
+
+
+def cache_settings():
+    s = CacheSettings()
+    if s.cache_provider is None:
+        return None
+    try:
+        return RedisSettings()
+    except pydantic.ValidationError:
+        pass
+    try:
+        return NativeCacheSettings()
+    except pydantic.ValidationError:
+        pass
 
 
 class LibrarySettings(pydantic.BaseSettings):
@@ -33,7 +69,9 @@ class LibrarySettings(pydantic.BaseSettings):
     tf_serving: TFServingSettings = pydantic.Field(
         default_factory=lambda: TFServingSettings()
     )
-    redis: RedisSettings = pydantic.Field(default_factory=lambda: RedisSettings())
+    cache: Optional[Union[RedisSettings, NativeCacheSettings]] = pydantic.Field(
+        default_factory=lambda: cache_settings()
+    )
 
     class Config:
         env_prefix = ""

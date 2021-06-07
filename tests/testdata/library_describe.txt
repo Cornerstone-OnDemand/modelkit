@@ -8,10 +8,8 @@ Settings
 │   ├── mode : str = 'rest'                                                     
 │   ├── host : str = 'localhost'                                                
 │   └── port : int = 8501                                                       
-└── redis : RedisSettings                                                       
-    ├── enable : bool = False                                                   
-    ├── host : str = 'localhost'                                                
-    └── port : int = 6379                                                       
+└── cache : typing.Union[modelkit.core.settings.RedisSettings,                  
+    modelkit.core.settings.NativeCacheSettings, NoneType] = None                
 Configuration                                                                   
 ├── some_complex_model_a : ModelConfiguration                                   
 │   ├── model_type : Type[Asset] = SomeComplexValidatedModelA type              

@@ -1,7 +1,10 @@
+import abc
 import hashlib
 import pickle
 from typing import Any, Dict, Generic, NamedTuple, Optional
 
+import cachetools
+import cachetools.keys
 import pydantic
 
 import modelkit
@@ -16,7 +19,30 @@ class CacheItem(NamedTuple, Generic[ItemType]):
     missing: bool = True
 
 
-class RedisCache:
+class Cache(abc.ABC):
+    @staticmethod
+    def from_settings(settings):
+        if settings.cache_provider == "redis":
+            return RedisCache(settings.settings.host, settings.settings.port)
+        if settings.cache_provider == "native":
+            return RedisCache(
+                settings.settings.implementation, settings.settings.maxsize
+            )
+
+    @abc.abstractmethod
+    def hash_key(self, model_key: str, item: Any, kwargs: Dict[str, Any]):
+        pass
+
+    @abc.abstractmethod
+    def get(self, model_key: str, item: Any, kwargs: Dict[str, Any]):
+        pass
+
+    @abc.abstractmethod
+    def set(self, k: bytes, d: Any):
+        pass
+
+
+class RedisCache(Cache):
     def __init__(self, host, port):
         self.redis = connect_redis(host, port)
         self.cache_keys = {}
@@ -41,3 +67,29 @@ class RedisCache:
             self.redis.set(k, pickle.dumps(d.dict()))
         else:
             self.redis.set(k, pickle.dumps(d))
+
+
+class NativeCache(Cache):
+    NATIVE_CACHE_IMPLEMENTATIONS = {
+        "LFU": cachetools.LFUCache,
+        "LRU": cachetools.LRUCache,
+    }
+
+    def __init__(self, implementation, maxsize):
+        self.cache: cachetools.Cache = self.NATIVE_CACHE_IMPLEMENTATIONS[
+            implementation
+        ](maxsize)
+
+    def hash_key(self, model_key: str, item: Any, kwargs: Dict[str, Any]):
+        pickled = pickle.dumps((item, kwargs))  # nosec: only used to build a hash
+        return cachetools.keys.hashkey((model_key, pickled))
+
+    def get(self, model_key: str, item: Any, kwargs: Dict[str, Any]):
+        cache_key = self.hash_key(model_key, item, kwargs)
+        r = self.cache.get(cache_key)
+        if r is None:
+            return CacheItem(item, cache_key, None, True)
+        return CacheItem(item, cache_key, r, False)
+
+    def set(self, k: bytes, d: Any):
+        self.cache.setdefault(k, d)
