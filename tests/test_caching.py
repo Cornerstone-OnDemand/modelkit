@@ -10,7 +10,63 @@ import redis
 
 from modelkit.core.library import ModelLibrary
 from modelkit.core.model import AsyncModel, Model
+from modelkit.utils.cache import NativeCache, RedisCache
 from tests.conftest import skip_unless
+
+
+@pytest.mark.parametrize("cache_implementation", ["LFU", "LRU", "RR"])
+def test_native_cache(cache_implementation):
+    class SomeModel(Model):
+        CONFIGURATIONS = {"model": {"model_settings": {"cache_predictions": True}}}
+
+        def _predict(self, item):
+            return item
+
+    class SomeModelMultiple(Model):
+        CONFIGURATIONS = {
+            "model_multiple": {"model_settings": {"cache_predictions": True}}
+        }
+
+        def _predict_batch(self, items):
+            return items
+
+    class Item(pydantic.BaseModel):
+        class SubItem(pydantic.BaseModel):
+            boomer: Union[int, List[int]]
+
+        ok: SubItem
+
+    class SomeModelValidated(Model[Item, Item]):
+        CONFIGURATIONS = {
+            "model_validated": {"model_settings": {"cache_predictions": True}}
+        }
+
+        def _predict_batch(self, items):
+            return items
+
+    svc = ModelLibrary(
+        models=[SomeModel, SomeModelMultiple, SomeModelValidated],
+        settings={
+            "cache": {
+                "cache_provider": "native",
+                "implementation": cache_implementation,
+                "maxsize": 16,
+            }
+        },
+    )
+
+    assert isinstance(svc.cache, NativeCache)
+
+    m = svc.get("model")
+    m_multi = svc.get("model_multiple")
+
+    ITEMS = [{"ok": {"boomer": 1}}, {"ok": {"boomer": [2, 2, 3]}}]
+
+    _do_model_test(m, ITEMS)
+    _do_model_test(m_multi, ITEMS)
+
+    m_validated = svc.get("model_validated")
+    _do_model_test(m_validated, ITEMS)
 
 
 @pytest.fixture()
@@ -85,8 +141,10 @@ def test_redis_cache(redis_service):
 
     svc = ModelLibrary(
         models=[SomeModel, SomeModelMultiple, SomeModelValidated],
-        settings={"redis": {"enable": True}},
+        settings={"cache": {"cache_provider": "redis"}},
     )
+
+    assert isinstance(svc.cache, RedisCache)
 
     m = svc.get("model")
     m_multi = svc.get("model_multiple")
@@ -148,8 +206,10 @@ async def test_redis_cache_async(redis_service, event_loop):
 
     svc = ModelLibrary(
         models=[SomeModel, SomeModelMultiple, SomeModelValidated],
-        settings={"redis": {"enable": True}},
+        settings={"cache": {"cache_provider": "redis"}},
     )
+
+    assert isinstance(svc.cache, RedisCache)
 
     m = svc.get("model")
     m_multi = svc.get("model_multiple")

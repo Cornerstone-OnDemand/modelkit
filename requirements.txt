@@ -21,7 +21,9 @@ botocore==1.19.36
     #   boto3
     #   s3transfer
 cachetools==4.2.0
-    # via google-auth
+    # via
+    #   -r requirements.in
+    #   google-auth
 certifi==2020.12.5
     # via requests
 cffi==1.14.4

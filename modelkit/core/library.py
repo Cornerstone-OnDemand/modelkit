@@ -21,8 +21,8 @@ from modelkit.assets.manager import AssetsManager
 from modelkit.assets.settings import AssetSpec
 from modelkit.core.model import Model
 from modelkit.core.model_configuration import ModelConfiguration, configure, list_assets
-from modelkit.core.settings import LibrarySettings
-from modelkit.utils.cache import RedisCache
+from modelkit.core.settings import LibrarySettings, NativeCacheSettings, RedisSettings
+from modelkit.utils.cache import Cache, NativeCache, RedisCache
 from modelkit.utils.memory import PerformanceTracker
 from modelkit.utils.pretty import describe
 from modelkit.utils.redis import RedisCacheException
@@ -81,22 +81,27 @@ class ModelLibrary:
         if isinstance(self.required_models, list):
             self.required_models = {r: {} for r in self.required_models}
 
-        self.cache = None
-        if self.settings.redis.enable:
-            try:
-                self.cache = RedisCache(
-                    self.settings.redis.host, self.settings.redis.port
-                )
-            except (ConnectionError, redis.ConnectionError):
-                logger.error(
-                    "Cannot ping redis instance",
-                    cache_host=self.settings.redis.host,
-                    port=self.settings.redis.port,
-                )
-                raise RedisCacheException(
-                    "Cannot ping redis instance"
-                    f"[cache_host={self.settings.redis.host}, "
-                    f"port={self.settings.redis.port}]"
+        self.cache: Optional[Cache] = None
+        if self.settings.cache:
+            if isinstance(self.settings.cache, RedisSettings):
+                try:
+                    self.cache = RedisCache(
+                        self.settings.cache.host, self.settings.cache.port
+                    )
+                except (ConnectionError, redis.ConnectionError):
+                    logger.error(
+                        "Cannot ping redis instance",
+                        cache_host=self.settings.cache.host,
+                        port=self.settings.cache.port,
+                    )
+                    raise RedisCacheException(
+                        "Cannot ping redis instance"
+                        f"[cache_host={self.settings.cache.host}, "
+                        f"port={self.settings.cache.port}]"
+                    )
+            if isinstance(self.settings.cache, NativeCacheSettings):
+                self.cache = NativeCache(
+                    self.settings.cache.implementation, self.settings.cache.maxsize
                 )
 
         if not self._lazy_loading:

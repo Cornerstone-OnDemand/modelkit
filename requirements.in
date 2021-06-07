@@ -1,6 +1,7 @@
 aiohttp
 boto3
 google-cloud-storage
+cachetools
 click
 filelock
 humanize

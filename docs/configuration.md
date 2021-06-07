@@ -22,9 +22,13 @@ Refer to the [AssetsManager settings documentation](assets/environment.md) for m
     - `TF_SERVING_PORT` (default: `8501`): Port of tensorflow server
     - `TF_SERVING_MODE` (default: `rest`): `rest` to use REST protocol of tensorflow server (port 8501), `grpc` to use GRPC protocol (port 8500)
     - `TF_SERVING_TIMEOUT_S` (default: `60`): Timeout duration for tensorflow server calls
-- `ENABLE_REDIS_CACHE` (default: `False) to use prediction caching
+- `CACHE_PROVIDER` (default: `None`) to use prediction caching
+  - if `CACHE_PROVIDER=redis`, use an external redis instance for caching:
     - `CACHE_HOST` (default: `localhost`)
     - `CACHE_PORT` (default: `6379`)
+  - if `CACHE_PROVIDER=native` use native caching (via [cachetools](https://cachetools.readthedocs.io/en/stable/)):
+    - `CACHE_IMPLEMENTATION` can be 
+    - `CACHE_MAX_SIZE` size of the cache
 - `modelkit_ASYNC_MODE` (default to `None`) forces the `DistantHTTPModels` to use async mode.
 
 ## New Assets Testing Environment
