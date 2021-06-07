@@ -455,12 +455,14 @@ class Model(BaseModel[ItemType, ReturnType]):
         step = 0
         while True:
             # This loops creates a list of `CacheItems` which
-            # are simple the item wrapped with information as to its
-            # status in the cache
+            # wrap the items with information as to their
+            # status within the cache.
             # Whenever `cache_items` has `batch_size` elements that need
             # to be recomputed, `_predict_cache_items` is called, which will
-            # in turn yield all results in the correct order
-            # Once we have 2 x batch_size elements available to yield
+            # in turn yield all results in the correct order.
+            # Once we have 2 x batch_size elements available from cache
+            # we yield them to avoid indefinite increase in the cache_item
+            # list size.
             try:
                 if (
                     n_items_to_compute == batch_size
