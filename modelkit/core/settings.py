@@ -1,8 +1,6 @@
-import os
 from typing import Optional, Union
 
 import pydantic
-from pydantic import root_validator
 
 
 class TFServingSettings(pydantic.BaseSettings):

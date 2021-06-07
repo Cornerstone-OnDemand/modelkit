@@ -20,15 +20,6 @@ class CacheItem(NamedTuple, Generic[ItemType]):
 
 
 class Cache(abc.ABC):
-    @staticmethod
-    def from_settings(settings):
-        if settings.cache_provider == "redis":
-            return RedisCache(settings.settings.host, settings.settings.port)
-        if settings.cache_provider == "native":
-            return RedisCache(
-                settings.settings.implementation, settings.settings.maxsize
-            )
-
     @abc.abstractmethod
     def hash_key(self, model_key: str, item: Any, kwargs: Dict[str, Any]):
         pass
@@ -73,6 +64,7 @@ class NativeCache(Cache):
     NATIVE_CACHE_IMPLEMENTATIONS = {
         "LFU": cachetools.LFUCache,
         "LRU": cachetools.LRUCache,
+        "RR": cachetools.RRCache,
     }
 
     def __init__(self, implementation, maxsize):

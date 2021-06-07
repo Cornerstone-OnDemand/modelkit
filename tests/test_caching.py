@@ -10,10 +10,11 @@ import redis
 
 from modelkit.core.library import ModelLibrary
 from modelkit.core.model import AsyncModel, Model
+from modelkit.utils.cache import NativeCache, RedisCache
 from tests.conftest import skip_unless
 
 
-@pytest.mark.parametrize("cache_implementation", ["LFU", "LRU"])
+@pytest.mark.parametrize("cache_implementation", ["LFU", "LRU", "RR"])
 def test_native_cache(cache_implementation):
     class SomeModel(Model):
         CONFIGURATIONS = {"model": {"model_settings": {"cache_predictions": True}}}
@@ -53,6 +54,8 @@ def test_native_cache(cache_implementation):
             }
         },
     )
+
+    assert isinstance(svc.cache, NativeCache)
 
     m = svc.get("model")
     m_multi = svc.get("model_multiple")
@@ -141,6 +144,8 @@ def test_redis_cache(redis_service):
         settings={"cache": {"cache_provider": "redis"}},
     )
 
+    assert isinstance(svc.cache, RedisCache)
+
     m = svc.get("model")
     m_multi = svc.get("model_multiple")
 
@@ -203,6 +208,8 @@ async def test_redis_cache_async(redis_service, event_loop):
         models=[SomeModel, SomeModelMultiple, SomeModelValidated],
         settings={"cache": {"cache_provider": "redis"}},
     )
+
+    assert isinstance(svc.cache, RedisCache)
 
     m = svc.get("model")
     m_multi = svc.get("model_multiple")
