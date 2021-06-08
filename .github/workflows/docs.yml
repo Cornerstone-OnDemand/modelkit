@@ -10,11 +10,22 @@ jobs:
     name: Deploy docs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - name: Delete branch
+        uses: dawidd6/action-delete-branch@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branches: gh-pages
+
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+    
+      - name: Setup Python
+        uses: actions/setup-python@v2
         with:
           python-version: 3.x
-      - run: pip install mkdocs-material mkdocs-git-revision-date-localized-plugin
-      - run: mkdocs gh-deploy --force
+          
+      - name: Build and deploy docs
+        run: pip install mkdocs-material mkdocs-git-revision-date-localized-plugin
+        run: mkdocs gh-deploy --force
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
