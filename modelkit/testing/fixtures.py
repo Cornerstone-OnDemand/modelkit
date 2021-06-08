@@ -10,7 +10,7 @@ import pydantic.generics
 from modelkit.core.library import ModelLibrary
 from modelkit.core.model import Model
 from modelkit.core.model_configuration import configure
-from modelkit.core.models.tensorflow_model import connect_tf_serving
+from modelkit.core.models.tensorflow_model import TensorflowModel, connect_tf_serving
 from modelkit.testing.reference import ReferenceJson
 from modelkit.utils.tensorflow import deploy_tf_models
 
@@ -156,5 +156,14 @@ def tf_serving_fixture(request, svc, deployment="docker"):
 
     request.addfinalizer(finalize)
     connect_tf_serving(
-        next((x for x in svc.required_models)), "localhost", 8500, "grpc"
+        next(
+            (
+                x
+                for x in svc.required_models
+                if issubclass(svc.configuration[x].model_type, TensorflowModel)
+            )
+        ),
+        "localhost",
+        8500,
+        "grpc",
     )
