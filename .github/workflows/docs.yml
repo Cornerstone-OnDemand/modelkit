@@ -24,8 +24,10 @@ jobs:
         with:
           python-version: 3.x
           
-      - name: Build and deploy docs
+      - name: Install dependencies
         run: pip install mkdocs-material mkdocs-git-revision-date-localized-plugin
+
+      - name: Build and deploy docs
         run: mkdocs gh-deploy --force
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
