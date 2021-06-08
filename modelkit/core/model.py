@@ -26,6 +26,7 @@ from structlog import get_logger
 import modelkit
 from modelkit.core.settings import LibrarySettings
 from modelkit.core.types import ItemType, ModelTestingConfiguration, ReturnType
+from modelkit.utils import traceback
 from modelkit.utils.cache import CacheItem
 from modelkit.utils.memory import PerformanceTracker
 from modelkit.utils.pretty import describe, pretty_print_type
@@ -158,6 +159,11 @@ class ItemValidationException(ModelkitDataValidationException):
             error_str="Predict item validation error when calling model",
             pydantic_exc=kwargs.pop("pydantic_exc"),
         )
+
+
+class PredictionError(Exception):
+    def __init__(self, exc):
+        self.exc = exc
 
 
 class BaseModel(Asset, Generic[ItemType, ReturnType]):
@@ -403,6 +409,7 @@ class Model(BaseModel[ItemType, ReturnType]):
     def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
         return [self._predict(p, **kwargs) for p in items]
 
+    @traceback.wrap_modelkit_exceptions
     def __call__(
         self,
         item: ItemType,
@@ -411,6 +418,7 @@ class Model(BaseModel[ItemType, ReturnType]):
     ) -> ReturnType:
         return self.predict(item, _force_compute=_force_compute, **kwargs)
 
+    @traceback.wrap_modelkit_exceptions
     def predict(
         self,
         item: ItemType,
@@ -421,6 +429,7 @@ class Model(BaseModel[ItemType, ReturnType]):
             self.predict_gen(iter((item,)), _force_compute=_force_compute, **kwargs)
         )
 
+    @traceback.wrap_modelkit_exceptions
     def predict_batch(
         self,
         items: List[ItemType],
@@ -439,6 +448,7 @@ class Model(BaseModel[ItemType, ReturnType]):
             )
         )
 
+    @traceback.wrap_modelkit_exceptions_gen
     def predict_gen(
         self,
         items: Iterator[ItemType],
