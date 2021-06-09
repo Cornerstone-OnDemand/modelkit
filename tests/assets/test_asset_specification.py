@@ -15,6 +15,9 @@ from modelkit.assets.settings import AssetSpec
         ("1", True),
         ("some_go0d_name", True),
         ("some_go/0d_name", True),
+        ("SOME_GOOD_NAME_AS_WELL", True),
+        ("50M3_G00D_N4ME_4S_W3LL", True),
+        ("C:\\A\\L0cAL\\Windows\\file.ext", True),
     ],
 )
 def test_names(test, valid):
@@ -51,6 +54,7 @@ TEST_SPECS = [
     ),
     ({"name": "ontologies/skills.csv", "minor_version": "10"}, False),
     ({"name": "ontologies/skills.csv", "major_version": "10"}, True),
+    ({"name": "ontologies/SKILLS.csv", "major_version": "10"}, True),
     ({"name": "skills.csv", "not_a_field": "0.1", "file_path": "/ok/boomer"}, False),
 ]
 
@@ -67,6 +71,8 @@ def test_valid_spec(spec_dict, valid):
 TEST_STRING_SPECS = [
     ("blabli/blebla", {"name": "blabli/blebla"}),
     ("bl2_32_a.bli/bl3.debla", {"name": "bl2_32_a.bli/bl3.debla"}),
+    ("blabli/BLEBLA", {"name": "blabli/BLEBLA"}),
+    ("bl2_32_a.BLI/bl3.DEBLA", {"name": "bl2_32_a.BLI/bl3.DEBLA"}),
     (
         "blabli/blebla[/foo/bar]",
         {"name": "blabli/blebla", "sub_part": "/foo/bar"},
@@ -125,6 +131,34 @@ TEST_STRING_SPECS = [
         },
     ),
     ("blabli/blebla[foo]", {"name": "blabli/blebla", "sub_part": "foo"}),
+    (
+        "blabli/BLEBLA:1.12[FOO]",
+        {
+            "name": "blabli/BLEBLA",
+            "sub_part": "FOO",
+            "major_version": 1,
+            "minor_version": 12,
+        },
+    ),
+    ("blabli/blebla[foo]", {"name": "blabli/blebla", "sub_part": "foo"}),
+    (
+        "C:\A\L0cAL\Windows\\file.ext",
+        {
+            "name": "C:\A\L0cAL\Windows\\file.ext",
+            "sub_part": None,
+            "major_version": None,
+            "minor_version": None,
+        },
+    ),
+    (
+        "/modelkit/tmp-local-asset/1.0/subpart/README.md",
+        {
+            "name": "/modelkit/tmp-local-asset/1.0/subpart/README.md",
+            "sub_part": None,
+            "major_version": None,
+            "minor_version": None,
+        },
+    ),
 ]
 
 
