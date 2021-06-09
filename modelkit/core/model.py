@@ -161,11 +161,6 @@ class ItemValidationException(ModelkitDataValidationException):
         )
 
 
-class PredictionError(Exception):
-    def __init__(self, exc):
-        self.exc = exc
-
-
 class BaseModel(Asset, Generic[ItemType, ReturnType]):
     """
     Model
