@@ -52,10 +52,17 @@ class AssetsManager:
             # no version is specified
             if not all_versions_list:
                 # and none exist
+                # in this case, the asset spec is likely a relative or absolute
+                # path to a file/directory
                 if os.path.exists(local_name):
+                    # if the asset spec resolves to WORKING_DIR/spec.name
                     return {"path": local_name}
                 elif os.path.exists(os.path.join(os.getcwd(), *spec.name.split("/"))):
+                    # if the assect spec resolves to cwd/spec.name
                     return {"path": os.path.join(os.getcwd(), *spec.name.split("/"))}
+                elif os.path.exists(spec.name):
+                    # if the asset spec is a valid absolute path
+                    return {"path": spec.name}
                 else:
                     raise errors.AssetDoesNotExistError(spec.name)
 
