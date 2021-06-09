@@ -110,14 +110,12 @@ def tf_serving_fixture(request, svc, deployment="docker"):
         "--rest_api_port=8501",
     ]
 
-    deploy_tf_models(svc, "local-docker", config_name="testing")
     if deployment == "process":
+        deploy_tf_models(svc, "local-process", config_name="testing")
         proc = subprocess.Popen(
             [
                 "tensorflow_model_server",
-                "--model_config_file="
-                f"{os.environ['WORKING_DIR']}/{os.environ['STORAGE_PREFIX']}/"
-                "testing.config",
+                "--model_config_file=" f"{os.environ['WORKING_DIR']}/testing.config",
             ]
             + cmd
         )
@@ -126,6 +124,7 @@ def tf_serving_fixture(request, svc, deployment="docker"):
             proc.terminate()
 
     else:
+        deploy_tf_models(svc, "local-docker", config_name="testing")
         # kill previous tfserving container (if any)
         subprocess.call(
             ["docker", "rm", "-f", "modelkit-tfserving-tests"],
