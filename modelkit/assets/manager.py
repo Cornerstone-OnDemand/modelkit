@@ -54,6 +54,8 @@ class AssetsManager:
                 # and none exist
                 if os.path.exists(local_name):
                     return {"path": local_name}
+                elif os.path.exists(os.path.join(os.getcwd(), *spec.name.split("/"))):
+                    return {"path": os.path.join(os.getcwd(), *spec.name.split("/"))}
                 else:
                     raise errors.AssetDoesNotExistError(spec.name)
 

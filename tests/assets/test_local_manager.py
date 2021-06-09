@@ -1,4 +1,5 @@
 import os
+import shutil
 
 import pytest
 
@@ -17,6 +18,10 @@ def test_local_manager_no_versions(working_dir):
     manager = AssetsManager(assets_dir=working_dir)
     res = manager.fetch_asset("something/else/deep.txt", return_info=True)
     assert res["path"] == os.path.join(working_dir, "something", "else", "deep.txt")
+
+    manager = AssetsManager()
+    res = manager.fetch_asset("README.md", return_info=True)
+    assert res["path"] == os.path.join(os.getcwd(), "README.md")
 
     manager = AssetsManager(assets_dir=working_dir)
     res = manager.fetch_asset("something", return_info=True)
@@ -66,6 +71,22 @@ def test_local_manager_with_versions(working_dir):
     manager = AssetsManager(assets_dir=working_dir)
     res = manager.fetch_asset("something", return_info=True)
     assert res["path"] == os.path.join(working_dir, "something", "1.1")
+
+    try:
+        manager = AssetsManager()
+        local_dir = os.path.join("tmp-local-asset", "1.0", "subpart")
+        os.makedirs(local_dir)
+        shutil.copy("README.md", local_dir)
+
+        res = manager.fetch_asset(
+            "tmp-local-asset:1.0[subpart/README.md]", return_info=True
+        )
+        assert res["path"] == os.path.abspath(os.path.join(local_dir, "README.md"))
+
+        res = manager.fetch_asset("tmp-local-asset", return_info=True)
+        assert res["path"] == os.path.abspath(os.path.join(local_dir, ".."))
+    finally:
+        shutil.rmtree("tmp-local-asset")
 
 
 def test_local_manager_with_fetch(working_dir):
