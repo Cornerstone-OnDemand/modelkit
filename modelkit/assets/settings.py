@@ -60,7 +60,9 @@ NAME_RE = r"[a-z0-9]([a-z0-9\-\_\.]*[a-z0-9])?"
 
 class AssetsManagerSettings(BaseSettings):
     remote_store: Optional[RemoteAssetsStoreSettings]
-    assets_dir: pydantic.DirectoryPath = pydantic.Field(..., env="WORKING_DIR")
+    assets_dir: pydantic.DirectoryPath = pydantic.Field(
+        default_factory=lambda: os.getcwd(), env="WORKING_DIR"
+    )
 
     @root_validator(pre=True)
     @classmethod

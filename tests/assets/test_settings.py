@@ -177,3 +177,9 @@ def test_assetsmanager_no_validation(monkeypatch, working_dir):
     monkeypatch.setenv("ENABLE_VALIDATION", "False")
     settings = LibrarySettings()
     assert not settings.enable_validation
+
+
+def test_assetsmanager_default():
+    settings = AssetsManagerSettings()
+    assert settings.assets_dir == Path(os.getcwd())
+    assert settings.remote_store is None
