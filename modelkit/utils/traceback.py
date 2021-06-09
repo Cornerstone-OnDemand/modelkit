@@ -1,7 +1,9 @@
+import functools
 import inspect
 import os
 import traceback
 import types
+from typing import Any, Callable, TypeVar, cast
 
 
 def is_modelkit_internal_frame(frame: types.FrameType):
@@ -30,8 +32,11 @@ def strip_modelkit_traceback_frames(exc: BaseException):
     return exc.with_traceback(tb)
 
 
+T = TypeVar("T", bound=Callable[..., Any])
+
 # Decorators to wrap prediction methods to simplify tracebacks
-def wrap_modelkit_exceptions(func):
+def wrap_modelkit_exceptions(func: T) -> T:
+    @functools.wraps(func)
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
@@ -40,10 +45,11 @@ def wrap_modelkit_exceptions(func):
                 raise strip_modelkit_traceback_frames(exc)
             raise exc
 
-    return wrapper
+    return cast(T, wrapper)
 
 
-def wrap_modelkit_exceptions_gen(func):
+def wrap_modelkit_exceptions_gen(func: T) -> T:
+    @functools.wraps(func)
     def wrapper(*args, **kwargs):
         try:
             yield from func(*args, **kwargs)
@@ -52,10 +58,11 @@ def wrap_modelkit_exceptions_gen(func):
                 raise strip_modelkit_traceback_frames(exc)
             raise exc
 
-    return wrapper
+    return cast(T, wrapper)
 
 
-def wrap_modelkit_exceptions_async(func):
+def wrap_modelkit_exceptions_async(func: T) -> T:
+    @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         try:
             return await func(*args, **kwargs)
@@ -64,10 +71,11 @@ def wrap_modelkit_exceptions_async(func):
                 raise strip_modelkit_traceback_frames(exc)
             raise exc
 
-    return wrapper
+    return cast(T, wrapper)
 
 
-def wrap_modelkit_exceptions_gen_async(func):
+def wrap_modelkit_exceptions_gen_async(func: T) -> T:
+    @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         try:
             async for x in func(*args, **kwargs):
@@ -77,4 +85,4 @@ def wrap_modelkit_exceptions_gen_async(func):
                 raise strip_modelkit_traceback_frames(exc)
             raise exc
 
-    return wrapper
+    return cast(T, wrapper)
