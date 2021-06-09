@@ -8,7 +8,7 @@ import copy
 import os
 import re
 from types import ModuleType
-from typing import Any, Dict, List, Mapping, Optional, Type, Union
+from typing import Any, Dict, List, Mapping, Optional, Type, TypeVar, Union, cast
 
 import humanize
 from pydantic import ValidationError
@@ -37,6 +37,9 @@ except ImportError:
 
 class ConfigurationNotFoundException(Exception):
     pass
+
+
+T = TypeVar("T", bound=Model)
 
 
 class ModelLibrary:
@@ -136,7 +139,7 @@ class ModelLibrary:
 
         return self._override_assets_manager
 
-    def get(self, name):
+    def get(self, name, model_type: Optional[Type[T]] = None) -> T:
         """
         Get a model by name
 
@@ -145,12 +148,12 @@ class ModelLibrary:
         """
         try:
             if not self._lazy_loading:
-                return self.models[name]
+                return cast(T, self.models[name])
             if name not in self.models:
                 self._load(name)
             if not self.models[name]._loaded:
                 self.models[name].load()
-            return self.models[name]
+            return cast(T, self.models[name])
         except KeyError:
             raise KeyError(
                 f"Model `{name}` not loaded."

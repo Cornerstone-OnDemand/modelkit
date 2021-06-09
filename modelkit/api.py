@@ -6,7 +6,7 @@ from rich.console import Console
 from structlog import get_logger
 
 from modelkit.core.library import LibrarySettings, ModelConfiguration, ModelLibrary
-from modelkit.core.model import Model
+from modelkit.core.model import BaseModel, Model
 
 logger = get_logger(__name__)
 
@@ -76,7 +76,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
 
         route_paths = route_paths or {}
         for model_name in self.svc.required_models:
-            m = self.svc.get(model_name)
+            m: BaseModel = self.svc.get(model_name)
             if not isinstance(m, Model):
                 continue
             path = route_paths.get(model_name, "/predict/" + model_name)
