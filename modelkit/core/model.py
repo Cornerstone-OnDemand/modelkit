@@ -556,6 +556,7 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
     async def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
         return [await self._predict(p, **kwargs) for p in items]
 
+    @traceback.wrap_modelkit_exceptions_async
     async def __call__(
         self,
         item: ItemType,
@@ -564,6 +565,7 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
     ) -> ReturnType:
         return await self.predict(item, _force_compute=_force_compute, **kwargs)
 
+    @traceback.wrap_modelkit_exceptions_async
     async def predict(
         self,
         item: ItemType,
@@ -576,6 +578,7 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
             break
         return r
 
+    @traceback.wrap_modelkit_exceptions_async
     async def predict_batch(
         self,
         items: List[ItemType],
@@ -595,6 +598,7 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
             )
         ]
 
+    @traceback.wrap_modelkit_exceptions_gen_async
     async def predict_gen(
         self,
         items: Iterator[ItemType],

@@ -53,3 +53,28 @@ def wrap_modelkit_exceptions_gen(func):
             raise exc
 
     return wrapper
+
+
+def wrap_modelkit_exceptions_async(func):
+    async def wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except BaseException as exc:
+            if os.environ.get("ENABLE_SIMPLE_TRACEBACK", "True") == "True":
+                raise strip_modelkit_traceback_frames(exc)
+            raise exc
+
+    return wrapper
+
+
+def wrap_modelkit_exceptions_gen_async(func):
+    async def wrapper(*args, **kwargs):
+        try:
+            async for x in func(*args, **kwargs):
+                yield x
+        except BaseException as exc:
+            if os.environ.get("ENABLE_SIMPLE_TRACEBACK", "True") == "True":
+                raise strip_modelkit_traceback_frames(exc)
+            raise exc
+
+    return wrapper

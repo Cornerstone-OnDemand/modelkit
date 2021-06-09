@@ -1,6 +1,6 @@
 import pytest
 
-from modelkit.core.model import Model
+from modelkit.core.model import AsyncModel, Model
 
 
 class CustomError(BaseException):
@@ -68,4 +68,54 @@ def test_prediction_error_complex_tb(monkeypatch, model):
 
     with pytest.raises(CustomError) as excinfo:
         next(model.predict_gen(iter(({},))))
+    assert len(excinfo.traceback) > 3
+
+
+class AsyncOKModel(AsyncModel):
+    async def _predict(self, item):
+        return self.model_dependencies["error_model"].predict(item)
+
+
+class AsyncErrorModel(AsyncModel):
+    async def _predict(self, item):
+        raise CustomError("something went wrong")
+
+
+class AsyncErrorBatchModel(AsyncModel):
+    async def _predict_batch(self, item):
+        raise CustomError("something went wrong")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("model", [AsyncErrorModel(), AsyncErrorBatchModel()])
+async def test_prediction_error_async(model):
+    with pytest.raises(CustomError) as excinfo:
+        await model.predict({})
+    assert len(excinfo.traceback) <= 3
+
+    with pytest.raises(CustomError) as excinfo:
+        await model.predict_batch([{}])
+    assert len(excinfo.traceback) <= 3
+
+    with pytest.raises(CustomError) as excinfo:
+        async for x in model.predict_gen(iter(({},))):
+            pass
+    assert len(excinfo.traceback) <= 3
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("model", [AsyncErrorModel(), AsyncErrorBatchModel()])
+async def test_prediction_error_complex_tb_async(monkeypatch, model):
+    monkeypatch.setenv("ENABLE_SIMPLE_TRACEBACK", False)
+    with pytest.raises(CustomError) as excinfo:
+        await model.predict({})
+    assert len(excinfo.traceback) > 3
+
+    with pytest.raises(CustomError) as excinfo:
+        await model.predict_batch([{}])
+    assert len(excinfo.traceback) > 3
+
+    with pytest.raises(CustomError) as excinfo:
+        async for x in model.predict_gen(iter(({},))):
+            pass
     assert len(excinfo.traceback) > 3
