@@ -3,18 +3,26 @@ import os
 import traceback
 import types
 
-_MODEL_FN = os.path.join("modelkit", "core", "model.py")
-_TB_FN = os.path.join("modelkit", "utils", "traceback.py")
-
 
 def is_modelkit_internal_frame(frame: types.FrameType):
-    frame_info = inspect.getframeinfo(frame)
-    return frame_info.filename.endswith(_MODEL_FN) or frame_info.filename.endswith(
-        _TB_FN
-    )
+    """
+    Guess whether the frame originates from a submodule of `modelkit`
+    """
+    try:
+        mod = inspect.getmodule(frame)
+        if mod:
+            frame_package = __package__.split(".")[0]
+            return frame_package == "modelkit"
+    except BaseException:
+        pass
+    return False
 
 
 def strip_modelkit_traceback_frames(exc: BaseException):
+    """
+    Walk the traceback and remove frames that originate from within modelkit
+    Return an exception with the filtered traceback
+    """
     tb = None
     for tb_frame, _ in reversed(list(traceback.walk_tb(exc.__traceback__))):
         if not is_modelkit_internal_frame(tb_frame):
@@ -22,6 +30,7 @@ def strip_modelkit_traceback_frames(exc: BaseException):
     return exc.with_traceback(tb)
 
 
+# Decorators to wrap prediction methods to simplify tracebacks
 def wrap_modelkit_exceptions(func):
     def wrapper(*args, **kwargs):
         try:
