@@ -150,6 +150,15 @@ TEST_STRING_SPECS = [
             "minor_version": None,
         },
     ),
+    (
+        "/modelkit/tmp-local-asset/1.0/subpart/README.md",
+        {
+            "name": "/modelkit/tmp-local-asset/1.0/subpart/README.md",
+            "sub_part": None,
+            "major_version": None,
+            "minor_version": None,
+        },
+    ),
 ]
 
 

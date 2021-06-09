@@ -83,7 +83,7 @@ class AssetsManagerSettings(BaseSettings):
 
 VERSION_SPEC_RE = r"(?P<major_version>[0-9]+)(\.(?P<minor_version>[0-9]+))?"
 
-ASSET_NAME_RE = r"([A-Z]:/)?[a-zA-Z0-9]([a-zA-Z0-9\-\_\.\/]*[a-zA-Z0-9])?"
+ASSET_NAME_RE = r"(([A-Z]:/)|/)?[a-zA-Z0-9]([a-zA-Z0-9\-\_\.\/]*[a-zA-Z0-9])?"
 
 REMOTE_ASSET_RE = (
     f"^(?P<name>{ASSET_NAME_RE})"
