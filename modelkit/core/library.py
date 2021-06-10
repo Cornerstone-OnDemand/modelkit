@@ -148,11 +148,17 @@ class ModelLibrary:
         """
         try:
             if not self._lazy_loading:
+                m = self.models[name]
+                if model_type and not isinstance(m, model_type):
+                    raise ValueError(f"Model `{m}` is not an instance of {model_type}")
                 return cast(T, self.models[name])
             if name not in self.models:
                 self._load(name)
             if not self.models[name]._loaded:
                 self.models[name].load()
+            m = self.models[name]
+            if model_type and not isinstance(m, model_type):
+                raise ValueError(f"Model `{m}` is not an instance of {model_type}")
             return cast(T, self.models[name])
         except KeyError:
             raise KeyError(
