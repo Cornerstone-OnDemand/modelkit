@@ -31,7 +31,6 @@ Models
 │   │                                                                           
 │   │           With **a lot** of documentation                                 
 │   ├── signature: ItemModel -> ItemModel                                       
-│   └── batch size: 64                                                          
 └── some_model_a : SomeSimpleValidatedModelA = SomeSimpleValidatedModelA        
     instance                                                                    
     ├── configuration: some_model_a                                             
@@ -39,4 +38,3 @@ Models
     │                                                                           
     │           that also has plenty more text                                  
     ├── signature: str -> str                                                   
-    └── batch size: 64                                                          
