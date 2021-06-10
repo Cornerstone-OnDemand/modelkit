@@ -26,19 +26,26 @@ class ModelConfiguration(pydantic.BaseSettings):
         return v
 
 
+def walk_module_objects(mod, already_seen):
+    for name, obj in inspect.getmembers(mod):
+        if (
+            inspect.isclass(obj)
+            and issubclass(obj, Asset)
+            and name not in {"Model", "Asset", "TensorflowModel"}
+            and obj not in already_seen
+        ):
+            already_seen.add(obj)
+            yield obj
+
+
 def walk_objects(mod):
     already_seen = set()
-    for _, modname, _ in pkgutil.walk_packages(mod.__path__, mod.__name__ + "."):
-        submod = importlib.import_module(modname)
-        for name, obj in inspect.getmembers(submod):
-            if (
-                inspect.isclass(obj)
-                and issubclass(obj, Asset)
-                and name not in {"Model", "Asset", "TensorflowModel"}
-                and obj not in already_seen
-            ):
-                already_seen.add(obj)
-                yield obj
+    try:
+        for _, modname, _ in pkgutil.walk_packages(mod.__path__, mod.__name__ + "."):
+            submod = importlib.import_module(modname)
+            yield from walk_module_objects(submod, already_seen)
+    except AttributeError:
+        yield from walk_module_objects(mod, already_seen)
 
 
 def _configurations_from_objects(m) -> Dict[str, ModelConfiguration]:
