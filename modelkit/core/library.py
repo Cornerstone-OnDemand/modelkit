@@ -151,7 +151,7 @@ class ModelLibrary:
                 m = self.models[name]
                 if model_type and not isinstance(m, model_type):
                     raise ValueError(f"Model `{m}` is not an instance of {model_type}")
-                return cast(T, self.models[name])
+                return cast(T, m)
             if name not in self.models:
                 self._load(name)
             if not self.models[name]._loaded:
@@ -159,7 +159,7 @@ class ModelLibrary:
             m = self.models[name]
             if model_type and not isinstance(m, model_type):
                 raise ValueError(f"Model `{m}` is not an instance of {model_type}")
-            return cast(T, self.models[name])
+            return cast(T, m)
         except KeyError:
             raise KeyError(
                 f"Model `{name}` not loaded."
