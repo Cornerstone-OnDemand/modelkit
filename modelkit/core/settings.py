@@ -4,10 +4,10 @@ import pydantic
 
 
 class TFServingSettings(pydantic.BaseSettings):
-    enable: bool = pydantic.Field(False, env="ENABLE_TF_SERVING")
-    mode: str = pydantic.Field("rest", env="TF_SERVING_MODE")
-    host: str = pydantic.Field("localhost", env="TF_SERVING_HOST")
-    port: int = pydantic.Field(None, env="TF_SERVING_PORT")
+    enable: bool = pydantic.Field(False, env="MODELKIT_TF_SERVING_ENABLE")
+    mode: str = pydantic.Field("rest", env="MODELKIT_TF_SERVING_MODE")
+    host: str = pydantic.Field("localhost", env="MODELKIT_TF_SERVING_HOST")
+    port: int = pydantic.Field(None, env="MODELKIT_TF_SERVING_PORT")
 
     @pydantic.validator("port")
     @classmethod
@@ -18,12 +18,12 @@ class TFServingSettings(pydantic.BaseSettings):
 
 
 class CacheSettings(pydantic.BaseSettings):
-    cache_provider: Optional[str] = pydantic.Field(None, env="CACHE_PROVIDER")
+    cache_provider: Optional[str] = pydantic.Field(None, env="MODELKIT_CACHE_PROVIDER")
 
 
 class RedisSettings(CacheSettings):
-    host: str = pydantic.Field("localhost", env="CACHE_HOST")
-    port: int = pydantic.Field(6379, env="CACHE_PORT")
+    host: str = pydantic.Field("localhost", env="MODELKIT_CACHE_HOST")
+    port: int = pydantic.Field(6379, env="MODELKIT_CACHE_PORT")
 
     @pydantic.validator("cache_provider")
     def _validate_type(cls, v):
@@ -33,8 +33,8 @@ class RedisSettings(CacheSettings):
 
 
 class NativeCacheSettings(CacheSettings):
-    implementation: str = pydantic.Field("LRU", env="CACHE_IMPLEMENTATION")
-    maxsize: int = pydantic.Field(128, env="CACHE_MAX_SIZE")
+    implementation: str = pydantic.Field("LRU", env="MODELKIT_CACHE_IMPLEMENTATION")
+    maxsize: int = pydantic.Field(128, env="MODELKIT_CACHE_MAX_SIZE")
 
     @pydantic.validator("cache_provider")
     def _validate_type(cls, v):
@@ -58,12 +58,11 @@ def cache_settings():
 
 
 class LibrarySettings(pydantic.BaseSettings):
-    lazy_loading: bool = pydantic.Field(False, env="LAZY_LOADING")
-    async_mode: bool = pydantic.Field(None, env="MODELKIT_ASYNC_MODE")
+    lazy_loading: bool = pydantic.Field(False, env="MODELKIT_LAZY_LOADING")
     override_storage_prefix: Optional[str] = pydantic.Field(
-        None, env="OVERRIDE_STORAGE_PREFIX"
+        None, env="MODELKIT_STORAGE_PREFIX_OVERRIDE"
     )
-    enable_validation: bool = pydantic.Field(True, env="ENABLE_VALIDATION")
+    enable_validation: bool = pydantic.Field(True, env="MODELKIT_ENABLE_VALIDATION")
     tf_serving: TFServingSettings = pydantic.Field(
         default_factory=lambda: TFServingSettings()
     )

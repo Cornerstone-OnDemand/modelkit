@@ -21,15 +21,23 @@ def working_dir(base_dir):
 
 def clean_env():
     for env_var in [
-        "ASSETS_DIR",
-        "WORKING_DIR",
-        "ASSETS_BUCKET_NAME",
-        "STORAGE_PREFIX",
-        "STORAGE_PROVIDER",
-        "LAZY_LOADING",
-        "ASSETSMANAGER_PREFIX",
-        "ASSETSMANAGER_TIMEOUT_S",
-        "ENABLE_VALIDATION",
+        "MODELKIT_ASSETS_DIR",
+        "MODELKIT_CACHE_HOST",
+        "MODELKIT_CACHE_IMPLEMENTATION",
+        "MODELKIT_CACHE_MAX_SIZE",
+        "MODELKIT_CACHE_PORT",
+        "MODELKIT_CACHE_PROVIDER",
+        "MODELKIT_DEFAULT_PACKAGE",
+        "MODELKIT_ENABLE_VALIDATION",
+        "MODELKIT_LAZY_LOADING",
+        "MODELKIT_STORAGE_BUCKET",
+        "MODELKIT_STORAGE_PREFIX_OVERRIDE",
+        "MODELKIT_STORAGE_PREFIX",
+        "MODELKIT_STORAGE_PROVIDER",
+        "MODELKIT_STORAGE_TIMEOUT_S",
+        "MODELKIT_TF_SERVING_ENABLE",
+        "MODELKIT_TF_SERVING_MODE",
+        "MODELKIT_TF_SERVING_PORT",
     ]:
         os.environ.pop(env_var, None)
 

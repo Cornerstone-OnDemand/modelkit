@@ -33,7 +33,7 @@ Sometimes this is not desirable, notably when using PySpark.
 
 Thus, when `lazy_loading=True` the `ModelLibrary` tries to delay the loading and
 deserialization of the assets as much as possible. You can also set this behavior by setting
-`LAZY_LOADING=True` in your environment.
+`MODELKIT_LAZY_LOADING=True` in your environment.
 
 Specifically:
 

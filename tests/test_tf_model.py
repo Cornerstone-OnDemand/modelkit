@@ -58,10 +58,10 @@ def test_tf_model_local_path():
 
 
 def test_tf_model(monkeypatch, working_dir):
-    monkeypatch.setenv("ASSETS_BUCKET_NAME", TEST_DIR)
-    monkeypatch.setenv("STORAGE_PREFIX", "testdata")
-    monkeypatch.setenv("STORAGE_PROVIDER", "local")
-    monkeypatch.setenv("WORKING_DIR", working_dir)
+    monkeypatch.setenv("MODELKIT_STORAGE_BUCKET", TEST_DIR)
+    monkeypatch.setenv("MODELKIT_STORAGE_PREFIX", "testdata")
+    monkeypatch.setenv("MODELKIT_STORAGE_PROVIDER", "local")
+    monkeypatch.setenv("MODELKIT_ASSETS_DIR", working_dir)
 
     lib = ModelLibrary(models=DummyTFModel)
     assert not lib.settings.tf_serving.enable
@@ -72,10 +72,10 @@ def test_tf_model(monkeypatch, working_dir):
 
 @pytest.fixture(scope="function")
 def tf_serving(request, monkeypatch, working_dir):
-    monkeypatch.setenv("WORKING_DIR", working_dir)
-    monkeypatch.setenv("ASSETS_BUCKET_NAME", TEST_DIR)
-    monkeypatch.setenv("STORAGE_PREFIX", "testdata")
-    monkeypatch.setenv("STORAGE_PROVIDER", "local")
+    monkeypatch.setenv("MODELKIT_ASSETS_DIR", working_dir)
+    monkeypatch.setenv("MODELKIT_STORAGE_BUCKET", TEST_DIR)
+    monkeypatch.setenv("MODELKIT_STORAGE_PREFIX", "testdata")
+    monkeypatch.setenv("MODELKIT_STORAGE_PROVIDER", "local")
 
     lib = ModelLibrary(models=DummyTFModel, settings={"lazy_loading": True})
     yield tf_serving_fixture(request, lib)

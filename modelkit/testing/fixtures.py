@@ -115,7 +115,8 @@ def tf_serving_fixture(request, svc, deployment="docker"):
         proc = subprocess.Popen(
             [
                 "tensorflow_model_server",
-                "--model_config_file=" f"{os.environ['WORKING_DIR']}/testing.config",
+                "--model_config_file="
+                f"{os.environ['MODELKIT_ASSETS_DIR']}/testing.config",
             ]
             + cmd
         )
@@ -138,7 +139,7 @@ def tf_serving_fixture(request, svc, deployment="docker"):
                 "--name",
                 "modelkit-tfserving-tests",
                 "--volume",
-                f"{os.environ['WORKING_DIR']}:/config",
+                f"{os.environ['MODELKIT_ASSETS_DIR']}:/config",
                 "-p",
                 "8500:8500",
                 "-p",

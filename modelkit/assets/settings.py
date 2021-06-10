@@ -10,7 +10,7 @@ from modelkit.assets.drivers.local import LocalDriverSettings
 from modelkit.assets.drivers.s3 import S3DriverSettings
 from modelkit.assets.errors import InvalidAssetSpecError
 
-SUPPORTED_STORAGE_PROVIDERS = {"s3", "gcs", "local"}
+SUPPORTED_MODELKIT_STORAGE_PROVIDERS = {"s3", "gcs", "local"}
 
 
 class DriverSettings(BaseSettings):
@@ -23,11 +23,11 @@ class DriverSettings(BaseSettings):
         if "settings" in fields:
             return fields
         storage_provider = fields.pop("storage_provider", None) or os.getenv(
-            "STORAGE_PROVIDER", None
+            "MODELKIT_STORAGE_PROVIDER", None
         )
         if not storage_provider:
             return {"storage_provider": None, "settings": None}
-        if storage_provider not in SUPPORTED_STORAGE_PROVIDERS:
+        if storage_provider not in SUPPORTED_MODELKIT_STORAGE_PROVIDERS:
             raise ValueError(f"Unkown storage provider `{storage_provider}`.")
         if storage_provider == "gcs":
             settings = GCSDriverSettings(**fields)
@@ -40,8 +40,10 @@ class DriverSettings(BaseSettings):
 
 class RemoteAssetsStoreSettings(BaseSettings):
     driver: DriverSettings
-    timeout_s: float = pydantic.Field(5 * 60, env="ASSETSMANAGER_TIMEOUT_S")
-    storage_prefix: str = pydantic.Field("modelkit-assets", env="STORAGE_PREFIX")
+    timeout_s: float = pydantic.Field(5 * 60, env="MODELKIT_STORAGE_TIMEOUT_S")
+    storage_prefix: str = pydantic.Field(
+        "modelkit-assets", env="MODELKIT_STORAGE_PREFIX"
+    )
 
     @root_validator(pre=True)
     @classmethod
@@ -61,7 +63,7 @@ NAME_RE = r"[a-z0-9]([a-z0-9\-\_\.]*[a-z0-9])?"
 class AssetsManagerSettings(BaseSettings):
     remote_store: Optional[RemoteAssetsStoreSettings]
     assets_dir: pydantic.DirectoryPath = pydantic.Field(
-        default_factory=lambda: os.getcwd(), env="WORKING_DIR"
+        default_factory=lambda: os.getcwd(), env="MODELKIT_ASSETS_DIR"
     )
 
     @root_validator(pre=True)

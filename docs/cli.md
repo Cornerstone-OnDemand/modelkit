@@ -85,8 +85,8 @@ To configure models from a package to be run in TF serving:
 modelkit tf-serving local-docker --models [PACKAGE]
 ```
 
-This will write a configuration file with relative paths to the model files. This is meant to be used by mounting the `WORKING_DIR` in the container under the path `/config`.
+This will write a configuration file with relative paths to the model files. This is meant to be used by mounting the `MODELKIT_ASSETS_DIR` in the container under the path `/config`.
 
 Other options include:
-- `local-process` To create a config file with absolute paths to the assets under `WORKING_DIR`
-- `remote` which will use whichever remote paths are found for the assets (i.e. as configured by the `STORAGE_PROVIDER`)
+- `local-process` To create a config file with absolute paths to the assets under `MODELKIT_ASSETS_DIR`
+- `remote` which will use whichever remote paths are found for the assets (i.e. as configured by the `MODELKIT_STORAGE_PROVIDER`)

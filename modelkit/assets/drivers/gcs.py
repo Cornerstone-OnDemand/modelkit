@@ -21,7 +21,7 @@ except ImportError:
 
 
 class GCSDriverSettings(pydantic.BaseSettings):
-    bucket: str = pydantic.Field(..., env="ASSETS_BUCKET_NAME")
+    bucket: str = pydantic.Field(..., env="MODELKIT_STORAGE_BUCKET")
     service_account_path: Optional[str] = None
     client: Optional[storage.Client]
 
