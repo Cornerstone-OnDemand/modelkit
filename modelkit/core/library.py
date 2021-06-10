@@ -147,15 +147,14 @@ class ModelLibrary:
         :return: required model
         """
         try:
-            if not self._lazy_loading:
-                m = self.models[name]
-                if model_type and not isinstance(m, model_type):
-                    raise ValueError(f"Model `{m}` is not an instance of {model_type}")
-                return cast(T, m)
-            if name not in self.models:
-                self._load(name)
-            if not self.models[name]._loaded:
-                self.models[name].load()
+            if self._lazy_loading:
+                # When in lazy mode ensure the model object and its dependencies
+                # are instantiated, this will download the asset
+                if name not in self.models:
+                    self._load(name)
+                # Ensure that it is loaded
+                if not self.models[name]._loaded:
+                    self.models[name].load()
             m = self.models[name]
             if model_type and not isinstance(m, model_type):
                 raise ValueError(f"Model `{m}` is not an instance of {model_type}")
