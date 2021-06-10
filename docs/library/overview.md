@@ -18,6 +18,7 @@ The normal way to use `modelkit` models is by instantiating a `ModelLibrary` wit
 from modelkit import ModelLibrary, Model
 
 class MyModel(Model):
+    CONFIGURATIONS = {"my_favorite_model": {}}
     def _predict(self, item):
         return item
 

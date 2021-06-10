@@ -40,7 +40,7 @@ class MyModel(Model):
 class MyComposedModel(Model):
     CONFIGURATIONS = {
         "my_favorite_model" : {
-            "model_dependencies": "a_model"
+            "model_dependencies": {"a_model"}
         }
     }
     def _predict(self, item):
@@ -77,7 +77,7 @@ model = library.get("my_favorite_model")
 
     ```python
     from modelkit import load_model
-    model = load_model("my_favorite_model", models="package")
+    model = load_model("my_favorite_model", models="my_models")
     ```
 
     If you have set the `MODELKIT_DEFAULT_PACKAGE` environment variable, you can also skip the `models=...` part.
