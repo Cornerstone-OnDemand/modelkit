@@ -20,6 +20,8 @@ TEST_CASES = [
     ("predict_pydantic_ok.py", False),
     ("predict_pydantic_bad.py", True),
     ("predict_list.py", False),
+    ("library_get_model_ko.py", True),
+    ("library_get_model_ok.py", False),
 ]
 
 
