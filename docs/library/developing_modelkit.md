@@ -35,7 +35,7 @@ It can be loaded to make "predictions" as so:
 
 ```python
 m = SimpleModel()
-m({}) # returns "YOLO les simpsons"
+m({}) # returns "something"
 ```
 
 ### Model configurations
@@ -92,7 +92,7 @@ Now, there are two versions of the model available, `simple` and `simple2`:
 ```python
 from modelkit.core import ModelLibrary
 
-p = ModelLibrary(models=YOLOModel)
+p = ModelLibrary(models=SimpleModel)
 m = p.get("simple")
 print(m({}))
 m2 = p.get("simple2")
@@ -225,7 +225,7 @@ Setting `Model` types allows static type checkers to fail if the expected return
 
 Consider the above model:
 
-```
+```python
 m = SomeTypedModel()
 x : int = m("ok")
 y : List[int] = m(["ok", "boomer"])
@@ -271,7 +271,7 @@ y : List[ReturnModel] = m([{"x": 1}, {"x": 2}])
 `Model` can easily deal with a single item or multiple items in the inputs:
 ```python
 
-class Identity(Model)
+class Identity(Model):
     def _predict(self, item):
         return item
     
@@ -286,7 +286,7 @@ batches of inputs at once. In this case, one can override `_predict_batch` inste
 
 ```python
 
-class IdentityBatched(Model)
+class IdentityBatched(Model):
     def _predict(self, item):
         return item
     
