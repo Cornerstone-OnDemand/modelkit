@@ -369,10 +369,10 @@ def test_required_models():
 
 
 def test_lazy_loading_setting(monkeypatch):
-    monkeypatch.delenv("LAZY_LOADING", raising=False)
+    monkeypatch.delenv("MODELKIT_LAZY_LOADING", raising=False)
     settings = LibrarySettings()
     assert not settings.lazy_loading
-    monkeypatch.setenv("LAZY_LOADING", "True")
+    monkeypatch.setenv("MODELKIT_LAZY_LOADING", "True")
     settings = LibrarySettings()
     assert settings.lazy_loading
 

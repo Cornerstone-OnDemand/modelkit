@@ -88,13 +88,13 @@ This can be achieved by
 modelkit tf-serving local-docker --models [PACKAGE]
 ```
 
-The CLI creates a configuration file for tensorflow serving, with the model locations refered to _relative to the container file system_. As a result, the TF serving container will expect that the `WORKING_DIR` is bound to the `/config` directory inside the container.
+The CLI creates a configuration file for tensorflow serving, with the model locations refered to _relative to the container file system_. As a result, the TF serving container will expect that the `MODELKIT_ASSETS_DIR` is bound to the `/config` directory inside the container.
 
 Specifically, the CLI:
 
 - Instantiates a `ModelLibrary` with all configured models in `PACKAGE`
-- Downloads all necessary assets in the `WORKING_DIR`
-- writes a configuration file under the local `WORKING_DIR` with all TF models that are configured
+- Downloads all necessary assets in the `MODELKIT_ASSETS_DIR`
+- writes a configuration file under the local `MODELKIT_ASSETS_DIR` with all TF models that are configured
 
 The container can then be started by pointing TF serving to the generated configuration file `--model_config_file=/config/config.config`:
 
@@ -103,7 +103,7 @@ docker run \
         --name local-tf-serving \
         -d \
         -p 8500:8500 -p 8501:8501 \
-        -v ${WORKING_DIR}:/config \
+        -v ${MODELKIT_ASSETS_DIR}:/config \
         -t tensorflow/serving \
         --model_config_file=/config/config.config\
         --rest_api_port=8501\
@@ -120,10 +120,10 @@ See also:
 
 Several environment variables control how `modelkit` requests predictions from TF serving.
 
-- `ENABLE_TF_SERVING`: Controls whether to use TF serving or use TF locally as a lib
-- `TF_SERVING_HOST`: Host to connect to to request TF predictions
-- `TF_SERVING_PORT`: Port to connect to to request TF predictions
-- `TF_SERVING_MODE`: Can be `grpc` (with `grpc`) or `rest` (with `requests` for `TensorflowModel`, or with `aiohttp` for `AsyncTensorflowModel`)
+- `MODELKIT_TF_SERVING_ENABLE`: Controls whether to use TF serving or use TF locally as a lib
+- `MODELKIT_TF_SERVING_HOST`: Host to connect to to request TF predictions
+- `MODELKIT_TF_SERVING_PORT`: Port to connect to to request TF predictions
+- `MODELKIT_TF_SERVING_MODE`: Can be `grpc` (with `grpc`) or `rest` (with `requests` for `TensorflowModel`, or with `aiohttp` for `AsyncTensorflowModel`)
 - `TF_SERVING_TIMEOUT_S`: timeout to wait for the first TF serving response
 
 All of these parameters can be set programmatically (and passed to the `ModelLibrary`'s settings):

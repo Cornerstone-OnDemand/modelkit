@@ -130,9 +130,9 @@ def test_remote_assets_store_settings(monkeypatch, settings_dict, valid):
 
 
 def test_assetsmanager_minimal(monkeypatch, working_dir):
-    monkeypatch.setenv("WORKING_DIR", working_dir)
-    monkeypatch.setenv("ASSETS_BUCKET_NAME", "some-bucket")
-    monkeypatch.setenv("STORAGE_PROVIDER", "gcs")
+    monkeypatch.setenv("MODELKIT_ASSETS_DIR", working_dir)
+    monkeypatch.setenv("MODELKIT_STORAGE_BUCKET", "some-bucket")
+    monkeypatch.setenv("MODELKIT_STORAGE_PROVIDER", "gcs")
     settings = AssetsManagerSettings()
     assert settings.remote_store.driver.storage_provider == "gcs"
     assert settings.remote_store.driver.settings == GCSDriverSettings()
@@ -142,13 +142,13 @@ def test_assetsmanager_minimal(monkeypatch, working_dir):
 
 
 def test_assetsmanager_minimal_provider(monkeypatch, working_dir):
-    monkeypatch.setenv("WORKING_DIR", working_dir)
-    monkeypatch.setenv("STORAGE_PROVIDER", "local")
+    monkeypatch.setenv("MODELKIT_ASSETS_DIR", working_dir)
+    monkeypatch.setenv("MODELKIT_STORAGE_PROVIDER", "local")
 
     settings = AssetsManagerSettings()
     assert not settings.remote_store
 
-    monkeypatch.setenv("ASSETS_BUCKET_NAME", working_dir)
+    monkeypatch.setenv("MODELKIT_STORAGE_BUCKET", working_dir)
     settings = AssetsManagerSettings()
     assert settings.remote_store.driver.storage_provider == "local"
     assert settings.remote_store.driver.settings == LocalDriverSettings()
@@ -157,10 +157,10 @@ def test_assetsmanager_minimal_provider(monkeypatch, working_dir):
 
 
 def test_assetsmanager_minimal_prefix(monkeypatch, working_dir):
-    monkeypatch.setenv("WORKING_DIR", working_dir)
-    monkeypatch.setenv("ASSETS_BUCKET_NAME", "some-bucket")
-    monkeypatch.setenv("STORAGE_PREFIX", "a-prefix")
-    monkeypatch.setenv("STORAGE_PROVIDER", "gcs")
+    monkeypatch.setenv("MODELKIT_ASSETS_DIR", working_dir)
+    monkeypatch.setenv("MODELKIT_STORAGE_BUCKET", "some-bucket")
+    monkeypatch.setenv("MODELKIT_STORAGE_PREFIX", "a-prefix")
+    monkeypatch.setenv("MODELKIT_STORAGE_PROVIDER", "gcs")
 
     settings = AssetsManagerSettings()
     assert settings.remote_store.driver.storage_provider == "gcs"
@@ -171,10 +171,10 @@ def test_assetsmanager_minimal_prefix(monkeypatch, working_dir):
 
 
 def test_assetsmanager_no_validation(monkeypatch, working_dir):
-    monkeypatch.setenv("WORKING_DIR", working_dir)
+    monkeypatch.setenv("MODELKIT_ASSETS_DIR", working_dir)
     settings = LibrarySettings()
     assert settings.enable_validation
-    monkeypatch.setenv("ENABLE_VALIDATION", "False")
+    monkeypatch.setenv("MODELKIT_ENABLE_VALIDATION", "False")
     settings = LibrarySettings()
     assert not settings.enable_validation
 

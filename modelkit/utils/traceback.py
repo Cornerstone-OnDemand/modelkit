@@ -34,6 +34,7 @@ def strip_modelkit_traceback_frames(exc: BaseException):
 
 T = TypeVar("T", bound=Callable[..., Any])
 
+
 # Decorators to wrap prediction methods to simplify tracebacks
 def wrap_modelkit_exceptions(func: T) -> T:
     @functools.wraps(func)

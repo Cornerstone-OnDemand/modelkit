@@ -1,6 +1,5 @@
 Settings                                                                        
 ├── lazy_loading : bool = False                                                 
-├── async_mode : bool = None                                                    
 ├── override_storage_prefix : str = None                                        
 ├── enable_validation : bool = True                                             
 ├── tf_serving : TFServingSettings                                              

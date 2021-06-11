@@ -4,31 +4,31 @@
 
 In order to run/deploy `modelkit` endpoints, you need to provide it with the necessary environment variables, most of them required by `modelkit.assets` to retrieve assets from the remote object store:
 
-- `ASSETS_BUCKET_NAME` (default: unset): override storage container
+- `MODELKIT_STORAGE_BUCKET` (default: unset): override storage container
   where assets are retrieved from.
-- `WORKING_DIR`: the local directory in which assets will be
+- `MODELKIT_ASSETS_DIR`: the local directory in which assets will be
   downloaded and cached. This needs to be a valid local directory.
-- `STORAGE_PROVIDER` (default: `gcs`) the storage provider (does not have to be set)
-    - for `STORAGE_PROVIDER=gcs`, the variable `GOOGLE_APPLICATION_CREDENTIALS` need to be
+- `MODELKIT_STORAGE_PROVIDER` (default: `gcs`) the storage provider (does not have to be set)
+    - for `MODELKIT_STORAGE_PROVIDER=gcs`, the variable `GOOGLE_APPLICATION_CREDENTIALS` need to be
       pointing to a service account credentials JSON file (this is not necessary on dev
       machines)
-    - for `STORAGE_PROVIDER=s3ssm`, you need to instantiate `AWS_PROFILE`
+    - for `MODELKIT_STORAGE_PROVIDER=s3ssm`, you need to instantiate `AWS_PROFILE`
 
 Refer to the [AssetsManager settings documentation](assets/environment.md) for more information.
 
-- `LAZY_LOADING` (defaults to `False`) toggles lazy loading mode for the `ModelLibrary`
-- `ENABLE_TF_SERVING` (default: `True`): Get tensorflow data from tensorflow server, instead of loading these data locally (if set to `False` you need to install tensorflow).
-    - `TF_SERVING_HOST` (default: `localhost`): IP address of tensorflow server
-    - `TF_SERVING_PORT` (default: `8501`): Port of tensorflow server
-    - `TF_SERVING_MODE` (default: `rest`): `rest` to use REST protocol of tensorflow server (port 8501), `grpc` to use GRPC protocol (port 8500)
+- `MODELKIT_LAZY_LOADING` (defaults to `False`) toggles lazy loading mode for the `ModelLibrary`
+- `MODELKIT_TF_SERVING_ENABLE` (default: `True`): Get tensorflow data from tensorflow server, instead of loading these data locally (if set to `False` you need to install tensorflow).
+    - `MODELKIT_TF_SERVING_HOST` (default: `localhost`): IP address of tensorflow server
+    - `MODELKIT_TF_SERVING_PORT` (default: `8501`): Port of tensorflow server
+    - `MODELKIT_TF_SERVING_MODE` (default: `rest`): `rest` to use REST protocol of tensorflow server (port 8501), `grpc` to use GRPC protocol (port 8500)
     - `TF_SERVING_TIMEOUT_S` (default: `60`): Timeout duration for tensorflow server calls
-- `CACHE_PROVIDER` (default: `None`) to use prediction caching
-  - if `CACHE_PROVIDER=redis`, use an external redis instance for caching:
-    - `CACHE_HOST` (default: `localhost`)
-    - `CACHE_PORT` (default: `6379`)
-  - if `CACHE_PROVIDER=native` use native caching (via [cachetools](https://cachetools.readthedocs.io/en/stable/)):
-    - `CACHE_IMPLEMENTATION` can be 
-    - `CACHE_MAX_SIZE` size of the cache
+- `MODELKIT_CACHE_PROVIDER` (default: `None`) to use prediction caching
+  - if `MODELKIT_CACHE_PROVIDER=redis`, use an external redis instance for caching:
+    - `MODELKIT_CACHE_HOST` (default: `localhost`)
+    - `MODELKIT_CACHE_PORT` (default: `6379`)
+  - if `MODELKIT_CACHE_PROVIDER=native` use native caching (via [cachetools](https://cachetools.readthedocs.io/en/stable/)):
+    - `MODELKIT_CACHE_IMPLEMENTATION` can be 
+    - `MODELKIT_CACHE_MAX_SIZE` size of the cache
 - `modelkit_ASYNC_MODE` (default to `None`) forces the `DistantHTTPModels` to use async mode.
 
 ## New Assets Testing Environment

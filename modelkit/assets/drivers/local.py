@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 
 
 class LocalDriverSettings(BaseSettings):
-    bucket: pydantic.DirectoryPath = pydantic.Field(..., env="ASSETS_BUCKET_NAME")
+    bucket: pydantic.DirectoryPath = pydantic.Field(..., env="MODELKIT_STORAGE_BUCKET")
 
     class Config:
         extra = "forbid"

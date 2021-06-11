@@ -14,9 +14,9 @@ switch between them.
 
 In order to run a TF Serving docker locally, one first needs to download the models and write a configuration file.
 
-This can be achieved by `bin/tf_serving.py configure local-docker [SERVICE]`, which will write the configuration file under the local `WORKING_DIR`.
+This can be achieved by `bin/tf_serving.py configure local-docker [SERVICE]`, which will write the configuration file under the local `MODELKIT_ASSETS_DIR`.
 
-`SERVICE` refers to a key of the `modelkit.models.config.TF_SERVING_MODELS`, so essentially describes different subsets of the models that use TF serving. Possible keys are `modelkit` or `dataplayground`.
+`SERVICE` refers to a key of the `modelkit.models.config.MODELKIT_TF_SERVING_MODELS`, so essentially describes different subsets of the models that use TF serving. Possible keys are `modelkit` or `dataplayground`.
 
 The bash script `bin/run_tf_serving.sh` then runs the docker container exposing both the REST and gRPC endpoints.
 
@@ -24,7 +24,7 @@ Also see [the CLI documentation](../../cli.md).
 
 ## Details
 
-The CLI `bin/tf_serving.py configure local-docker` creates a configuration file for tensorflow serving, with the model locations refered to _relative to the container file system_. As a result, the TF serving container will expect that the `WORKING_DIR/modelkit-assets` is bound to the `/config` directory inside the container.
+The CLI `bin/tf_serving.py configure local-docker` creates a configuration file for tensorflow serving, with the model locations refered to _relative to the container file system_. As a result, the TF serving container will expect that the `MODELKIT_ASSETS_DIR/modelkit-assets` is bound to the `/config` directory inside the container.
 
 The container can then be started by pointing TF serving to the
 generated configuration file `--model_config_file=/config/modelkit.config`.

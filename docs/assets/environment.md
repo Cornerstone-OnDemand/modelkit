@@ -7,7 +7,7 @@ It is possible to set a default value of a package in which `ModelLibrary` will 
 | Environment variable | Default value | Notes |
 | --- | --- | --- |
 | `MODELKIT_DEFAULT_PACKAGE` | None | It has to be findable (on the `PYTHONPATH`) |
-| `WORKING_DIR` | None | Local directory to find assets, has to exist |
+| `MODELKIT_ASSETS_DIR` | None | Local directory to find assets, has to exist |
 
 ## AssetsManager settings
 
@@ -15,10 +15,10 @@ The parameters necessary to instantiate an `AssetsManager` can all be read from 
 
 | Environment variable | Default value | Parameter | Notes |
 | --- | --- | --- | --- |
-| `STORAGE_PROVIDER` | `gcs` | `storage_provider` | `gcs` (default), `s3` or `local` |
-| `ASSETS_BUCKET_NAME` | None | `bucket` | Bucket in which data is stored |
-| `STORAGE_PREFIX` | `modelkit-assets` | `storage_prefix` | Objects prefix |
-| `ASSETSMANAGER_TIMEOUT_S` | `300` | `timeout_s` | file lock timeout when downloading assets |
+| `MODELKIT_STORAGE_PROVIDER` | `gcs` | `storage_provider` | `gcs` (default), `s3` or `local` |
+| `MODELKIT_STORAGE_BUCKET` | None | `bucket` | Bucket in which data is stored |
+| `MODELKIT_STORAGE_PREFIX` | `modelkit-assets` | `storage_prefix` | Objects prefix |
+| `MODELKIT_STORAGE_TIMEOUT_S` | `300` | `timeout_s` | file lock timeout when downloading assets |
 
 More settings can be passed in order to configure the driver itself.
 
@@ -32,8 +32,8 @@ Then, configure the following variables:
 
 | Environment variable    | Value |
 | ----------------------- | ----- |
-| `STORAGE_PROVIDER`      | `s3`  |
-| `ASSETS_BUCKET_NAME`    |       |
+| `MODELKIT_STORAGE_PROVIDER`      | `s3`  |
+| `MODELKIT_STORAGE_BUCKET`    |       |
 | `AWS_ACCESS_KEY_ID`     |       |
 | `AWS_SECRET_ACCESS_KEY` |       |
 | `AWS_SESSION_TOKEN`     |       |
@@ -57,8 +57,8 @@ If `GOOGLE_APPLICATION_CREDENTIALS` is provided, it should point to a local JSON
 The local storage method is mostly used for development, and should not be useful to end users.
 It implements a `StorageDriver` from a local directory, that emulates other object providers.
 
-In this case `ASSETS_BUCKET_NAME` describes a local folder from which assets will be pulled.
+In this case `MODELKIT_STORAGE_BUCKET` describes a local folder from which assets will be pulled.
 
 ## Prediction Service
 
-`OVERRIDE_STORAGE_PREFIX` is used to set ModelLibrary `override_storage_prefix` setting
+`MODELKIT_STORAGE_PREFIX_OVERRIDE` is used to set ModelLibrary `override_storage_prefix` setting

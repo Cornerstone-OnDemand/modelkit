@@ -88,8 +88,8 @@ def _check_asset_file_number(asset_path):
 @assets_cli.command("new")
 @click.argument("asset_path")
 @click.argument("asset_spec")
-@click.option("--bucket", envvar="ASSETS_BUCKET_NAME")
-@click.option("--storage-prefix", envvar="STORAGE_PREFIX")
+@click.option("--bucket", envvar="MODELKIT_STORAGE_BUCKET")
+@click.option("--storage-prefix", envvar="MODELKIT_STORAGE_PREFIX")
 @click.option("--dry-run", is_flag=True)
 def new(asset_path, asset_spec, bucket, storage_prefix, dry_run):
     """
@@ -141,8 +141,8 @@ def new(asset_path, asset_spec, bucket, storage_prefix, dry_run):
 @click.option(
     "--bump-major", is_flag=True, help="Push a new major version (1.0, 2.0, etc.)"
 )
-@click.option("--bucket", envvar="ASSETS_BUCKET_NAME")
-@click.option("--storage-prefix", envvar="STORAGE_PREFIX")
+@click.option("--bucket", envvar="MODELKIT_STORAGE_BUCKET")
+@click.option("--storage-prefix", envvar="MODELKIT_STORAGE_PREFIX")
 @click.option("--dry-run", is_flag=True)
 def update(asset_path, asset_spec, bucket, storage_prefix, bump_major, dry_run):
     """
@@ -242,8 +242,8 @@ def update(asset_path, asset_spec, bucket, storage_prefix, bump_major, dry_run):
 
 
 @assets_cli.command("list")
-@click.option("--bucket", envvar="ASSETS_BUCKET_NAME")
-@click.option("--storage-prefix", envvar="STORAGE_PREFIX")
+@click.option("--bucket", envvar="MODELKIT_STORAGE_BUCKET")
+@click.option("--storage-prefix", envvar="MODELKIT_STORAGE_PREFIX")
 def list(bucket, storage_prefix):
     """lists all available assets and their versions."""
     manager = RemoteAssetsStore(

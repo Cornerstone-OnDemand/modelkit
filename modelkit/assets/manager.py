@@ -55,7 +55,7 @@ class AssetsManager:
                 # in this case, the asset spec is likely a relative or absolute
                 # path to a file/directory
                 if os.path.exists(local_name):
-                    # if the asset spec resolves to WORKING_DIR/spec.name
+                    # if the asset spec resolves to MODELKIT_ASSETS_DIR/spec.name
                     return {"path": local_name}
                 elif os.path.exists(os.path.join(os.getcwd(), *spec.name.split("/"))):
                     # if the assect spec resolves to cwd/spec.name

@@ -17,7 +17,7 @@ except ImportError:
 
 
 class S3DriverSettings(BaseSettings):
-    bucket: str = pydantic.Field(..., env="ASSETS_BUCKET_NAME")
+    bucket: str = pydantic.Field(..., env="MODELKIT_STORAGE_BUCKET")
     aws_access_key_id: str = pydantic.Field(None, env="AWS_ACCESS_KEY_ID")
     aws_secret_access_key: str = pydantic.Field(None, env="AWS_SECRET_ACCESS_KEY")
     aws_default_region: str = pydantic.Field(None, env="AWS_DEFAULT_REGION")
