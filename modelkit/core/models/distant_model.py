@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 import aiohttp
 import requests
@@ -49,7 +50,7 @@ class AsyncDistantHTTPModel(AsyncModel[ItemType, ReturnType]):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
         self.endpoint = self.model_settings["endpoint"]
-        self.aiohttp_session = None
+        self.aiohttp_session: Optional[aiohttp.ClientSession] = None
 
     def _load(self):
         pass
@@ -68,12 +69,16 @@ class AsyncDistantHTTPModel(AsyncModel[ItemType, ReturnType]):
                 )
             return await response.json()
 
+    async def close(self):
+        if self.aiohttp_session:
+            return self.aiohttp_session.close()
+
 
 class DistantHTTPModel(Model[ItemType, ReturnType]):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
         self.endpoint = self.model_settings["endpoint"]
-        self.requests_session = None
+        self.requests_session: Optional[requests.Session] = None
 
     def _load(self):
         pass
@@ -91,3 +96,7 @@ class DistantHTTPModel(Model[ItemType, ReturnType]):
                 response.status_code, response.reason, response.text
             )
         return response.json()
+
+    def close(self):
+        if self.requests_session:
+            return self.requests_session.close()

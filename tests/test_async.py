@@ -37,6 +37,9 @@ def test_compose_sync_async_generator_fail():
             await asyncio.sleep(0)
             return item
 
+        async def close(self):
+            await asyncio.sleep(0)
+
     class ComposedModel(Model):
         CONFIGURATIONS = {"composed_model": {"model_dependencies": {"async_model"}}}
 
@@ -56,6 +59,8 @@ def test_compose_sync_async_generator_fail():
         # raises
         # TypeError: object async_generator can't be used in 'await' expression
         assert m.predict({"hello": "world"}) == {"hello": "world"}
+
+    library.close()
 
 
 @pytest.mark.asyncio
@@ -92,6 +97,7 @@ async def test_compose_async_sync_async(event_loop):
         assert res == {"hello": "world"}
     res = await m.predict_batch([{"hello": "world"}])
     assert res == [{"hello": "world"}]
+    await library.aclose()
 
 
 async def _do_async(model, item, expected=None):
