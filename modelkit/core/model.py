@@ -487,7 +487,11 @@ class Model(BaseModel[ItemType, ReturnType]):
                 n_items_to_compute == batch_size or n_items_from_cache == 2 * batch_size
             ):
                 yield from self._predict_cache_items(
-                    step, cache_items, _callback=_callback, **kwargs
+                    step,
+                    cache_items,
+                    _callback=_callback,
+                    batch_size=batch_size,
+                    **kwargs,
                 )
                 cache_items = []
                 n_items_to_compute = 0
@@ -496,7 +500,7 @@ class Model(BaseModel[ItemType, ReturnType]):
 
         if cache_items:
             yield from self._predict_cache_items(
-                step, cache_items, _callback=_callback, **kwargs
+                step, cache_items, _callback=_callback, batch_size=batch_size, **kwargs
             )
 
     def _predict_cache_items(
@@ -626,7 +630,11 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
                 n_items_to_compute == batch_size or n_items_from_cache == 2 * batch_size
             ):
                 async for r in self._predict_cache_items(
-                    step, cache_items, _callback=_callback, **kwargs
+                    step,
+                    cache_items,
+                    batch_size=batch_size,
+                    _callback=_callback,
+                    **kwargs,
                 ):
                     yield r
                 cache_items = []
@@ -636,7 +644,7 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
 
         if cache_items:
             async for r in self._predict_cache_items(
-                step, cache_items, _callback=_callback, **kwargs
+                step, cache_items, batch_size=batch_size, _callback=_callback, **kwargs
             ):
                 yield r
 

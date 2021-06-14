@@ -24,7 +24,7 @@ def test_validate_item_spec_pydantic(service_settings):
         x: int
 
     class SomeValidatedModel(Model[ItemModel, Any]):
-        def _predict(self, item):
+        def _predict(self, item, **_):
             return item
 
     valid_test_item = {"x": 10}
@@ -89,7 +89,7 @@ def test_validate_item_spec_pydantic_default(service_settings):
 )
 def test_validate_item_spec_typing(service_settings):
     class SomeValidatedModel(Model[Dict[str, int], Any]):
-        def _predict(self, item):
+        def _predict(self, item, **_):
             return item
 
     valid_test_item = {"x": 10}
@@ -126,7 +126,7 @@ def test_validate_return_spec(service_settings):
         x: int
 
     class SomeValidatedModel(Model[Any, ItemModel]):
-        def _predict(self, item):
+        def _predict(self, item, **_):
             return item
 
     m = SomeValidatedModel(service_settings)
@@ -154,7 +154,7 @@ def test_validate_list_items(service_settings):
             self.counter = 0
             super().__init__(*args, **kwargs)
 
-        def _predict(self, item):
+        def _predict(self, item, **_):
             self.counter += 1
             return item
 
@@ -174,7 +174,7 @@ def test_validate_list_items(service_settings):
 )
 def test_validate_none(service_settings):
     class SomeValidatedModel(Model):
-        def _predict(self, item):
+        def _predict(self, item, **_):
             return item
 
     m = SomeValidatedModel(service_settings=service_settings)

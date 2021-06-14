@@ -210,7 +210,7 @@ def test_lazy_loading_dependencies():
         def _load(self):
             self.some_attribute = self.model_dependencies["model0"].some_attribute
 
-        def _predict(self, item):
+        def _predict(self, item, **_):
             return self.some_attribute
 
     p = ModelLibrary(models=[Model1, Model0], settings={"lazy_loading": True})
@@ -317,7 +317,7 @@ def test_load_model():
     class SomeModel(Model):
         CONFIGURATIONS = {"model": {}}
 
-        def _predict(self, item):
+        def _predict(self, item, **_):
             return item
 
     m = load_model("model", models=SomeModel)
@@ -379,13 +379,13 @@ def test_rename_dependencies():
     class SomeModel(Model):
         CONFIGURATIONS = {"ok": {}}
 
-        def _predict(self, item):
+        def _predict(self, item, **_):
             return self.configuration_key
 
     class SomeModel2(Model):
         CONFIGURATIONS = {"boomer": {}}
 
-        def _predict(self, item):
+        def _predict(self, item, **_):
             return self.configuration_key
 
     class FinalModel(Model):
@@ -398,7 +398,7 @@ def test_rename_dependencies():
             },
         }
 
-        def _predict(self, item):
+        def _predict(self, item, **_):
             return self.model_dependencies["ok"](item)
 
     svc = ModelLibrary(models=[SomeModel, SomeModel2, FinalModel])
@@ -487,7 +487,7 @@ def test_auto_load():
         def _load(self):
             self.some_attribute = "OK"
 
-        def _predict(self, item):
+        def _predict(self, item, **_):
             return self.some_attribute
 
     m = SomeModel()
@@ -497,7 +497,7 @@ def test_auto_load():
         def _load(self):
             self.some_attribute = self.model_dependencies["model"].some_attribute
 
-        def _predict(self, item):
+        def _predict(self, item, **_):
             return self.some_attribute
 
     m = SomeModelDep(model_dependencies={"model": SomeModel()})

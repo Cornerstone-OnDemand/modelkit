@@ -5,11 +5,11 @@ import pytest
 from modelkit.core.model import AsyncModel, Model
 
 
-def _identity(x):
+def _identity(x, **_):
     return x
 
 
-def _double(x):
+def _double(x, **_):
     return [y * 2 for y in x]
 
 
@@ -54,7 +54,7 @@ def test_callback_batch_process(
 ):
     steps = 0
 
-    def func(items):
+    def func(items, **_):
         return [item + 1 for item in items]
 
     def _callback(batch_step, batch_items, batch_results):
@@ -94,7 +94,7 @@ async def test_callback_batch_process_async(
     steps = 0
 
     class SomeAsyncModel(AsyncModel):
-        async def _predict_batch(self, items):
+        async def _predict_batch(self, items, **_):
             await asyncio.sleep(0)
             return [item + 1 for item in items]
 
@@ -143,7 +143,7 @@ def _do_gen_test(m, batch_size, n_items):
 
 def test_predict_gen():
     class GeneratorTestModel(Model):
-        def _predict_batch(self, items):
+        def _predict_batch(self, items, **_):
             # returns the size of the batch
             return [
                 (item, position_in_batch, len(items))
@@ -175,7 +175,7 @@ async def _do_gen_test_async(m, batch_size, n_items):
 @pytest.mark.asyncio
 async def test_predict_gen_async():
     class AsyncGeneratorTestModel(AsyncModel):
-        async def _predict_batch(self, items):
+        async def _predict_batch(self, items, **_):
             await asyncio.sleep(0)
             # returns the size of the batch
             return [

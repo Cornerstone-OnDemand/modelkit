@@ -63,14 +63,14 @@ async def test_compose_async_sync_async(event_loop):
     class SomeAsyncModel(AsyncModel):
         CONFIGURATIONS = {"async_model": {}}
 
-        async def _predict(self, item):
+        async def _predict(self, item, **_):
             await asyncio.sleep(0)
             return item
 
     class ComposedModel(Model):
         CONFIGURATIONS = {"composed_model": {"model_dependencies": {"async_model"}}}
 
-        def _predict(self, item):
+        def _predict(self, item, **_):
             return self.model_dependencies["async_model"].predict(item)
 
     class SomeAsyncComposedModel(AsyncModel):
@@ -78,7 +78,7 @@ async def test_compose_async_sync_async(event_loop):
             "async_composed_model": {"model_dependencies": {"composed_model"}}
         }
 
-        async def _predict(self, item):
+        async def _predict(self, item, **_):
             await asyncio.sleep(0)
             return await self.model_dependencies["composed_model"].predict(item)
 

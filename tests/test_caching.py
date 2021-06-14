@@ -19,7 +19,7 @@ def test_native_cache(cache_implementation):
     class SomeModel(Model):
         CONFIGURATIONS = {"model": {"model_settings": {"cache_predictions": True}}}
 
-        def _predict(self, item):
+        def _predict(self, item, **_):
             return item
 
     class SomeModelMultiple(Model):
@@ -27,7 +27,7 @@ def test_native_cache(cache_implementation):
             "model_multiple": {"model_settings": {"cache_predictions": True}}
         }
 
-        def _predict_batch(self, items):
+        def _predict_batch(self, items, **_):
             return items
 
     class Item(pydantic.BaseModel):
@@ -41,7 +41,7 @@ def test_native_cache(cache_implementation):
             "model_validated": {"model_settings": {"cache_predictions": True}}
         }
 
-        def _predict_batch(self, items):
+        def _predict_batch(self, items, **_):
             return items
 
     svc = ModelLibrary(
@@ -114,7 +114,7 @@ def test_redis_cache(redis_service):
     class SomeModel(Model):
         CONFIGURATIONS = {"model": {"model_settings": {"cache_predictions": True}}}
 
-        def _predict(self, item):
+        def _predict(self, item, **_):
             return item
 
     class SomeModelMultiple(Model):
@@ -122,7 +122,7 @@ def test_redis_cache(redis_service):
             "model_multiple": {"model_settings": {"cache_predictions": True}}
         }
 
-        def _predict_batch(self, items):
+        def _predict_batch(self, items, **_):
             return items
 
     class Item(pydantic.BaseModel):
@@ -136,7 +136,7 @@ def test_redis_cache(redis_service):
             "model_validated": {"model_settings": {"cache_predictions": True}}
         }
 
-        def _predict_batch(self, items):
+        def _predict_batch(self, items, **_):
             return items
 
     svc = ModelLibrary(
@@ -176,7 +176,7 @@ async def test_redis_cache_async(redis_service, event_loop):
     class SomeModel(AsyncModel):
         CONFIGURATIONS = {"model": {"model_settings": {"cache_predictions": True}}}
 
-        async def _predict(self, item):
+        async def _predict(self, item, **_):
             await asyncio.sleep(0)
             return item
 
@@ -185,7 +185,7 @@ async def test_redis_cache_async(redis_service, event_loop):
             "model_multiple": {"model_settings": {"cache_predictions": True}}
         }
 
-        async def _predict_batch(self, items):
+        async def _predict_batch(self, items, **_):
             await asyncio.sleep(0)
             return items
 
@@ -200,7 +200,7 @@ async def test_redis_cache_async(redis_service, event_loop):
             "model_validated": {"model_settings": {"cache_predictions": True}}
         }
 
-        async def _predict_batch(self, items):
+        async def _predict_batch(self, items, **_):
             await asyncio.sleep(0)
             return items
 

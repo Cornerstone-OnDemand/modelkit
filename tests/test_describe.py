@@ -20,7 +20,7 @@ def test_describe():
 
         CONFIGURATIONS = {"some_model_a": {}}
 
-        def _predict(self, item):
+        def _predict(self, item, **_):
             return item
 
     class ItemModel(pydantic.BaseModel):
@@ -47,7 +47,7 @@ def test_describe():
             super().__init__(*args, **kwargs)
             self.some_object = A()
 
-        def _predict(self, item):
+        def _predict(self, item, **_):
             return item
 
     library = ModelLibrary(

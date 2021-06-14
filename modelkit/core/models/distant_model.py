@@ -55,7 +55,7 @@ class AsyncDistantHTTPModel(AsyncModel[ItemType, ReturnType]):
         pass
 
     @retry(**SERVICE_MODEL_RETRY_POLICY)
-    async def _predict(self, item):
+    async def _predict(self, item, **kwargs):
         if self.aiohttp_session is None:
             self.aiohttp_session = aiohttp.ClientSession()
         async with self.aiohttp_session.post(
@@ -79,7 +79,7 @@ class DistantHTTPModel(Model[ItemType, ReturnType]):
         pass
 
     @retry(**SERVICE_MODEL_RETRY_POLICY)
-    def _predict(self, item):
+    def _predict(self, item, **kwargs):
         if not self.requests_session:
             self.requests_session = requests.Session()
         response = self.requests_session.post(

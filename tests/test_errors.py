@@ -8,17 +8,17 @@ class CustomError(BaseException):
 
 
 class OKModel(Model):
-    def _predict(self, item):
+    def _predict(self, item, **_):
         return self.model_dependencies["error_model"].predict(item)
 
 
 class ErrorModel(Model):
-    def _predict(self, item):
+    def _predict(self, item, **_):
         raise CustomError("something went wrong")
 
 
 class ErrorBatchModel(Model):
-    def _predict_batch(self, item):
+    def _predict_batch(self, item, **_):
         raise CustomError("something went wrong")
 
 
@@ -72,17 +72,17 @@ def test_prediction_error_complex_tb(monkeypatch, model):
 
 
 class AsyncOKModel(AsyncModel):
-    async def _predict(self, item):
+    async def _predict(self, item, **_):
         return self.model_dependencies["error_model"].predict(item)
 
 
 class AsyncErrorModel(AsyncModel):
-    async def _predict(self, item):
+    async def _predict(self, item, **_):
         raise CustomError("something went wrong")
 
 
 class AsyncErrorBatchModel(AsyncModel):
-    async def _predict_batch(self, item):
+    async def _predict_batch(self, item, **_):
         raise CustomError("something went wrong")
 
 
