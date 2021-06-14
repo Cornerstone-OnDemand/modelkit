@@ -1,17 +1,14 @@
-from types import ModuleType
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Union
 
 import fastapi
 from rich.console import Console
 from structlog import get_logger
 
 from modelkit.core.library import LibrarySettings, ModelConfiguration, ModelLibrary
-from modelkit.core.model import AsyncModel, BaseModel
+from modelkit.core.model import AsyncModel
+from modelkit.core.types import LibraryModelsType
 
 logger = get_logger(__name__)
-
-# create APIRoute for model
-# create startup event
 
 
 class ModelkitAPIRouter(fastapi.APIRouter):
@@ -23,7 +20,7 @@ class ModelkitAPIRouter(fastapi.APIRouter):
         configuration: Optional[
             Dict[str, Union[Dict[str, Any], ModelConfiguration]]
         ] = None,
-        models: Optional[Union[ModuleType, Type, List]] = None,
+        models: Optional[LibraryModelsType] = None,
         required_models: Optional[Union[List[str], Dict[str, Any]]] = None,
         # APIRouter arguments
         **kwargs,
@@ -59,7 +56,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
         configuration: Optional[
             Dict[str, Union[Dict[str, Any], ModelConfiguration]]
         ] = None,
-        models: Optional[Union[ModuleType, Type, List]] = None,
+        models: Optional[LibraryModelsType] = None,
         # paths overrides change the configuration key into a path
         route_paths: Optional[Dict[str, str]] = None,
         # APIRouter arguments

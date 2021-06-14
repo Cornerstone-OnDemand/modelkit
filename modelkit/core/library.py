@@ -7,7 +7,6 @@ import collections
 import copy
 import os
 import re
-from types import ModuleType
 from typing import Any, Dict, List, Mapping, Optional, Type, TypeVar, Union, cast
 
 import humanize
@@ -23,6 +22,7 @@ from modelkit.assets.settings import AssetSpec
 from modelkit.core.model import AsyncModel, Model
 from modelkit.core.model_configuration import ModelConfiguration, configure, list_assets
 from modelkit.core.settings import LibrarySettings, NativeCacheSettings, RedisSettings
+from modelkit.core.types import LibraryModelsType
 from modelkit.utils.cache import Cache, NativeCache, RedisCache
 from modelkit.utils.memory import PerformanceTracker
 from modelkit.utils.pretty import describe
@@ -51,7 +51,7 @@ class ModelLibrary:
         configuration: Optional[
             Dict[str, Union[Dict[str, Any], ModelConfiguration]]
         ] = None,
-        models: Optional[Union[ModuleType, Type, List, str]] = None,
+        models: Optional[LibraryModelsType] = None,
         required_models: Optional[Union[List[str], Dict[str, Any]]] = None,
     ):
         """
@@ -377,7 +377,7 @@ def load_model(
     configuration: Optional[
         Dict[str, Union[Dict[str, Any], ModelConfiguration]]
     ] = None,
-    models: Optional[Union[ModuleType, Type, List]] = None,
+    models: Optional[LibraryModelsType] = None,
 ):
     """
     Loads an modelkit model without the need for a ModelLibrary.
@@ -398,7 +398,7 @@ def download_assets(
     configuration: Optional[
         Mapping[str, Union[Dict[str, Any], ModelConfiguration]]
     ] = None,
-    models: Optional[Union[ModuleType, Type, List]] = None,
+    models: Optional[LibraryModelsType] = None,
     required_models: Optional[List[str]] = None,
 ):
     assetsmanager_settings = assetsmanager_settings or {}
