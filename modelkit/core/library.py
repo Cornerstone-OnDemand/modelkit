@@ -398,7 +398,8 @@ def load_model(
         Dict[str, Union[Dict[str, Any], ModelConfiguration]]
     ] = None,
     models: Optional[LibraryModelsType] = None,
-):
+    model_type: Optional[Type[T]] = None,
+) -> T:
     """
     Loads an modelkit model without the need for a ModelLibrary.
     This is useful for development, and should be avoided in production
@@ -410,7 +411,7 @@ def load_model(
         configuration=configuration,
         settings={"lazy_loading": True},
     )
-    return svc.get(model_name)
+    return svc.get(model_name, model_type=model_type)
 
 
 def download_assets(
