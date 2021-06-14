@@ -169,7 +169,7 @@ class ItemValidationException(ModelkitDataValidationException):
         )
 
 
-class BaseModel(Asset, Generic[ItemType, ReturnType]):
+class AbstractModel(Asset, Generic[ItemType, ReturnType]):
     """
     Model
     ===
@@ -375,7 +375,7 @@ class BaseModel(Asset, Generic[ItemType, ReturnType]):
                 raise
 
 
-class Model(BaseModel[ItemType, ReturnType]):
+class Model(AbstractModel[ItemType, ReturnType]):
     def load(self):
         super().load()
         try:
@@ -554,7 +554,7 @@ class Model(BaseModel[ItemType, ReturnType]):
         pass
 
 
-class AsyncModel(BaseModel[ItemType, ReturnType]):
+class AsyncModel(AbstractModel[ItemType, ReturnType]):
     async def _predict(self, item: ItemType, **kwargs) -> ReturnType:
         result = await self._predict_batch([item], **kwargs)
         return result[0]

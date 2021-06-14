@@ -5,7 +5,7 @@ from rich.console import Console
 from structlog import get_logger
 
 from modelkit.core.library import LibrarySettings, ModelConfiguration, ModelLibrary
-from modelkit.core.model import AsyncModel, BaseModel
+from modelkit.core.model import AbstractModel, AsyncModel
 from modelkit.core.types import LibraryModelsType
 
 logger = get_logger(__name__)
@@ -73,8 +73,8 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
 
         route_paths = route_paths or {}
         for model_name in self.svc.required_models:
-            m: BaseModel = self.svc.get(model_name)
-            if not isinstance(m, BaseModel):
+            m: AbstractModel = self.svc.get(model_name)
+            if not isinstance(m, AbstractModel):
                 continue
             path = route_paths.get(model_name, "/predict/" + model_name)
             batch_path = route_paths.get(model_name, "/predict/batch/" + model_name)
