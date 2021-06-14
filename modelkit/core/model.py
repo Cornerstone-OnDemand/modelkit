@@ -36,10 +36,6 @@ from modelkit.utils.pydantic import construct_recursive
 logger = get_logger(__name__)
 
 
-class NoModelDependenciesInInitError(BaseException):
-    pass
-
-
 class Asset:
     """
     Asset
@@ -66,16 +62,16 @@ class Asset:
         self.asset_path = kwargs.pop("asset_path", "")
         self.cache = kwargs.pop("cache", None)
         self._loaded = False
-        self._deserializing = False
         self.model_settings = kwargs.pop("model_settings", {})
         self.load_time = None
         self.load_memory_increment = None
+        if not self.service_settings.lazy_loading:
+            self.load()
 
     def load(self):
         """Implement this method in order for the model to load and
         deserialize its asset, whose path is kept int the `asset_path`
         attribute"""
-        self._deserializing = True
         with PerformanceTracker() as m:
             self._load()
 
@@ -90,7 +86,6 @@ class Asset:
             memory_bytes=m.increment,
         )
         self._loaded = True
-        self._deserializing = False
         self.load_time = m.time
         self.load_memory_increment = m.increment
 
@@ -182,29 +177,20 @@ class BaseModel(Asset, Generic[ItemType, ReturnType]):
     TEST_CASES: Any
 
     def __init__(self, *args, **kwargs):
-        self._model_dependencies = kwargs.pop("model_dependencies", {})
+        self.model_dependencies = kwargs.pop("model_dependencies", {})
         self._model_cache_key = None
         self._item_model = None
         self._return_model = None
+        self._loaded = False
         super().__init__(self, *args, **kwargs)
         self.initialize_validation_models()
 
     def load(self):
         """For Model instances, there may be a need to also load the dependencies"""
-        for m in self._model_dependencies.values():
+        for m in self.model_dependencies.values():
             if not m._loaded:
                 m.load()
         Asset.load(self)
-
-    @property
-    def model_dependencies(self):
-        if not hasattr(self, "_loaded") or not self._loaded and not self._deserializing:
-            raise NoModelDependenciesInInitError(
-                "Model dependencies are not loaded yet!"
-                "If you have to refer to it in the __init__ of the Model,"
-                "move the code to the _load method."
-            )
-        return self._model_dependencies
 
     def initialize_validation_models(self):
         try:
@@ -394,9 +380,9 @@ class Model(BaseModel[ItemType, ReturnType]):
             # In a synchronous context, we wrap asynchronous models
             # such that we can evaluate `.predict`
             # Otherwise, they will have to be awaited
-            for model_name, m in self._model_dependencies.items():
+            for model_name, m in self.model_dependencies.items():
                 if isinstance(m, AsyncModel):
-                    self._model_dependencies[model_name] = WrappedAsyncModel(m)
+                    self.model_dependencies[model_name] = WrappedAsyncModel(m)
 
     def _predict(self, item: ItemType, **kwargs) -> ReturnType:
         result = self._predict_batch([item], **kwargs)
@@ -692,6 +678,7 @@ class WrappedAsyncModel:
         self.async_model = async_model
         self.predict = AsyncToSync(self.async_model.predict)
         self.predict_batch = AsyncToSync(self.async_model.predict_batch)
+        self._loaded = True
         # The following does not currently work, because AsyncToSync does not
         # seem to correctly wrap asynchronous generators
         # self.predict_gen = AsyncToSync(self.async_model.predict_gen)

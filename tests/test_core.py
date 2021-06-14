@@ -10,7 +10,7 @@ from modelkit.core.library import (
     download_assets,
     load_model,
 )
-from modelkit.core.model import Asset, AsyncModel, Model, NoModelDependenciesInInitError
+from modelkit.core.model import Asset, AsyncModel, Model
 from modelkit.core.model_configuration import (
     ModelConfiguration,
     _configurations_from_objects,
@@ -218,34 +218,6 @@ def test_lazy_loading_dependencies():
     assert m({}) == "ok"
     assert m.model_dependencies["model0"].some_attribute == "ok"
     assert m.some_attribute == "ok"
-
-
-def test_dependencies_not_in_init():
-    class Model0(Asset):
-        CONFIGURATIONS = {"model0": {}}
-
-        def _load(self):
-            self.some_attribute = "ok"
-
-    class Model1(Model):
-        CONFIGURATIONS = {"model1": {"model_dependencies": {"model0"}}}
-
-        def __init__(self, *args, **kwargs):
-            self.some_attribute = self.model_dependencies["model0"].some_attribute
-            super().__init__(self, *args, **kwargs)
-
-    with pytest.raises(NoModelDependenciesInInitError):
-        ModelLibrary(models=[Model1, Model0])
-
-    class Model11(Model):
-        CONFIGURATIONS = {"model11": {"model_dependencies": {"model0"}}}
-
-        def __init__(self, *args, **kwargs):
-            super().__init__(self, *args, **kwargs)
-            self.some_attribute = self.model_dependencies["model0"].some_attribute
-
-    with pytest.raises(NoModelDependenciesInInitError):
-        ModelLibrary(models=[Model11, Model0])
 
 
 def test_list_assets():
@@ -508,3 +480,25 @@ def test_model_async_test():
             return len(item)
 
     TestClass().test()
+
+
+def test_auto_load():
+    class SomeModel(Model):
+        def _load(self):
+            self.some_attribute = "OK"
+
+        def _predict(self, item):
+            return self.some_attribute
+
+    m = SomeModel()
+    assert m.predict({}) == "OK"
+
+    class SomeModelDep(Model):
+        def _load(self):
+            self.some_attribute = self.model_dependencies["model"].some_attribute
+
+        def _predict(self, item):
+            return self.some_attribute
+
+    m = SomeModelDep(model_dependencies={"model": SomeModel()})
+    assert m.predict({}) == "OK"
