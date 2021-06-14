@@ -371,7 +371,7 @@ class ModelLibrary:
                 if model_key in self._models:
                     yield self.get(model_key), item, result
 
-    def describe(self, console=None):
+    def describe(self, console=None) -> None:
         if not console:
             console = Console()
         t = Tree("[bold]Settings")
