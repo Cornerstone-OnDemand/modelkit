@@ -250,8 +250,8 @@ def predict(model_name, models):
     """
     Make predictions for a given model.
     """
-    svc = _configure_from_cli_arguments(models, [model_name], False, {})
-    model = svc.get(model_name)
+    lib = _configure_from_cli_arguments(models, [model_name], False, {})
+    model = lib.get(model_name)
     while True:
         r = click.prompt(f"[{model_name}]>")
         if r:

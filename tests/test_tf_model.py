@@ -88,7 +88,7 @@ def tf_serving(request, monkeypatch, working_dir):
 async def test_iso_serving_mode(tf_serving, event_loop):
     model_name = "dummy_tf_model"
     # Get the prediction service running TF with gRPC serving
-    svc_serving_grpc = ModelLibrary(
+    lib_serving_grpc = ModelLibrary(
         required_models=[model_name],
         settings=LibrarySettings(
             tf_serving={
@@ -100,9 +100,9 @@ async def test_iso_serving_mode(tf_serving, event_loop):
         ),
         models=DummyTFModel,
     )
-    model_grpc = svc_serving_grpc.get(model_name)
+    model_grpc = lib_serving_grpc.get(model_name)
 
-    svc_serving_rest = ModelLibrary(
+    lib_serving_rest = ModelLibrary(
         required_models=[model_name],
         settings=LibrarySettings(
             tf_serving={
@@ -114,22 +114,22 @@ async def test_iso_serving_mode(tf_serving, event_loop):
         ),
         models=DummyTFModel,
     )
-    model_rest = svc_serving_rest.get(model_name)
+    model_rest = lib_serving_rest.get(model_name)
 
     # Get the prediction service running TF as a library
-    svc_tflib = ModelLibrary(
+    lib_tflib = ModelLibrary(
         required_models=[model_name],
         settings=LibrarySettings(),
         models=DummyTFModel,
     )
-    assert not svc_tflib.settings.tf_serving.enable
-    model_tflib = svc_tflib.get(model_name)
+    assert not lib_tflib.settings.tf_serving.enable
+    model_tflib = lib_tflib.get(model_name)
     _compare_models(model_tflib, model_grpc, TEST_ITEMS)
 
     _compare_models(model_rest, model_grpc, TEST_ITEMS)
 
-    await svc_serving_rest.aclose()
-    await svc_serving_grpc.aclose()
+    await lib_serving_rest.close_connections()
+    await lib_serving_grpc.close_connections()
 
 
 def compare_result(x, y, tolerance):
@@ -213,7 +213,7 @@ def _compare_models(model0, model1, items, tolerance=1e-2):
 @skip_unless("ENABLE_TF_SERVING_TEST", "True")
 async def test_iso_async(tf_serving, event_loop):
     # Get the prediction service running TF with REST serving
-    svc = ModelLibrary(
+    lib = ModelLibrary(
         required_models=["dummy_tf_model", "dummy_tf_model_async"],
         settings=LibrarySettings(
             tf_serving={
@@ -225,11 +225,11 @@ async def test_iso_async(tf_serving, event_loop):
         ),
         models=[DummyTFModel, DummyTFModelAsync],
     )
-    m_jt2s = svc.get("dummy_tf_model")
-    async_m_jt2s = svc.get("dummy_tf_model_async")
+    m_jt2s = lib.get("dummy_tf_model")
+    async_m_jt2s = lib.get("dummy_tf_model_async")
 
     await _compare_models_async(m_jt2s, async_m_jt2s, TEST_ITEMS)
-    await svc.aclose()
+    await lib.aclose()
     assert async_m_jt2s.aiohttp_session.closed
 
 

@@ -44,20 +44,20 @@ def test_override_asset():
     }
     # The asset does not exist
     with pytest.raises(Exception):
-        prediction_service = ModelLibrary(
+        model_library = ModelLibrary(
             required_models=["some_asset"], configuration=config
         )
 
     # It does when overriden
-    prediction_service = ModelLibrary(
+    model_library = ModelLibrary(
         required_models={"some_asset": {"asset_path": "/the/path"}},
         configuration=config,
     )
-    model = prediction_service.get("some_asset")
+    model = model_library.get("some_asset")
     assert "/the/path" == model({})
 
     # Dependent models are loaded properly
-    model = prediction_service.get("dep_model")
+    model = model_library.get("dep_model")
     assert "dep" == model({})
 
     # Finally, it is possible to also specify
@@ -65,7 +65,7 @@ def test_override_asset():
     config["dep_model"] = ModelConfiguration(
         model_type=TestDepModel, asset="cat/someasset"
     )
-    prediction_service = ModelLibrary(
+    model_library = ModelLibrary(
         required_models={
             "some_asset": {"asset_path": "/the/path"},
             "dep_model": {"asset_path": "/the/dep/path"},
@@ -73,11 +73,11 @@ def test_override_asset():
         configuration=config,
     )
     # Dependent models are loaded properly
-    model = prediction_service.get("dep_model")
+    model = model_library.get("dep_model")
     assert "dep/the/dep/path" == model({})
 
 
-def test_prediction_service_inexistent_model():
+def test_model_library_inexistent_model():
     with pytest.raises(ConfigurationNotFoundException):
         ModelLibrary(required_models=["model_that_does_not_exist"])
 
@@ -331,13 +331,13 @@ def test_required_models():
     class SomeOtherModel(Model):
         CONFIGURATIONS = {"other_model": {}}
 
-    svc = ModelLibrary(required_models=[], models=[SomeModel, SomeOtherModel])
-    assert len(svc.models) == 0
-    assert svc.required_models == {}
+    lib = ModelLibrary(required_models=[], models=[SomeModel, SomeOtherModel])
+    assert len(lib.models) == 0
+    assert lib.required_models == {}
 
-    svc = ModelLibrary(models=[SomeModel, SomeOtherModel])
-    assert len(svc.models) == 2
-    assert svc.required_models == {"model": {}, "other_model": {}}
+    lib = ModelLibrary(models=[SomeModel, SomeOtherModel])
+    assert len(lib.models) == 2
+    assert lib.required_models == {"model": {}, "other_model": {}}
 
 
 def test_lazy_loading_setting(monkeypatch):
@@ -360,7 +360,7 @@ def test_environment_asset_load(monkeypatch, assetsmanager_settings):
 
     monkeypatch.setenv("MODELKIT_TESTS_TEST_ASSET_FILE", "path/to/asset")
 
-    prediction_service = ModelLibrary(
+    model_library = ModelLibrary(
         required_models=["some_asset"],
         configuration={
             "some_asset": ModelConfiguration(
@@ -369,7 +369,7 @@ def test_environment_asset_load(monkeypatch, assetsmanager_settings):
         },
         assetsmanager_settings=assetsmanager_settings,
     )
-    model = prediction_service.get("some_asset")
+    model = model_library.get("some_asset")
 
     predicted = model({})
     assert predicted == {"some key": "some data"}
@@ -401,9 +401,9 @@ def test_rename_dependencies():
         def _predict(self, item):
             return self.model_dependencies["ok"](item)
 
-    svc = ModelLibrary(models=[SomeModel, SomeModel2, FinalModel])
-    assert svc.get("model_no_rename")({}) == "ok"
-    assert svc.get("model_rename")({}) == "boomer"
+    lib = ModelLibrary(models=[SomeModel, SomeModel2, FinalModel])
+    assert lib.get("model_no_rename")({}) == "ok"
+    assert lib.get("model_rename")({}) == "boomer"
 
 
 def test_override_prefix(assetsmanager_settings):
@@ -411,7 +411,7 @@ def test_override_prefix(assetsmanager_settings):
         def _predict(self, item, **kwargs):
             return self.asset_path
 
-    prediction_service = ModelLibrary(
+    model_library = ModelLibrary(
         required_models=["my_model", "my_override_model"],
         configuration={
             "my_model": ModelConfiguration(
@@ -424,13 +424,13 @@ def test_override_prefix(assetsmanager_settings):
         assetsmanager_settings=assetsmanager_settings,
     )
 
-    prediction = prediction_service.get("my_model")({})
+    prediction = model_library.get("my_model")({})
     assert prediction.endswith(os.path.join("category", "asset", "1.0"))
 
-    prediction = prediction_service.get("my_override_model")({})
+    prediction = model_library.get("my_override_model")({})
     assert prediction.endswith(os.path.join("category", "override-asset", "0.0"))
 
-    prediction_service = ModelLibrary(
+    model_library = ModelLibrary(
         required_models=["my_model", "my_override_model"],
         configuration={
             "my_model": ModelConfiguration(
@@ -444,10 +444,10 @@ def test_override_prefix(assetsmanager_settings):
         assetsmanager_settings=assetsmanager_settings,
     )
 
-    prediction = prediction_service.get("my_model")({})
+    prediction = model_library.get("my_model")({})
     assert prediction.endswith(os.path.join("category", "asset", "1.0"))
 
-    prediction = prediction_service.get("my_override_model")({})
+    prediction = model_library.get("my_override_model")({})
     assert prediction.endswith(os.path.join("category", "override-asset", "1.0"))
 
 

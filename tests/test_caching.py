@@ -44,7 +44,7 @@ def test_native_cache(cache_implementation):
         def _predict_batch(self, items):
             return items
 
-    svc = ModelLibrary(
+    lib = ModelLibrary(
         models=[SomeModel, SomeModelMultiple, SomeModelValidated],
         settings={
             "cache": {
@@ -55,17 +55,17 @@ def test_native_cache(cache_implementation):
         },
     )
 
-    assert isinstance(svc.cache, NativeCache)
+    assert isinstance(lib.cache, NativeCache)
 
-    m = svc.get("model")
-    m_multi = svc.get("model_multiple")
+    m = lib.get("model")
+    m_multi = lib.get("model_multiple")
 
     ITEMS = [{"ok": {"boomer": 1}}, {"ok": {"boomer": [2, 2, 3]}}]
 
     _do_model_test(m, ITEMS)
     _do_model_test(m_multi, ITEMS)
 
-    m_validated = svc.get("model_validated")
+    m_validated = lib.get("model_validated")
     _do_model_test(m_validated, ITEMS)
 
 
@@ -139,22 +139,22 @@ def test_redis_cache(redis_service):
         def _predict_batch(self, items):
             return items
 
-    svc = ModelLibrary(
+    lib = ModelLibrary(
         models=[SomeModel, SomeModelMultiple, SomeModelValidated],
         settings={"cache": {"cache_provider": "redis"}},
     )
 
-    assert isinstance(svc.cache, RedisCache)
+    assert isinstance(lib.cache, RedisCache)
 
-    m = svc.get("model")
-    m_multi = svc.get("model_multiple")
+    m = lib.get("model")
+    m_multi = lib.get("model_multiple")
 
     ITEMS = [{"ok": {"boomer": 1}}, {"ok": {"boomer": [2, 2, 3]}}]
 
     _do_model_test(m, ITEMS)
     _do_model_test(m_multi, ITEMS)
 
-    m_validated = svc.get("model_validated")
+    m_validated = lib.get("model_validated")
     _do_model_test(m_validated, ITEMS)
 
 
@@ -204,21 +204,21 @@ async def test_redis_cache_async(redis_service, event_loop):
             await asyncio.sleep(0)
             return items
 
-    svc = ModelLibrary(
+    lib = ModelLibrary(
         models=[SomeModel, SomeModelMultiple, SomeModelValidated],
         settings={"cache": {"cache_provider": "redis"}},
     )
 
-    assert isinstance(svc.cache, RedisCache)
+    assert isinstance(lib.cache, RedisCache)
 
-    m = svc.get("model")
-    m_multi = svc.get("model_multiple")
+    m = lib.get("model")
+    m_multi = lib.get("model_multiple")
 
     ITEMS = [{"ok": {"boomer": 1}}, {"ok": {"boomer": [2, 2, 3]}}]
 
     await _do_model_test_async(m, ITEMS)
     await _do_model_test_async(m_multi, ITEMS)
-    await svc.aclose()
+    await lib.aclose()
 
-    m_validated = svc.get("model_validated")
+    m_validated = lib.get("model_validated")
     await _do_model_test_async(m_validated, ITEMS)

@@ -34,7 +34,7 @@ class ModelkitAPIRouter(fastapi.APIRouter):
         kwargs["on_shutdown"] = on_shutdown
         super().__init__(**kwargs)
 
-        self.svc = ModelLibrary(
+        self.lib = ModelLibrary(
             required_models=required_models,
             settings=settings,
             assetsmanager_settings=assetsmanager_settings,
@@ -43,7 +43,7 @@ class ModelkitAPIRouter(fastapi.APIRouter):
         )
 
     async def _on_shutdown(self):
-        await self.svc.aclose()
+        await self.lib.aclose()
 
 
 class ModelkitAutoAPIRouter(ModelkitAPIRouter):
@@ -72,8 +72,8 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
         )
 
         route_paths = route_paths or {}
-        for model_name in self.svc.required_models:
-            m: AbstractModel = self.svc.get(model_name)
+        for model_name in self.lib.required_models:
+            m: AbstractModel = self.lib.get(model_name)
             if not isinstance(m, AbstractModel):
                 continue
             path = route_paths.get(model_name, "/predict/" + model_name)
@@ -128,7 +128,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
 
             async def _aendpoint(
                 item: item_type = fastapi.Body(...),
-                model=fastapi.Depends(lambda: self.svc.get(model_name)),
+                model=fastapi.Depends(lambda: self.lib.get(model_name)),
             ):  # noqa: B008
                 return await model.predict(item)
 
@@ -136,7 +136,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
 
         def _endpoint(
             item: item_type = fastapi.Body(...),
-            model=fastapi.Depends(lambda: self.svc.get(model_name)),
+            model=fastapi.Depends(lambda: self.lib.get(model_name)),
         ):  # noqa: B008
             return model.predict(item)
 
@@ -147,7 +147,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
 
             async def _aendpoint(
                 item: item_type = fastapi.Body(...),
-                model=fastapi.Depends(lambda: self.svc.get(model_name)),
+                model=fastapi.Depends(lambda: self.lib.get(model_name)),
             ):  # noqa: B008
                 return await model.predict_batch(item)
 
@@ -155,7 +155,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
 
         def _endpoint(
             item: List[item_type] = fastapi.Body(...),
-            model=fastapi.Depends(lambda: self.svc.get(model_name)),
+            model=fastapi.Depends(lambda: self.lib.get(model_name)),
         ):  # noqa: B008
             return model.predict_batch(item)
 

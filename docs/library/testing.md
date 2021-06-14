@@ -12,15 +12,15 @@ The belief is that test cases for models constitute essential documentation for 
 from modelkit.core.fixtures import make_modellibrary_test
 
 make_modellibrary_test(
-    **prediction_service_arguments, # insert any arguments to ModelLibrary here
-    fixture_name="testing_prediction_service",
-    test_name="test_auto_prediction_service",
+    **model_library_arguments, # insert any arguments to ModelLibrary here
+    fixture_name="testing_model_library",
+    test_name="test_auto_model_library",
 )
 ```
 
-This will create a pytest fixture called `testing_prediction_service` that returns `ModelLibrary(**prediction_service_arguments)` which you can freely reuse.
+This will create a pytest fixture called `testing_model_library` that returns `ModelLibrary(**model_library_arguments)` which you can freely reuse.
 
-In addition, it creates a test called `test_auto_prediction_service` that iterates through the tests defined as part of `Model` classes.
+In addition, it creates a test called `test_auto_model_library` that iterates through the tests defined as part of `Model` classes.
 
 
 ### Defining test cases
@@ -47,9 +47,9 @@ Each test is instantiated with an item value and a result value, the automatic t
 
 ```python
 @pytest.mark.parametrize("model_key, item, result", [case for case in Model.TEST_CASES])
-def test_function(model_key, item, result, testing_prediction_service):
-    svc = testing_prediction_service.getfixturevalue(fixture_name)
-    assert svc.get(model_key)(item) == result
+def test_function(model_key, item, result, testing_model_library):
+    lib = testing_model_library.getfixturevalue(fixture_name)
+    assert lib.get(model_key)(item) == result
 
 ```
 
