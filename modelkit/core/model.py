@@ -43,7 +43,17 @@ class Asset:
 
     CONFIGURATIONS: Dict[str, Dict[str, Any]] = {}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self,
+        configuration_key: Optional[str] = None,
+        service_settings: Optional[LibrarySettings] = None,
+        model_settings: Optional[Dict[str, Any]] = None,
+        asset_path: str = "",
+        cache: Optional[Cache] = None,
+        model_dependencies: Optional[
+            Dict[str, Union["Model", "AsyncModel", "WrappedAsyncModel"]]
+        ] = None,
+    ):
         """
         At init in the ModelLibrary, a Model is passed
         the `model` and `settings` parameters.
@@ -53,19 +63,20 @@ class Asset:
         :param args:
         :param kwargs:
         """
-        self.configuration_key: Optional[str] = kwargs.get("configuration_key")
-        self.service_settings: LibrarySettings = (
-            kwargs.get("service_settings") or LibrarySettings()
-        )
-        self.batch_size: Optional[int] = kwargs.get("model_settings", {}).get(
-            "batch_size", None
-        )
-        self.asset_path: str = kwargs.pop("asset_path", "")
-        self.cache: Optional[Cache] = kwargs.pop("cache", None)
+        self.configuration_key: Optional[str] = configuration_key
+        self.service_settings: LibrarySettings = service_settings or LibrarySettings()
+        self.asset_path: str = asset_path
+        self.cache: Optional[Cache] = cache
+        self.model_settings: Dict[str, Any] = model_settings or {}
+        self.batch_size: Optional[int] = self.model_settings.get("batch_size", None)
+        self.model_dependencies: Dict[
+            str, Union[Model, AsyncModel, WrappedAsyncModel]
+        ] = (model_dependencies or {})
+
         self._loaded: bool = False
-        self.model_settings: Dict[str, Any] = kwargs.pop("model_settings", {})
-        self._load_time: float = None
-        self._load_memory_increment: float = None
+        self._load_time: Optional[float] = None
+        self._load_memory_increment: Optional[float] = None
+
         if not self.service_settings.lazy_loading:
             self.load()
 
@@ -109,7 +120,7 @@ class ModelkitDataValidationException(Exception):
     def __init__(
         self,
         model_identifier: str,
-        pydantic_exc: pydantic.error_wrappers.ValidationError,
+        pydantic_exc: Optional[pydantic.error_wrappers.ValidationError] = None,
         error_str: str = "Data validation error in model",
     ):
         pydantic_exc_output = ""
@@ -177,14 +188,14 @@ class BaseModel(Asset, Generic[ItemType, ReturnType]):
     # TEST_CASES: Union[ModelTestingConfiguration[ItemType, ReturnType], Dict]
     TEST_CASES: Any
 
-    def __init__(self, *args, **kwargs):
-        self.model_dependencies: Dict[
-            str, Union[Model, AsyncModel, WrappedAsyncModel]
-        ] = kwargs.pop("model_dependencies", {})
+    def __init__(
+        self,
+        **kwargs,
+    ):
         self._item_model: Optional[Type[InternalDataModel]] = None
         self._return_model: Optional[Type[InternalDataModel]] = None
         self._loaded: bool = False
-        super().__init__(self, *args, **kwargs)
+        super().__init__(**kwargs)
         self.initialize_validation_models()
 
     def load(self):

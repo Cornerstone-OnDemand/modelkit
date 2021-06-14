@@ -129,12 +129,15 @@ def test_validate_return_spec(service_settings):
         def _predict(self, item):
             return item
 
-    m = SomeValidatedModel(service_settings)
+    m = SomeValidatedModel(service_settings=service_settings)
     ret = m({"x": 10})
     assert ret.x == 10
 
-    with pytest.raises(ReturnValueValidationException):
-        m({"x": "something", "blabli": 10})
+    if m.service_settings.enable_validation:
+        with pytest.raises(ReturnValueValidationException):
+            m({"x": "something", "blabli": 10})
+    else:
+        m.predict({"x": "something", "blabli": 10})
 
 
 @pytest.mark.parametrize(

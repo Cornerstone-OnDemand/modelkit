@@ -97,14 +97,14 @@ class ModelLibrary:
         self.assets_info: Dict[str, AssetInfo] = {}
         self._asset_manager: Optional[AssetsManager] = None
 
-        self.required_models: Dict[str, Dict[str, Any]] = (
+        required_models = (
             required_models
             if required_models is not None
             else {r: {} for r in self.configuration}
         )
-        if isinstance(self.required_models, list):
-            self.required_models = {r: {} for r in self.required_models}
-
+        if isinstance(required_models, list):
+            required_models = {r: {} for r in required_models}
+        self.required_models: Dict[str, Dict[str, Any]] = required_models
         self.cache: Optional[Cache] = None
         if self.settings.cache:
             if isinstance(self.settings.cache, RedisSettings):

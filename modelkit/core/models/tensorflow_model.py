@@ -47,8 +47,8 @@ def safe_np_dump(obj):
 
 
 class TensorflowModel(Model[ItemType, ReturnType]):
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         output_tensor_mapping = kwargs.pop("output_tensor_mapping", {}) or kwargs[
             "model_settings"
         ].get("output_tensor_mapping")
@@ -205,13 +205,12 @@ class TensorflowModel(Model[ItemType, ReturnType]):
 
 
 class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType]):
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+    def __init__(self, **kwargs):
         output_tensor_mapping = kwargs.pop("output_tensor_mapping", {}) or kwargs[
             "model_settings"
         ].get("output_tensor_mapping")
         self.output_tensor_mapping = output_tensor_mapping
-        self.output_shapes = kwargs.get("output_shapes", {}) or kwargs[
+        self.output_shapes = kwargs.pop("output_shapes", {}) or kwargs[
             "model_settings"
         ].get("output_shapes")
         self.output_dtypes = kwargs.pop(
@@ -227,6 +226,8 @@ class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType]):
         )
         # the GRPC stub
         self.grpc_stub = None
+
+        super().__init__(**kwargs)
 
         connect_tf_serving(
             self.tf_model_name,
