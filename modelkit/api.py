@@ -5,7 +5,7 @@ from rich.console import Console
 from structlog import get_logger
 
 from modelkit.core.library import LibrarySettings, ModelConfiguration, ModelLibrary
-from modelkit.core.model import AsyncModel
+from modelkit.core.model import AsyncModel, BaseModel
 from modelkit.core.types import LibraryModelsType
 
 logger = get_logger(__name__)

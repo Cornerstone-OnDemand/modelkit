@@ -19,7 +19,7 @@ from structlog import get_logger
 import modelkit.assets
 from modelkit.assets.manager import AssetsManager
 from modelkit.assets.settings import AssetSpec
-from modelkit.core.model import AsyncModel, Model
+from modelkit.core.model import Asset, AsyncModel, Model
 from modelkit.core.model_configuration import ModelConfiguration, configure, list_assets
 from modelkit.core.settings import LibrarySettings, NativeCacheSettings, RedisSettings
 from modelkit.core.types import LibraryModelsType
@@ -73,9 +73,9 @@ class ModelLibrary:
         if models is None:
             models = os.environ.get("MODELKIT_DEFAULT_PACKAGE")
         self.configuration = configure(models=models, configuration=configuration)
-        self.models: Dict[str, Model] = {}
+        self.models: Dict[str, Asset] = {}
         self.assets_info: Dict[str, Dict[str, str]] = {}
-        self._asset_manager = None
+        self._asset_manager: Optional[AssetsManager] = None
 
         self.required_models = (
             required_models
