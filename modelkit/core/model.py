@@ -64,8 +64,8 @@ class Asset:
         self.cache: Optional[Cache] = kwargs.pop("cache", None)
         self._loaded: bool = False
         self.model_settings: Dict[str, Any] = kwargs.pop("model_settings", {})
-        self.load_time: float = None
-        self.load_memory_increment: float = None
+        self._load_time: float = None
+        self._load_memory_increment: float = None
         if not self.service_settings.lazy_loading:
             self.load()
 
@@ -87,8 +87,8 @@ class Asset:
             memory_bytes=m.increment,
         )
         self._loaded = True
-        self.load_time = m.time
-        self.load_memory_increment = m.increment
+        self._load_time = m.time
+        self._load_memory_increment = m.increment
 
     def _load(self):
         pass
@@ -281,16 +281,16 @@ class BaseModel(Asset, Generic[ItemType, ReturnType]):
                 f" {pretty_print_type(self.item_type)}"
             )
 
-        if self.load_time:
+        if self._load_time:
             sub_t = t.add(
                 "[deep_sky_blue1]load time[/deep_sky_blue1]: [orange3]"
-                + humanize.naturaldelta(self.load_time, minimum_unit="microseconds")
+                + humanize.naturaldelta(self._load_time, minimum_unit="microseconds")
             )
 
-        if self.load_memory_increment is not None:
+        if self._load_memory_increment is not None:
             sub_t = t.add(
                 f"[deep_sky_blue1]load memory[/deep_sky_blue1]: "
-                f"[orange3]{humanize.naturalsize(self.load_memory_increment)}"
+                f"[orange3]{humanize.naturalsize(self._load_memory_increment)}"
             )
         if self.model_dependencies:
             dep_t = t.add("[deep_sky_blue1]dependencies")
