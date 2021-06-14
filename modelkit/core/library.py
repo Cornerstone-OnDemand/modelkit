@@ -84,18 +84,20 @@ class ModelLibrary:
         """
         if isinstance(settings, dict):
             settings = LibrarySettings(**settings)
-        self.settings = settings or LibrarySettings()
-        self.assetsmanager_settings = assetsmanager_settings or {}
-        self._override_assets_manager = None
-        self._lazy_loading = self.settings.lazy_loading
+        self.settings: LibrarySettings = settings or LibrarySettings()
+        self.assetsmanager_settings: Dict[str, Any] = assetsmanager_settings or {}
+        self._override_assets_manager: Optional[AssetsManager] = None
+        self._lazy_loading: bool = self.settings.lazy_loading
         if models is None:
             models = os.environ.get("MODELKIT_DEFAULT_PACKAGE")
-        self.configuration = configure(models=models, configuration=configuration)
+        self.configuration: Dict[str, ModelConfiguration] = configure(
+            models=models, configuration=configuration
+        )
         self.models: Dict[str, Asset] = {}
         self.assets_info: Dict[str, AssetInfo] = {}
         self._asset_manager: Optional[AssetsManager] = None
 
-        self.required_models = (
+        self.required_models: Dict[str, Dict[str, Any]] = (
             required_models
             if required_models is not None
             else {r: {} for r in self.configuration}
@@ -368,7 +370,7 @@ class ModelLibrary:
         model_types = {type(model_type) for model_type in self._models.values()}
         for model_type in model_types:
             for model_key, item, result in model_type._iterate_test_cases():
-                if model_key in self._models:
+                if model_key in self.models:
                     yield self.get(model_key), item, result
 
     def describe(self, console=None) -> None:
