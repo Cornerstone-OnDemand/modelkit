@@ -1,3 +1,4 @@
+import asyncio
 import os
 import platform
 
@@ -9,7 +10,7 @@ from starlette.testclient import TestClient
 
 from modelkit import testing
 from modelkit.api import ModelkitAutoAPIRouter
-from modelkit.core.model import Asset, Model
+from modelkit.core.model import Asset, AsyncModel, Model
 from tests import TEST_DIR
 
 
@@ -51,6 +52,13 @@ def api_no_type(event_loop):
         def _predict(self, item):
             return item
 
+    class SomeAsyncModel(AsyncModel):
+        CONFIGURATIONS = {"async_model": {}}
+
+        async def _predict(self, item):
+            await asyncio.sleep(0)
+            return item
+
     class ValidationNotSupported(Model[np.ndarray, np.ndarray]):
         CONFIGURATIONS = {"no_supported_model": {}}
 
@@ -74,6 +82,7 @@ def api_no_type(event_loop):
             "some_model",
             "some_complex_model",
             "some_asset",
+            "async_model",
         ],
         models=[
             ValidationNotSupported,
@@ -81,6 +90,7 @@ def api_no_type(event_loop):
             SomeSimpleValidatedModel,
             SomeComplexValidatedModel,
             SomeAsset,
+            SomeAsyncModel,
         ],
     )
 
