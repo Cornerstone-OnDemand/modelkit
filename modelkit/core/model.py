@@ -69,7 +69,7 @@ class Asset:
         if not self.service_settings.lazy_loading:
             self.load()
 
-    def load(self):
+    def load(self) -> None:
         """Implement this method in order for the model to load and
         deserialize its asset, whose path is kept int the `asset_path`
         attribute"""
@@ -90,7 +90,7 @@ class Asset:
         self._load_time = m.time
         self._load_memory_increment = m.increment
 
-    def _load(self):
+    def _load(self) -> None:
         pass
 
 
@@ -108,9 +108,9 @@ PYDANTIC_ERROR_TRUNCATION = 20
 class ModelkitDataValidationException(Exception):
     def __init__(
         self,
-        model_identifier,
-        pydantic_exc=None,
-        error_str="Data validation error in model",
+        model_identifier: str,
+        pydantic_exc: pydantic.error_wrappers.ValidationError,
+        error_str: str = "Data validation error in model",
     ):
         pydantic_exc_output = ""
         if pydantic_exc:
@@ -707,7 +707,7 @@ class WrappedAsyncModel:
         self.async_model = async_model
         self.predict = AsyncToSync(self.async_model.predict)
         self.predict_batch = AsyncToSync(self.async_model.predict_batch)
-        self._loaded : bool = True
+        self._loaded: bool = True
         # The following does not currently work, because AsyncToSync does not
         # seem to correctly wrap asynchronous generators
         # self.predict_gen = AsyncToSync(self.async_model.predict_gen)
