@@ -187,7 +187,7 @@ def test_modellibrary_required_models():
     assert m.__class__.__name__ == "SomeModel"
     assert m.model_settings == {}
     assert m.asset_path == ""
-    assert m.batch_size == 64
+    assert m.batch_size is None
 
 
 def test_modellibrary_no_models(monkeypatch):

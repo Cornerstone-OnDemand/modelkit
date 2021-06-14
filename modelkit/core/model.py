@@ -10,6 +10,7 @@ from typing import (
     Generic,
     Iterator,
     List,
+    Optional,
     Type,
     Union,
 )
@@ -61,7 +62,7 @@ class Asset:
         """
         self.configuration_key = kwargs.get("configuration_key")
         self.service_settings = kwargs.get("service_settings") or LibrarySettings()
-        self.batch_size = kwargs.get("model_settings", {}).get("batch_size", 64)
+        self.batch_size = kwargs.get("model_settings", {}).get("batch_size", None)
         self.asset_path = kwargs.pop("asset_path", "")
         self.cache = kwargs.pop("cache", None)
         self._loaded = False
@@ -433,6 +434,7 @@ class Model(BaseModel[ItemType, ReturnType]):
         _force_compute: bool = False,
         **kwargs,
     ) -> List[ReturnType]:
+        batch_size = batch_size or (self.batch_size or len(items))
         return list(
             self.predict_gen(
                 iter(items),
@@ -447,13 +449,12 @@ class Model(BaseModel[ItemType, ReturnType]):
     def predict_gen(
         self,
         items: Iterator[ItemType],
-        batch_size: int = None,
+        batch_size: Optional[int] = None,
         _callback: Callable = None,
         _force_compute: bool = False,
         **kwargs,
     ) -> Iterator[ReturnType]:
-        batch_size = batch_size or self.batch_size
-
+        batch_size = batch_size or (self.batch_size or 1)
         n_items_to_compute = 0
         n_items_from_cache = 0
         cache_items: List[CacheItem] = []
@@ -496,7 +497,9 @@ class Model(BaseModel[ItemType, ReturnType]):
                 # When no cache is active, all of them should be computed
                 cache_items.append(CacheItem(current_item, None, None, True))
                 n_items_to_compute += 1
-            if n_items_to_compute == batch_size or n_items_from_cache == 2 * batch_size:
+            if batch_size and (
+                n_items_to_compute == batch_size or n_items_from_cache == 2 * batch_size
+            ):
                 yield from self._predict_cache_items(
                     step, cache_items, _callback=_callback, **kwargs
                 )
@@ -578,10 +581,11 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
         self,
         items: List[ItemType],
         _callback: Callable = None,
-        batch_size: int = None,
+        batch_size: Optional[int] = None,
         _force_compute: bool = False,
         **kwargs,
     ) -> List[ReturnType]:
+        batch_size = batch_size or (self.batch_size or len(items))
         return [
             r
             async for r in self.predict_gen(
@@ -597,12 +601,12 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
     async def predict_gen(
         self,
         items: Iterator[ItemType],
-        batch_size: int = None,
+        batch_size: Optional[int] = None,
         _callback: Callable = None,
         _force_compute: bool = False,
         **kwargs,
     ) -> AsyncIterator[ReturnType]:
-        batch_size = batch_size or self.batch_size
+        batch_size = batch_size or (self.batch_size or 1)
 
         n_items_to_compute = 0
         n_items_from_cache = 0
@@ -632,7 +636,9 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
                 cache_items.append(CacheItem(current_item, None, None, True))
                 n_items_to_compute += 1
 
-            if n_items_to_compute == batch_size or n_items_from_cache == 2 * batch_size:
+            if batch_size and (
+                n_items_to_compute == batch_size or n_items_from_cache == 2 * batch_size
+            ):
                 async for r in self._predict_cache_items(
                     step, cache_items, _callback=_callback, **kwargs
                 ):
