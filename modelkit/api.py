@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 class ModelkitAPIRouter(fastapi.APIRouter):
     def __init__(
         self,
-        # PredictionService arguments
+        # ModelLibrary arguments
         settings: Optional[Union[Dict, LibrarySettings]] = None,
         assetsmanager_settings: Optional[dict] = None,
         configuration: Optional[
@@ -49,7 +49,7 @@ class ModelkitAPIRouter(fastapi.APIRouter):
 class ModelkitAutoAPIRouter(ModelkitAPIRouter):
     def __init__(
         self,
-        # PredictionService arguments
+        # ModelLibrary arguments
         required_models: Optional[List[str]] = None,
         settings: Optional[Union[Dict, LibrarySettings]] = None,
         assetsmanager_settings: Optional[dict] = None,
