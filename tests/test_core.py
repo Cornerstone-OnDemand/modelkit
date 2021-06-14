@@ -263,7 +263,7 @@ def test_download_assets_version(assetsmanager_settings):
         models=[SomeModel],
     )
     assert model_assets["model0"] == {"category/asset:0.0"}
-    assert assets_info["category/asset:0.0"]["version"] == "0.0"
+    assert assets_info["category/asset:0.0"].version == "0.0"
 
     class SomeModel(Asset):
         CONFIGURATIONS = {"model0": {"asset": "category/asset"}}
@@ -273,7 +273,7 @@ def test_download_assets_version(assetsmanager_settings):
         models=[SomeModel],
     )
     assert model_assets["model0"] == {"category/asset"}
-    assert assets_info["category/asset"]["version"] == "1.0"
+    assert assets_info["category/asset"].version == "1.0"
 
     class SomeModel(Asset):
         CONFIGURATIONS = {"model0": {"asset": "category/asset:0"}}
@@ -283,7 +283,7 @@ def test_download_assets_version(assetsmanager_settings):
         models=[SomeModel],
     )
     assert model_assets["model0"] == {"category/asset:0"}
-    assert assets_info["category/asset:0"]["version"] == "0.1"
+    assert assets_info["category/asset:0"].version == "0.1"
 
 
 def test_download_assets_dependencies(assetsmanager_settings):
@@ -302,8 +302,8 @@ def test_download_assets_dependencies(assetsmanager_settings):
 
     assert model_assets["model0"] == {"category/asset"}
     assert model_assets["model1"] == {"category/asset:0", "category/asset"}
-    assert assets_info["category/asset"]["version"] == "1.0"
-    assert assets_info["category/asset:0"]["version"] == "0.1"
+    assert assets_info["category/asset"].version == "1.0"
+    assert assets_info["category/asset:0"].version == "0.1"
 
 
 def test_write_tf_serving_config(base_dir, assetsmanager_settings):

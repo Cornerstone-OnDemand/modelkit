@@ -7,9 +7,22 @@ import collections
 import copy
 import os
 import re
-from typing import Any, Dict, List, Mapping, Optional, Type, TypeVar, Union, cast
+from typing import (
+    Any,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 import humanize
+import pydantic
 from asgiref.sync import AsyncToSync
 from pydantic import ValidationError
 from rich.console import Console
@@ -43,6 +56,11 @@ class ConfigurationNotFoundException(Exception):
 T = TypeVar("T", bound=Model)
 
 
+class AssetInfo(pydantic.BaseModel):
+    path: str
+    version: Optional[str]
+
+
 class ModelLibrary:
     def __init__(
         self,
@@ -74,7 +92,7 @@ class ModelLibrary:
             models = os.environ.get("MODELKIT_DEFAULT_PACKAGE")
         self.configuration = configure(models=models, configuration=configuration)
         self.models: Dict[str, Asset] = {}
-        self.assets_info: Dict[str, Dict[str, str]] = {}
+        self.assets_info: Dict[str, AssetInfo] = {}
         self._asset_manager: Optional[AssetsManager] = None
 
         self.required_models = (
@@ -241,7 +259,7 @@ class ModelLibrary:
         }
 
         self.models[model_name] = configuration.model_type(
-            asset_path=self.assets_info[configuration.asset]["path"]
+            asset_path=self.assets_info[configuration.asset].path
             if configuration.asset
             else "",
             model_dependencies=model_dependencies,
@@ -274,9 +292,9 @@ class ModelLibrary:
 
         # If the asset is overriden in the model_settings
         if "asset_path" in model_settings:
-            self.assets_info[configuration.asset] = {
-                "path": model_settings.pop("asset_path")
-            }
+            self.assets_info[configuration.asset] = AssetInfo(
+                path=model_settings.pop("asset_path")
+            )
 
         asset_spec = AssetSpec.from_string(configuration.asset)
 
@@ -291,7 +309,7 @@ class ModelLibrary:
                 asset_name=asset_spec.name,
                 path=local_file,
             )
-            self.assets_info[configuration.asset] = {"path": local_file}
+            self.assets_info[configuration.asset] = AssetInfo(path=local_file)
 
         # The assets should be retrieved
         # possibly override version
@@ -304,12 +322,14 @@ class ModelLibrary:
 
         try:
             if self.override_assets_manager:
-                self.assets_info[
-                    configuration.asset
-                ] = self.override_assets_manager.fetch_asset(
-                    spec=AssetSpec(name=asset_spec.name, sub_part=asset_spec.sub_part),
-                    return_info=True,
-                )  # AssetSpec redefined to remove versions
+                self.assets_info[configuration.asset] = AssetInfo(
+                    **self.override_assets_manager.fetch_asset(
+                        spec=AssetSpec(
+                            name=asset_spec.name, sub_part=asset_spec.sub_part
+                        ),
+                        return_info=True,
+                    )
+                )
                 logger.info(
                     "Asset has been loaded with overriden prefix",
                     name=asset_spec.name,
@@ -320,8 +340,8 @@ class ModelLibrary:
                 name=asset_spec.name,
             )
         if configuration.asset not in self.assets_info:
-            self.assets_info[configuration.asset] = self.asset_manager.fetch_asset(
-                asset_spec, return_info=True
+            self.assets_info[configuration.asset] = AssetInfo(
+                **self.asset_manager.fetch_asset(asset_spec, return_info=True)
             )
 
     def preload(self):
@@ -400,7 +420,7 @@ def download_assets(
     ] = None,
     models: Optional[LibraryModelsType] = None,
     required_models: Optional[List[str]] = None,
-):
+) -> Tuple[Dict[str, Set[str]], Dict[str, AssetInfo]]:
     assetsmanager_settings = assetsmanager_settings or {}
     assets_manager = AssetsManager(**assetsmanager_settings)
 
@@ -418,8 +438,10 @@ def download_assets(
         for asset in models_assets[model]:
             if asset in assets_info:
                 continue
-            assets_info[asset] = assets_manager.fetch_asset(
-                asset,
-                return_info=True,
+            assets_info[asset] = AssetInfo(
+                **assets_manager.fetch_asset(
+                    asset,
+                    return_info=True,
+                )
             )
     return models_assets, assets_info
