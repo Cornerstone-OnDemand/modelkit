@@ -6,7 +6,7 @@ from rich.console import Console
 from structlog import get_logger
 
 from modelkit.core.library import LibrarySettings, ModelConfiguration, ModelLibrary
-from modelkit.core.model import BaseModel, Model
+from modelkit.core.model import AsyncModel, BaseModel
 
 logger = get_logger(__name__)
 
@@ -77,7 +77,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
         route_paths = route_paths or {}
         for model_name in self.svc.required_models:
             m: BaseModel = self.svc.get(model_name)
-            if not isinstance(m, Model):
+            if not isinstance(m, BaseModel):
                 continue
             path = route_paths.get(model_name, "/predict/" + model_name)
             batch_path = route_paths.get(model_name, "/predict/batch/" + model_name)
@@ -127,15 +127,35 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
                 )
 
     def _make_model_endpoint_fn(self, model_name, item_type):
+        if isinstance(model_name, AsyncModel):
+
+            async def _aendpoint(
+                item: item_type = fastapi.Body(...),
+                model=fastapi.Depends(lambda: self.svc.get(model_name)),
+            ):  # noqa: B008
+                return await model.predict(item)
+
+            return _aendpoint
+
         def _endpoint(
             item: item_type = fastapi.Body(...),
             model=fastapi.Depends(lambda: self.svc.get(model_name)),
         ):  # noqa: B008
-            return model(item)
+            return model.predict(item)
 
         return _endpoint
 
     def _make_batch_model_endpoint_fn(self, model_name, item_type):
+        if isinstance(model_name, AsyncModel):
+
+            async def _aendpoint(
+                item: item_type = fastapi.Body(...),
+                model=fastapi.Depends(lambda: self.svc.get(model_name)),
+            ):  # noqa: B008
+                return await model.predict_batch(item)
+
+            return _aendpoint
+
         def _endpoint(
             item: List[item_type] = fastapi.Body(...),
             model=fastapi.Depends(lambda: self.svc.get(model_name)),

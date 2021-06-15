@@ -61,6 +61,88 @@
   },
   "openapi": "3.0.2",
   "paths": {
+    "/predict/async_model": {
+      "post": {
+        "description": "\n\n```                                                                                \n├── configuration: async_model                                                  \n```",
+        "operationId": "_endpoint_predict_async_model_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "title": "Item"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": " Endpoint",
+        "tags": [
+          "tests.test_api"
+        ]
+      }
+    },
+    "/predict/batch/async_model": {
+      "post": {
+        "description": "\n\n```                                                                                \n├── configuration: async_model                                                  \n```",
+        "operationId": "_endpoint_predict_batch_async_model_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {},
+                "title": "Item",
+                "type": "array"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": " Endpoint",
+        "tags": [
+          "tests.test_api"
+        ]
+      }
+    },
     "/predict/batch/no_supported_model": {
       "post": {
         "description": "\n\n```                                                                                \n├── configuration: no_supported_model                                           \n├── signature: ndarray -> ndarray                                               \n```",
