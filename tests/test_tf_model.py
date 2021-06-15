@@ -128,8 +128,8 @@ async def test_iso_serving_mode(tf_serving, event_loop):
 
     _compare_models(model_rest, model_grpc, TEST_ITEMS)
 
-    await lib_serving_rest.close_connections()
-    await lib_serving_grpc.close_connections()
+    await lib_serving_rest.aclose()
+    await lib_serving_grpc.aclose()
 
 
 def compare_result(x, y, tolerance):
