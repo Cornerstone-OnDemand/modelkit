@@ -197,6 +197,8 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
     ):
         self._item_model: Optional[Type[InternalDataModel]] = None
         self._return_model: Optional[Type[InternalDataModel]] = None
+        self._item_type: Optional[Type] = None
+        self._return_type: Optional[Type] = None
         self._loaded: bool = False
         super().__init__(**kwargs)
         self.initialize_validation_models()
@@ -218,24 +220,24 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
                 and issubclass(t.__origin__, Model)
             ]
             if len(generic_aliases):
-                item_type, return_type = generic_aliases[0].__args__
-                if item_type != ItemType:
-                    self.item_type = item_type
+                _item_type, _return_type = generic_aliases[0].__args__
+                if _item_type != ItemType:
+                    self._item_type = _item_type
                     type_name = self.__class__.__name__ + "ItemTypeModel"
                     self._item_model = pydantic.create_model(
                         type_name,
                         #  The order of the Union arguments matter here, in order
                         #  to make sure that lists of items and single items
                         # are correctly validated
-                        data=(self.item_type, ...),
+                        data=(self._item_type, ...),
                         __base__=InternalDataModel,
                     )
-                if return_type != ReturnType:
-                    self.return_type = return_type
+                if _return_type != ReturnType:
+                    self._return_type = _return_type
                     type_name = self.__class__.__name__ + "ReturnTypeModel"
                     self._return_model = pydantic.create_model(
                         type_name,
-                        data=(self.return_type, ...),
+                        data=(self._return_type, ...),
                         __base__=InternalDataModel,
                     )
         except Exception as exc:
@@ -283,16 +285,11 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
         if self.__doc__:
             t.add(f"[deep_sky_blue1]doc[/deep_sky_blue1]: {self.__doc__.strip()}")
 
-        if (
-            hasattr(self, "item_type")
-            and hasattr(self, "return_type")
-            and self.item_type
-            and self.return_type
-        ):
+        if self._item_type and self._return_type:
             sub_t = t.add(
                 f"[deep_sky_blue1]signature[/deep_sky_blue1]: "
-                f"{pretty_print_type(self.item_type)} ->"
-                f" {pretty_print_type(self.item_type)}"
+                f"{pretty_print_type(self._item_type)} ->"
+                f" {pretty_print_type(self._item_type)}"
             )
 
         if self._load_time:

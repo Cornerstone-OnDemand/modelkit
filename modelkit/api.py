@@ -95,9 +95,9 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
 
             logger.info("Adding model", name=model_name)
             try:
-                item_type = m.item_type if hasattr(m, "item_type") else Any
+                item_type = m._item_type or Any
                 try:
-                    item_type.schema()
+                    item_type.schema()  # type: ignore
                 except (ValueError, AttributeError):
                     item_type = Any
 
