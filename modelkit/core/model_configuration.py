@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Mapping, Optional, Set, Type, Union
 import pydantic
 
 from modelkit.core.model import Asset
+from modelkit.core.types import LibraryModelsType
 
 
 class ModelConfiguration(pydantic.BaseSettings):
@@ -70,7 +71,7 @@ def _configurations_from_objects(m) -> Dict[str, ModelConfiguration]:
 
 
 def configure(
-    models: Optional[Union[ModuleType, Type, List, str]] = None,
+    models: Optional[LibraryModelsType] = None,
     configuration: Optional[
         Mapping[str, Union[Dict[str, Any], ModelConfiguration]]
     ] = None,
@@ -99,7 +100,7 @@ def configure(
 
 
 def list_assets(
-    models: Optional[Union[ModuleType, Type, List]] = None,
+    models: Optional[LibraryModelsType] = None,
     required_models: Optional[List[str]] = None,
     configuration: Optional[
         Mapping[str, Union[Dict[str, Any], ModelConfiguration]]

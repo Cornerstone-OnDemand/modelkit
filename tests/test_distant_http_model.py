@@ -61,16 +61,16 @@ async def test_distant_http_model(run_mocked_service, event_loop):
             }
         }
 
-    svc = ModelLibrary(models=[SomeDistantHTTPModel, SomeAsyncDistantHTTPModel])
+    lib = ModelLibrary(models=[SomeDistantHTTPModel, SomeAsyncDistantHTTPModel])
     ITEM = {"some_content": "something"}
 
     # Test with asynchronous mode
-    m = svc.get("some_model_async")
+    m = lib.get("some_model_async")
     with pytest.raises(AssertionError):
         assert ITEM == m(ITEM)
     await _check_service_async(m, ITEM)
-    await svc.aclose()
+    await lib.aclose()
 
     # Test with synchronous mode
-    m = svc.get("some_model_sync")
+    m = lib.get("some_model_sync")
     assert ITEM == m(ITEM)

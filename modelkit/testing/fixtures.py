@@ -52,17 +52,17 @@ def modellibrary_auto_test(
     @pytest.mark.parametrize("model_key, item, result, kwargs", test_cases)
     def test_function(model_key, item, result, kwargs, request):
         # get the above fixture by name
-        svc = request.getfixturevalue(fixture_name)
+        lib = request.getfixturevalue(fixture_name)
         if isinstance(result, JSONTestResult):
             ref = ReferenceJson(os.path.join(test_dir, os.path.dirname(result.fn)))
-            pred = svc.get(model_key)(item)
+            pred = lib.get(model_key)(item)
             if isinstance(pred, pydantic.BaseModel):
                 pred = pred.dict()
             ref.assert_equal(os.path.basename(result.fn), pred)
         elif isinstance(result, np.ndarray):
-            assert np.array_equal(svc.get(model_key)(item, **kwargs), result)
+            assert np.array_equal(lib.get(model_key)(item, **kwargs), result)
         else:
-            assert svc.get(model_key)(item, **kwargs) == result
+            assert lib.get(model_key)(item, **kwargs) == result
 
     # in order for the above functions to be collected by pytest, add them
     # to the caller's local variables under their desired names
@@ -104,14 +104,14 @@ def modellibrary_fixture(
     frame.f_locals[fixture_name] = fixture_function
 
 
-def tf_serving_fixture(request, svc, deployment="docker"):
+def tf_serving_fixture(request, lib, deployment="docker"):
     cmd = [
         "--port=8500",
         "--rest_api_port=8501",
     ]
 
     if deployment == "process":
-        deploy_tf_models(svc, "local-process", config_name="testing")
+        deploy_tf_models(lib, "local-process", config_name="testing")
         proc = subprocess.Popen(
             [
                 "tensorflow_model_server",
@@ -125,7 +125,7 @@ def tf_serving_fixture(request, svc, deployment="docker"):
             proc.terminate()
 
     else:
-        deploy_tf_models(svc, "local-docker", config_name="testing")
+        deploy_tf_models(lib, "local-docker", config_name="testing")
         # kill previous tfserving container (if any)
         subprocess.call(
             ["docker", "rm", "-f", "modelkit-tfserving-tests"],
@@ -159,8 +159,8 @@ def tf_serving_fixture(request, svc, deployment="docker"):
         next(
             (
                 x
-                for x in svc.required_models
-                if issubclass(svc.configuration[x].model_type, TensorflowModel)
+                for x in lib.required_models
+                if issubclass(lib.configuration[x].model_type, TensorflowModel)
             )
         ),
         "localhost",

@@ -25,11 +25,11 @@ def write_config(destination, models, verbose=False):
             print(f.read())
 
 
-def deploy_tf_models(svc, mode, config_name="config", verbose=False):
+def deploy_tf_models(lib, mode, config_name="config", verbose=False):
     manager = AssetsManager()
-    configuration = svc.configuration
+    configuration = lib.configuration
     model_paths = {}
-    for model_name in svc.required_models:
+    for model_name in lib.required_models:
         model_configuration = configuration[model_name]
         if not issubclass(model_configuration.model_type, TensorflowModel):
             logger.info(f"Skipping non TF model `{model_name}`")
@@ -58,7 +58,7 @@ def deploy_tf_models(svc, mode, config_name="config", verbose=False):
     if mode == "local-docker" or mode == "local-process":
         logger.info("Checking that local models are present.")
         download_assets(
-            configuration=configuration, required_models=svc.required_models
+            configuration=configuration, required_models=lib.required_models
         )
         target = os.path.join(manager.assets_dir, f"{config_name}.config")
 

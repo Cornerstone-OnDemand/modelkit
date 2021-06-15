@@ -1,6 +1,4 @@
 import copy
-import hashlib
-import pickle  # nosec
 import typing
 from typing import (
     Any,
@@ -24,11 +22,10 @@ from rich.markup import escape
 from rich.tree import Tree
 from structlog import get_logger
 
-import modelkit
 from modelkit.core.settings import LibrarySettings
 from modelkit.core.types import ItemType, ModelTestingConfiguration, ReturnType
 from modelkit.utils import traceback
-from modelkit.utils.cache import CacheItem
+from modelkit.utils.cache import Cache, CacheItem
 from modelkit.utils.memory import PerformanceTracker
 from modelkit.utils.pretty import describe, pretty_print_type
 from modelkit.utils.pydantic import construct_recursive
@@ -46,7 +43,18 @@ class Asset:
 
     CONFIGURATIONS: Dict[str, Dict[str, Any]] = {}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self,
+        configuration_key: Optional[str] = None,
+        service_settings: Optional[LibrarySettings] = None,
+        model_settings: Optional[Dict[str, Any]] = None,
+        asset_path: str = "",
+        cache: Optional[Cache] = None,
+        batch_size: Optional[int] = None,
+        model_dependencies: Optional[
+            Dict[str, Union["Model", "AsyncModel", "WrappedAsyncModel"]]
+        ] = None,
+    ):
         """
         At init in the ModelLibrary, a Model is passed
         the `model` and `settings` parameters.
@@ -56,19 +64,26 @@ class Asset:
         :param args:
         :param kwargs:
         """
-        self.configuration_key = kwargs.get("configuration_key")
-        self.service_settings = kwargs.get("service_settings") or LibrarySettings()
-        self.batch_size = kwargs.get("model_settings", {}).get("batch_size", None)
-        self.asset_path = kwargs.pop("asset_path", "")
-        self.cache = kwargs.pop("cache", None)
-        self._loaded = False
-        self.model_settings = kwargs.pop("model_settings", {})
-        self.load_time = None
-        self.load_memory_increment = None
+        self.configuration_key: Optional[str] = configuration_key
+        self.service_settings: LibrarySettings = service_settings or LibrarySettings()
+        self.asset_path: str = asset_path
+        self.cache: Optional[Cache] = cache
+        self.model_settings: Dict[str, Any] = model_settings or {}
+        self.batch_size: Optional[int] = batch_size or self.model_settings.get(
+            "batch_size"
+        )
+        self.model_dependencies: Dict[
+            str, Union[Model, AsyncModel, WrappedAsyncModel]
+        ] = (model_dependencies or {})
+
+        self._loaded: bool = False
+        self._load_time: Optional[float] = None
+        self._load_memory_increment: Optional[float] = None
+
         if not self.service_settings.lazy_loading:
             self.load()
 
-    def load(self):
+    def load(self) -> None:
         """Implement this method in order for the model to load and
         deserialize its asset, whose path is kept int the `asset_path`
         attribute"""
@@ -86,10 +101,10 @@ class Asset:
             memory_bytes=m.increment,
         )
         self._loaded = True
-        self.load_time = m.time
-        self.load_memory_increment = m.increment
+        self._load_time = m.time
+        self._load_memory_increment = m.increment
 
-    def _load(self):
+    def _load(self) -> None:
         pass
 
 
@@ -107,9 +122,9 @@ PYDANTIC_ERROR_TRUNCATION = 20
 class ModelkitDataValidationException(Exception):
     def __init__(
         self,
-        model_identifier,
-        pydantic_exc=None,
-        error_str="Data validation error in model",
+        model_identifier: str,
+        pydantic_exc: Optional[pydantic.error_wrappers.ValidationError] = None,
+        error_str: str = "Data validation error in model",
     ):
         pydantic_exc_output = ""
         if pydantic_exc:
@@ -157,7 +172,7 @@ class ItemValidationException(ModelkitDataValidationException):
         )
 
 
-class BaseModel(Asset, Generic[ItemType, ReturnType]):
+class AbstractModel(Asset, Generic[ItemType, ReturnType]):
     """
     Model
     ===
@@ -176,13 +191,16 @@ class BaseModel(Asset, Generic[ItemType, ReturnType]):
     # TEST_CASES: Union[ModelTestingConfiguration[ItemType, ReturnType], Dict]
     TEST_CASES: Any
 
-    def __init__(self, *args, **kwargs):
-        self.model_dependencies = kwargs.pop("model_dependencies", {})
-        self._model_cache_key = None
-        self._item_model = None
-        self._return_model = None
-        self._loaded = False
-        super().__init__(self, *args, **kwargs)
+    def __init__(
+        self,
+        **kwargs,
+    ):
+        self._item_model: Optional[Type[InternalDataModel]] = None
+        self._return_model: Optional[Type[InternalDataModel]] = None
+        self._item_type: Optional[Type] = None
+        self._return_type: Optional[Type] = None
+        self._loaded: bool = False
+        super().__init__(**kwargs)
         self.initialize_validation_models()
 
     def load(self):
@@ -202,25 +220,24 @@ class BaseModel(Asset, Generic[ItemType, ReturnType]):
                 and issubclass(t.__origin__, Model)
             ]
             if len(generic_aliases):
-                item_type, return_type = generic_aliases[0].__args__
-                if item_type != ItemType:
-                    self.item_type = item_type
+                _item_type, _return_type = generic_aliases[0].__args__
+                if _item_type != ItemType:
+                    self._item_type = _item_type
                     type_name = self.__class__.__name__ + "ItemTypeModel"
                     self._item_model = pydantic.create_model(
                         type_name,
                         #  The order of the Union arguments matter here, in order
                         #  to make sure that lists of items and single items
                         # are correctly validated
-                        data=(self.item_type, ...),
+                        data=(self._item_type, ...),
                         __base__=InternalDataModel,
                     )
-                if return_type != ReturnType:
-                    self.return_type = return_type
+                if _return_type != ReturnType:
+                    self._return_type = _return_type
                     type_name = self.__class__.__name__ + "ReturnTypeModel"
-                    self._return_type = Union[List[return_type], return_type]
                     self._return_model = pydantic.create_model(
                         type_name,
-                        data=(self.return_type, ...),
+                        data=(self._return_type, ...),
                         __base__=InternalDataModel,
                     )
         except Exception as exc:
@@ -237,14 +254,6 @@ class BaseModel(Asset, Generic[ItemType, ReturnType]):
     def __setstate__(self, state):
         self.__dict__ = state
         self.initialize_validation_models()
-
-    def item_cache_key(self, item: Any, kwargs: Dict[str, Any]):
-        if not self._model_cache_key:
-            self._model_cache_key = (
-                self.configuration_key + modelkit.__version__
-            ).encode()
-        pickled = pickle.dumps((item, kwargs))  # nosec: only used to build a hash
-        return hashlib.sha256(self._model_cache_key + pickled).digest()
 
     @classmethod
     def _iterate_test_cases(cls, model_keys=None):
@@ -276,28 +285,23 @@ class BaseModel(Asset, Generic[ItemType, ReturnType]):
         if self.__doc__:
             t.add(f"[deep_sky_blue1]doc[/deep_sky_blue1]: {self.__doc__.strip()}")
 
-        if (
-            hasattr(self, "item_type")
-            and hasattr(self, "return_type")
-            and self.item_type
-            and self.return_type
-        ):
+        if self._item_type and self._return_type:
             sub_t = t.add(
                 f"[deep_sky_blue1]signature[/deep_sky_blue1]: "
-                f"{pretty_print_type(self.item_type)} ->"
-                f" {pretty_print_type(self.item_type)}"
+                f"{pretty_print_type(self._item_type)} ->"
+                f" {pretty_print_type(self._item_type)}"
             )
 
-        if self.load_time:
+        if self._load_time:
             sub_t = t.add(
                 "[deep_sky_blue1]load time[/deep_sky_blue1]: [orange3]"
-                + humanize.naturaldelta(self.load_time, minimum_unit="microseconds")
+                + humanize.naturaldelta(self._load_time, minimum_unit="microseconds")
             )
 
-        if self.load_memory_increment is not None:
+        if self._load_memory_increment is not None:
             sub_t = t.add(
                 f"[deep_sky_blue1]load memory[/deep_sky_blue1]: "
-                f"[orange3]{humanize.naturalsize(self.load_memory_increment)}"
+                f"[orange3]{humanize.naturalsize(self._load_memory_increment)}"
             )
         if self.model_dependencies:
             dep_t = t.add("[deep_sky_blue1]dependencies")
@@ -371,7 +375,7 @@ class BaseModel(Asset, Generic[ItemType, ReturnType]):
                 raise
 
 
-class Model(BaseModel[ItemType, ReturnType]):
+class Model(AbstractModel[ItemType, ReturnType]):
     def load(self):
         super().load()
         try:
@@ -415,8 +419,10 @@ class Model(BaseModel[ItemType, ReturnType]):
     def predict_batch(
         self,
         items: List[ItemType],
-        _callback: Callable = None,
-        batch_size: int = None,
+        _callback: Optional[
+            Callable[[int, List[ItemType], Iterator[ReturnType]], None]
+        ] = None,
+        batch_size: Optional[int] = None,
         _force_compute: bool = False,
         **kwargs,
     ) -> List[ReturnType]:
@@ -436,7 +442,9 @@ class Model(BaseModel[ItemType, ReturnType]):
         self,
         items: Iterator[ItemType],
         batch_size: Optional[int] = None,
-        _callback: Callable = None,
+        _callback: Optional[
+            Callable[[int, List[ItemType], Iterator[ReturnType]], None]
+        ] = None,
         _force_compute: bool = False,
         **kwargs,
     ) -> Iterator[ReturnType]:
@@ -455,7 +463,11 @@ class Model(BaseModel[ItemType, ReturnType]):
             # Once we have 2 x batch_size elements available from cache
             # we yield them to avoid indefinite increase in the cache_item
             # list size.
-            if self.cache and self.model_settings.get("cache_predictions"):
+            if (
+                self.configuration_key
+                and self.cache
+                and self.model_settings.get("cache_predictions")
+            ):
                 if not _force_compute:
                     # The cache will return a CacheItem with the information
                     # as to the stored value (if it exists) and if it is missing
@@ -503,7 +515,9 @@ class Model(BaseModel[ItemType, ReturnType]):
         self,
         _step: int,
         cache_items: List[CacheItem],
-        _callback: Callable = None,
+        _callback: Optional[
+            Callable[[int, List[ItemType], Iterator[ReturnType]], None]
+        ] = None,
         **kwargs,
     ) -> Iterator[ReturnType]:
         batch = [
@@ -515,7 +529,12 @@ class Model(BaseModel[ItemType, ReturnType]):
         for cache_item in cache_items:
             if cache_item.missing:
                 r = next(predictions)
-                if self.cache and self.model_settings.get("cache_predictions"):
+                if (
+                    cache_item.cache_key
+                    and self.configuration_key
+                    and self.cache
+                    and self.model_settings.get("cache_predictions")
+                ):
                     self.cache.set(cache_item.cache_key, r)
                 yield self._validate(
                     r,
@@ -535,7 +554,7 @@ class Model(BaseModel[ItemType, ReturnType]):
         pass
 
 
-class AsyncModel(BaseModel[ItemType, ReturnType]):
+class AsyncModel(AbstractModel[ItemType, ReturnType]):
     async def _predict(self, item: ItemType, **kwargs) -> ReturnType:
         result = await self._predict_batch([item], **kwargs)
         return result[0]
@@ -569,7 +588,9 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
     async def predict_batch(
         self,
         items: List[ItemType],
-        _callback: Callable = None,
+        _callback: Optional[
+            Callable[[int, List[ItemType], Iterator[ReturnType]], None]
+        ] = None,
         batch_size: Optional[int] = None,
         _force_compute: bool = False,
         **kwargs,
@@ -591,7 +612,9 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
         self,
         items: Iterator[ItemType],
         batch_size: Optional[int] = None,
-        _callback: Callable = None,
+        _callback: Optional[
+            Callable[[int, List[ItemType], Iterator[ReturnType]], None]
+        ] = None,
         _force_compute: bool = False,
         **kwargs,
     ) -> AsyncIterator[ReturnType]:
@@ -602,7 +625,11 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
         cache_items: List[CacheItem] = []
         step = 0
         for current_item in items:
-            if self.cache and self.model_settings.get("cache_predictions"):
+            if (
+                self.configuration_key
+                and self.cache
+                and self.model_settings.get("cache_predictions")
+            ):
                 if not _force_compute:
                     cache_item = self.cache.get(
                         self.configuration_key, current_item, kwargs
@@ -647,7 +674,9 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
         self,
         _step: int,
         cache_items: List[CacheItem],
-        _callback: Callable = None,
+        _callback: Optional[
+            Callable[[int, List[ItemType], Iterator[ReturnType]], None]
+        ] = None,
         **kwargs,
     ) -> AsyncIterator[ReturnType]:
         batch = [
@@ -659,7 +688,12 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
         for cache_item in cache_items:
             if cache_item.missing:
                 r = next(predictions)
-                if self.cache and self.model_settings.get("cache_predictions"):
+                if (
+                    cache_item.cache_key
+                    and self.configuration_key
+                    and self.cache
+                    and self.model_settings.get("cache_predictions")
+                ):
                     self.cache.set(cache_item.cache_key, r)
                 yield self._validate(
                     r,
@@ -680,11 +714,11 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
 
 
 class WrappedAsyncModel:
-    def __init__(self, async_model: AsyncModel):
+    def __init__(self, async_model: AsyncModel[ItemType, ReturnType]):
         self.async_model = async_model
         self.predict = AsyncToSync(self.async_model.predict)
         self.predict_batch = AsyncToSync(self.async_model.predict_batch)
-        self._loaded = True
+        self._loaded: bool = True
         # The following does not currently work, because AsyncToSync does not
         # seem to correctly wrap asynchronous generators
         # self.predict_gen = AsyncToSync(self.async_model.predict_gen)

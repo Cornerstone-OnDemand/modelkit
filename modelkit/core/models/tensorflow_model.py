@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import aiohttp
 import numpy as np
@@ -32,6 +32,7 @@ try:
     from tensorflow_serving.apis import prediction_service_pb2_grpc
     from tensorflow_serving.apis.get_model_metadata_pb2 import GetModelMetadataRequest
     from tensorflow_serving.apis.predict_pb2 import PredictRequest
+
 except ModuleNotFoundError:
     logger.info("Tensorflow serving is not installed")
 
@@ -47,28 +48,40 @@ def safe_np_dump(obj):
 
 
 class TensorflowModel(Model[ItemType, ReturnType]):
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
-        output_tensor_mapping = kwargs.pop("output_tensor_mapping", {}) or kwargs[
+    def __init__(
+        self,
+        output_tensor_mapping: Optional[Dict[str, str]] = None,
+        output_shapes: Optional[Dict[str, Tuple]] = None,
+        output_dtypes: Optional[Dict[str, np.dtype]] = None,
+        tf_model_name: Optional[str] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.output_tensor_mapping = output_tensor_mapping or kwargs[
             "model_settings"
         ].get("output_tensor_mapping")
-        self.output_tensor_mapping = output_tensor_mapping
-        self.output_shapes = kwargs.get("output_shapes", {}) or kwargs[
-            "model_settings"
-        ].get("output_shapes")
-        self.output_dtypes = kwargs.pop(
-            "output_dtypes", {name: np.float for name in output_tensor_mapping}
-        ) or kwargs["model_settings"].get("output_dtypes")
+        self.output_shapes = output_shapes or kwargs["model_settings"].get(
+            "output_shapes"
+        )
+        self.output_dtypes = (
+            output_dtypes
+            or kwargs["model_settings"].get("output_dtypes")
+            or {name: np.float for name in self.output_tensor_mapping}
+        )
         # sanity checks
-        assert output_tensor_mapping.keys() == self.output_dtypes.keys()
-        assert output_tensor_mapping.keys() == self.output_shapes.keys()
+        assert self.output_tensor_mapping.keys() == self.output_dtypes.keys()
+        assert self.output_tensor_mapping.keys() == self.output_shapes.keys()
 
         self.tf_model_name = (
-            kwargs.pop("model_settings", {}).get("tf_model_name")
+            tf_model_name
+            or kwargs.get("model_settings", {}).get("tf_model_name")
             or self.configuration_key
         )
+
         # the GRPC stub
-        self.grpc_stub = None
+        self.grpc_stub: Optional[
+            prediction_service_pb2_grpc.PredictionServiceStub
+        ] = None
 
         # the session (for use with TF as an API)
         self.session = None
@@ -122,6 +135,12 @@ class TensorflowModel(Model[ItemType, ReturnType]):
         for key, vect in vects.items():
             request.inputs[key].CopyFrom(
                 tf.compat.v1.make_tensor_proto(vect, dtype=dtype)
+            )
+        if not self.grpc_stub:
+            self.grpc_stub = connect_tf_serving_grpc(
+                self.tf_model_name,
+                self.service_settings.tf_serving.host,
+                self.service_settings.tf_serving.port,
             )
 
         r = self.grpc_stub.Predict(request, 1)
@@ -205,28 +224,35 @@ class TensorflowModel(Model[ItemType, ReturnType]):
 
 
 class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType]):
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
-        output_tensor_mapping = kwargs.pop("output_tensor_mapping", {}) or kwargs[
+    def __init__(
+        self,
+        output_tensor_mapping: Optional[Dict[str, str]] = None,
+        output_shapes: Optional[Dict[str, Tuple]] = None,
+        output_dtypes: Optional[Dict[str, np.dtype]] = None,
+        tf_model_name: Optional[str] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.output_tensor_mapping = output_tensor_mapping or kwargs[
             "model_settings"
         ].get("output_tensor_mapping")
-        self.output_tensor_mapping = output_tensor_mapping
-        self.output_shapes = kwargs.get("output_shapes", {}) or kwargs[
-            "model_settings"
-        ].get("output_shapes")
-        self.output_dtypes = kwargs.pop(
-            "output_dtypes", {name: np.float for name in output_tensor_mapping}
-        ) or kwargs["model_settings"].get("output_dtypes")
+        self.output_shapes = output_shapes or kwargs["model_settings"].get(
+            "output_shapes"
+        )
+        self.output_dtypes = (
+            output_dtypes
+            or kwargs["model_settings"].get("output_dtypes")
+            or {name: np.float for name in self.output_tensor_mapping}
+        )
         # sanity checks
-        assert output_tensor_mapping.keys() == self.output_dtypes.keys()
-        assert output_tensor_mapping.keys() == self.output_shapes.keys()
+        assert self.output_tensor_mapping.keys() == self.output_dtypes.keys()
+        assert self.output_tensor_mapping.keys() == self.output_shapes.keys()
 
         self.tf_model_name = (
-            kwargs.pop("model_settings", {}).get("tf_model_name")
+            tf_model_name
+            or kwargs.get("model_settings", {}).get("tf_model_name")
             or self.configuration_key
         )
-        # the GRPC stub
-        self.grpc_stub = None
 
         connect_tf_serving(
             self.tf_model_name,
@@ -309,6 +335,24 @@ TF_SERVING_RETRY_POLICY = {
 
 
 @retry(**TF_SERVING_RETRY_POLICY)
+def connect_tf_serving_grpc(
+    model_name, host, port
+) -> prediction_service_pb2_grpc.PredictionServiceStub:
+    channel = grpc.insecure_channel(
+        f"{host}:{port}", [("grpc.lb_policy_name", "round_robin")]
+    )
+    stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
+    r = GetModelMetadataRequest()
+    r.model_spec.name = model_name
+    r.metadata_field.append("signature_def")
+    answ = stub.GetModelMetadata(r, 1)
+    version = answ.model_spec.version.value
+    if version != 1:
+        raise TFServingError(f"Bad model version: {version}!=1")
+    return stub
+
+
+@retry(**TF_SERVING_RETRY_POLICY)
 def connect_tf_serving(model_name, host, port, mode):
     logger.info(
         "Connecting to tensorflow serving",
@@ -318,18 +362,7 @@ def connect_tf_serving(model_name, host, port, mode):
         mode=mode,
     )
     if mode == "grpc":
-        channel = grpc.insecure_channel(
-            f"{host}:{port}", [("grpc.lb_policy_name", "round_robin")]
-        )
-        stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
-        r = GetModelMetadataRequest()
-        r.model_spec.name = model_name
-        r.metadata_field.append("signature_def")
-        answ = stub.GetModelMetadata(r, 1)
-        version = answ.model_spec.version.value
-        if version != 1:
-            raise TFServingError(f"Bad model version: {version}!=1")
-        return stub
+        return connect_tf_serving_grpc(model_name, host, port)
     elif mode in {"rest", "rest"}:
         response = requests.get(f"http://{host}:{port}/v1/models/{model_name}")
         if response.status_code != 200:

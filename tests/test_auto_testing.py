@@ -60,23 +60,23 @@ def test_list_cases():
     ]
 
 
-# This function creates the test_auto_prediction_service test
-# but also a fixture called testing_prediction_service with a
+# This function creates the test_auto_model_library test
+# but also a fixture called testing_model_library with a
 # ModelLibrary
-# pytest will run the test_auto_prediction_service test
+# pytest will run the test_auto_model_library test
 modellibrary_fixture(
     models=TestableModel,
-    fixture_name="testing_prediction_service",
+    fixture_name="testing_model_library",
 )
 
 modellibrary_auto_test(
     models=TestableModel,
-    fixture_name="testing_prediction_service",
-    test_name="test_auto_prediction_service",
+    fixture_name="testing_model_library",
+    test_name="test_auto_model_library",
 )
 
 
 # The fixture with the ModelLibrary can be used elsewhere as usual
-def test_testing_prediction_service(testing_prediction_service):
-    m = testing_prediction_service.get("some_model")
+def test_testing_model_library(testing_model_library):
+    m = testing_model_library.get("some_model")
     assert m({"x": 1}).x == 1

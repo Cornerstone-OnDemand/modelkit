@@ -7,10 +7,22 @@ import collections
 import copy
 import os
 import re
-from types import ModuleType
-from typing import Any, Dict, List, Mapping, Optional, Type, TypeVar, Union, cast
+from typing import (
+    Any,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 import humanize
+import pydantic
 from asgiref.sync import AsyncToSync
 from pydantic import ValidationError
 from rich.console import Console
@@ -20,9 +32,10 @@ from structlog import get_logger
 import modelkit.assets
 from modelkit.assets.manager import AssetsManager
 from modelkit.assets.settings import AssetSpec
-from modelkit.core.model import AsyncModel, Model
+from modelkit.core.model import Asset, AsyncModel, Model
 from modelkit.core.model_configuration import ModelConfiguration, configure, list_assets
 from modelkit.core.settings import LibrarySettings, NativeCacheSettings, RedisSettings
+from modelkit.core.types import LibraryModelsType
 from modelkit.utils.cache import Cache, NativeCache, RedisCache
 from modelkit.utils.memory import PerformanceTracker
 from modelkit.utils.pretty import describe
@@ -43,6 +56,11 @@ class ConfigurationNotFoundException(Exception):
 T = TypeVar("T", bound=Model)
 
 
+class AssetInfo(pydantic.BaseModel):
+    path: str
+    version: Optional[str]
+
+
 class ModelLibrary:
     def __init__(
         self,
@@ -51,7 +69,7 @@ class ModelLibrary:
         configuration: Optional[
             Dict[str, Union[Dict[str, Any], ModelConfiguration]]
         ] = None,
-        models: Optional[Union[ModuleType, Type, List, str]] = None,
+        models: Optional[LibraryModelsType] = None,
         required_models: Optional[Union[List[str], Dict[str, Any]]] = None,
     ):
         """
@@ -66,25 +84,27 @@ class ModelLibrary:
         """
         if isinstance(settings, dict):
             settings = LibrarySettings(**settings)
-        self.settings = settings or LibrarySettings()
-        self.assetsmanager_settings = assetsmanager_settings or {}
-        self._override_assets_manager = None
-        self._lazy_loading = self.settings.lazy_loading
+        self.settings: LibrarySettings = settings or LibrarySettings()
+        self.assetsmanager_settings: Dict[str, Any] = assetsmanager_settings or {}
+        self._override_assets_manager: Optional[AssetsManager] = None
+        self._lazy_loading: bool = self.settings.lazy_loading
         if models is None:
             models = os.environ.get("MODELKIT_DEFAULT_PACKAGE")
-        self.configuration = configure(models=models, configuration=configuration)
-        self.models: Dict[str, Model] = {}
-        self.assets_info: Dict[str, Dict[str, str]] = {}
-        self._asset_manager = None
+        self.configuration: Dict[str, ModelConfiguration] = configure(
+            models=models, configuration=configuration
+        )
+        self.models: Dict[str, Asset] = {}
+        self.assets_info: Dict[str, AssetInfo] = {}
+        self._asset_manager: Optional[AssetsManager] = None
 
-        self.required_models = (
+        required_models = (
             required_models
             if required_models is not None
             else {r: {} for r in self.configuration}
         )
-        if isinstance(self.required_models, list):
-            self.required_models = {r: {} for r in self.required_models}
-
+        if isinstance(required_models, list):
+            required_models = {r: {} for r in required_models}
+        self.required_models: Dict[str, Dict[str, Any]] = required_models
         self.cache: Optional[Cache] = None
         if self.settings.cache:
             if isinstance(self.settings.cache, RedisSettings):
@@ -241,7 +261,7 @@ class ModelLibrary:
         }
 
         self.models[model_name] = configuration.model_type(
-            asset_path=self.assets_info[configuration.asset]["path"]
+            asset_path=self.assets_info[configuration.asset].path
             if configuration.asset
             else "",
             model_dependencies=model_dependencies,
@@ -274,9 +294,9 @@ class ModelLibrary:
 
         # If the asset is overriden in the model_settings
         if "asset_path" in model_settings:
-            self.assets_info[configuration.asset] = {
-                "path": model_settings.pop("asset_path")
-            }
+            self.assets_info[configuration.asset] = AssetInfo(
+                path=model_settings.pop("asset_path")
+            )
 
         asset_spec = AssetSpec.from_string(configuration.asset)
 
@@ -291,7 +311,7 @@ class ModelLibrary:
                 asset_name=asset_spec.name,
                 path=local_file,
             )
-            self.assets_info[configuration.asset] = {"path": local_file}
+            self.assets_info[configuration.asset] = AssetInfo(path=local_file)
 
         # The assets should be retrieved
         # possibly override version
@@ -304,12 +324,14 @@ class ModelLibrary:
 
         try:
             if self.override_assets_manager:
-                self.assets_info[
-                    configuration.asset
-                ] = self.override_assets_manager.fetch_asset(
-                    spec=AssetSpec(name=asset_spec.name, sub_part=asset_spec.sub_part),
-                    return_info=True,
-                )  # AssetSpec redefined to remove versions
+                self.assets_info[configuration.asset] = AssetInfo(
+                    **self.override_assets_manager.fetch_asset(
+                        spec=AssetSpec(
+                            name=asset_spec.name, sub_part=asset_spec.sub_part
+                        ),
+                        return_info=True,
+                    )
+                )
                 logger.info(
                     "Asset has been loaded with overriden prefix",
                     name=asset_spec.name,
@@ -320,8 +342,8 @@ class ModelLibrary:
                 name=asset_spec.name,
             )
         if configuration.asset not in self.assets_info:
-            self.assets_info[configuration.asset] = self.asset_manager.fetch_asset(
-                asset_spec, return_info=True
+            self.assets_info[configuration.asset] = AssetInfo(
+                **self.asset_manager.fetch_asset(asset_spec, return_info=True)
             )
 
     def preload(self):
@@ -348,10 +370,10 @@ class ModelLibrary:
         model_types = {type(model_type) for model_type in self._models.values()}
         for model_type in model_types:
             for model_key, item, result in model_type._iterate_test_cases():
-                if model_key in self._models:
+                if model_key in self.models:
                     yield self.get(model_key), item, result
 
-    def describe(self, console=None):
+    def describe(self, console=None) -> None:
         if not console:
             console = Console()
         t = Tree("[bold]Settings")
@@ -377,20 +399,21 @@ def load_model(
     configuration: Optional[
         Dict[str, Union[Dict[str, Any], ModelConfiguration]]
     ] = None,
-    models: Optional[Union[ModuleType, Type, List]] = None,
-):
+    models: Optional[LibraryModelsType] = None,
+    model_type: Optional[Type[T]] = None,
+) -> T:
     """
     Loads an modelkit model without the need for a ModelLibrary.
     This is useful for development, and should be avoided in production
     code.
     """
-    svc = ModelLibrary(
+    lib = ModelLibrary(
         required_models=[model_name],
         models=models,
         configuration=configuration,
         settings={"lazy_loading": True},
     )
-    return svc.get(model_name)
+    return lib.get(model_name, model_type=model_type)
 
 
 def download_assets(
@@ -398,9 +421,9 @@ def download_assets(
     configuration: Optional[
         Mapping[str, Union[Dict[str, Any], ModelConfiguration]]
     ] = None,
-    models: Optional[Union[ModuleType, Type, List]] = None,
+    models: Optional[LibraryModelsType] = None,
     required_models: Optional[List[str]] = None,
-):
+) -> Tuple[Dict[str, Set[str]], Dict[str, AssetInfo]]:
     assetsmanager_settings = assetsmanager_settings or {}
     assets_manager = AssetsManager(**assetsmanager_settings)
 
@@ -418,8 +441,10 @@ def download_assets(
         for asset in models_assets[model]:
             if asset in assets_info:
                 continue
-            assets_info[asset] = assets_manager.fetch_asset(
-                asset,
-                return_info=True,
+            assets_info[asset] = AssetInfo(
+                **assets_manager.fetch_asset(
+                    asset,
+                    return_info=True,
+                )
             )
     return models_assets, assets_info

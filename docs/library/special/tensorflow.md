@@ -129,7 +129,7 @@ Several environment variables control how `modelkit` requests predictions from T
 All of these parameters can be set programmatically (and passed to the `ModelLibrary`'s settings):
 
 ```python
-svc_serving_grpc = ModelLibrary(
+lib_serving_grpc = ModelLibrary(
     required_models=...,
     settings=LibrarySettings(
         tf_serving={

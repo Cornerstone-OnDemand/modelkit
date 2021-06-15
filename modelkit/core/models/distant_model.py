@@ -47,8 +47,8 @@ SERVICE_MODEL_RETRY_POLICY = {
 
 
 class AsyncDistantHTTPModel(AsyncModel[ItemType, ReturnType]):
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.endpoint = self.model_settings["endpoint"]
         self.aiohttp_session: Optional[aiohttp.ClientSession] = None
 
@@ -75,8 +75,8 @@ class AsyncDistantHTTPModel(AsyncModel[ItemType, ReturnType]):
 
 
 class DistantHTTPModel(Model[ItemType, ReturnType]):
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.endpoint = self.model_settings["endpoint"]
         self.requests_session: Optional[requests.Session] = None
 
