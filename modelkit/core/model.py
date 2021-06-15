@@ -50,6 +50,7 @@ class Asset:
         model_settings: Optional[Dict[str, Any]] = None,
         asset_path: str = "",
         cache: Optional[Cache] = None,
+        batch_size: Optional[int] = None,
         model_dependencies: Optional[
             Dict[str, Union["Model", "AsyncModel", "WrappedAsyncModel"]]
         ] = None,
@@ -68,7 +69,9 @@ class Asset:
         self.asset_path: str = asset_path
         self.cache: Optional[Cache] = cache
         self.model_settings: Dict[str, Any] = model_settings or {}
-        self.batch_size: Optional[int] = self.model_settings.get("batch_size", None)
+        self.batch_size: Optional[int] = batch_size or model_settings.get(
+            "batch_size", None
+        )
         self.model_dependencies: Dict[
             str, Union[Model, AsyncModel, WrappedAsyncModel]
         ] = (model_dependencies or {})
