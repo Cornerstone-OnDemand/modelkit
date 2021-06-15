@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 import numpy as np
@@ -86,8 +86,7 @@ class TensorflowModel(Model[ItemType, ReturnType]):
             self.tf_model_signature = saved_model.signatures[
                 DEFAULT_SERVING_SIGNATURE_DEF_KEY
             ]
-        self.aiohttp_session = None
-        self.requests_session = None
+        self.requests_session: Optional[requests.Session] = None
 
     def _predict_batch(self, items, **kwargs):
         """A generic _predict_batch that stacks and passes items to TensorFlow"""
@@ -200,6 +199,10 @@ class TensorflowModel(Model[ItemType, ReturnType]):
                 results.append(self._generate_empty_prediction())
         return results
 
+    def close(self):
+        if self.requests_session:
+            return self.requests_session.close()
+
 
 class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType]):
     def __init__(self, *args, **kwargs):
@@ -231,7 +234,7 @@ class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType]):
             self.service_settings.tf_serving.port,
             self.service_settings.tf_serving.mode,
         )
-        self.aiohttp_session = None
+        self.aiohttp_session: Optional[aiohttp.ClientSession] = None
 
     async def _predict_batch(self, items, **kwargs):
         """A generic _predict_batch that stacks and passes items to TensorFlow"""
@@ -273,6 +276,10 @@ class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType]):
             for name in self.output_tensor_mapping
         }
         return results
+
+    async def close(self):
+        if self.aiohttp_session:
+            return await self.aiohttp_session.close()
 
 
 class TFServingError(Exception):

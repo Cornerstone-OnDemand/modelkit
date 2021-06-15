@@ -218,7 +218,7 @@ async def test_redis_cache_async(redis_service, event_loop):
 
     await _do_model_test_async(m, ITEMS)
     await _do_model_test_async(m_multi, ITEMS)
-    await svc.close_connections()
+    await svc.aclose()
 
     m_validated = svc.get("model_validated")
     await _do_model_test_async(m_validated, ITEMS)

@@ -11,6 +11,7 @@ from types import ModuleType
 from typing import Any, Dict, List, Mapping, Optional, Type, TypeVar, Union, cast
 
 import humanize
+from asgiref.sync import AsyncToSync
 from pydantic import ValidationError
 from rich.console import Console
 from rich.tree import Tree
@@ -19,7 +20,7 @@ from structlog import get_logger
 import modelkit.assets
 from modelkit.assets.manager import AssetsManager
 from modelkit.assets.settings import AssetSpec
-from modelkit.core.model import Model
+from modelkit.core.model import AsyncModel, Model
 from modelkit.core.model_configuration import ModelConfiguration, configure, list_assets
 from modelkit.core.settings import LibrarySettings, NativeCacheSettings, RedisSettings
 from modelkit.utils.cache import Cache, NativeCache, RedisCache
@@ -329,20 +330,19 @@ class ModelLibrary:
         for model_name in self.required_models:
             self._load(model_name)
 
-    async def close_connections(self):
+    def close(self):
         for model in self.models.values():
-            try:
-                if model.aiohttp_session:
-                    await model.aiohttp_session.close()
-                    model.aiohttp_session = None
-            except AttributeError:
-                pass
-            try:
-                if model.requests_session:
-                    model.requests_session.close()
-                    model.requests_session = None
-            except AttributeError:
-                pass
+            if isinstance(model, Model):
+                model.close()
+            if isinstance(model, AsyncModel):
+                AsyncToSync(model.close)()
+
+    async def aclose(self):
+        for model in self.models.values():
+            if isinstance(model, Model):
+                model.close()
+            if isinstance(model, AsyncModel):
+                await model.close()
 
     def _iterate_test_cases(self):
         model_types = {type(model_type) for model_type in self._models.values()}

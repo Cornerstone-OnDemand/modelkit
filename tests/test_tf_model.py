@@ -126,9 +126,8 @@ async def test_iso_serving_mode(tf_serving, event_loop):
 
     _compare_models(model_rest, model_grpc, TEST_ITEMS)
 
-    await svc_serving_rest.close_connections()
-    await svc_serving_grpc.close_connections()
-    assert model_rest.aiohttp_session is None
+    await svc_serving_rest.aclose()
+    await svc_serving_grpc.aclose()
 
 
 def compare_result(x, y, tolerance):
@@ -228,8 +227,8 @@ async def test_iso_async(tf_serving, event_loop):
     async_m_jt2s = svc.get("dummy_tf_model_async")
 
     await _compare_models_async(m_jt2s, async_m_jt2s, TEST_ITEMS)
-    await svc.close_connections()
-    assert async_m_jt2s.aiohttp_session is None
+    await svc.aclose()
+    assert async_m_jt2s.aiohttp_session.closed
 
 
 async def _compare_models_async(model, model_async, items, tolerance=1e-2):

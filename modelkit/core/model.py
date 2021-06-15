@@ -531,6 +531,9 @@ class Model(BaseModel[ItemType, ReturnType]):
         if _callback:
             _callback(_step, batch, predictions)
 
+    def close(self):
+        pass
+
 
 class AsyncModel(BaseModel[ItemType, ReturnType]):
     async def _predict(self, item: ItemType, **kwargs) -> ReturnType:
@@ -671,6 +674,9 @@ class AsyncModel(BaseModel[ItemType, ReturnType]):
                 )
         if _callback:
             _callback(_step, batch, predictions)
+
+    async def close(self):
+        pass
 
 
 class WrappedAsyncModel:

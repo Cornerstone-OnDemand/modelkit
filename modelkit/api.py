@@ -46,7 +46,7 @@ class ModelkitAPIRouter(fastapi.APIRouter):
         )
 
     async def _on_shutdown(self):
-        await self.svc.close_connections()
+        await self.svc.aclose()
 
 
 class ModelkitAutoAPIRouter(ModelkitAPIRouter):

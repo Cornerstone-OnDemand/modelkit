@@ -69,7 +69,7 @@ async def test_distant_http_model(run_mocked_service, event_loop):
     with pytest.raises(AssertionError):
         assert ITEM == m(ITEM)
     await _check_service_async(m, ITEM)
-    await svc.close_connections()
+    await svc.aclose()
 
     # Test with synchronous mode
     m = svc.get("some_model_sync")
