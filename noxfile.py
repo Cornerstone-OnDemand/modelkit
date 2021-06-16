@@ -13,7 +13,7 @@ def test(session):
 @nox.session(python=["3.7"])
 def coverage(session):
     # Install deps and the package itself.
-    session.install("-r", "requirements-dev.txt")
+    session.install("-r", "requirements-optional.txt")
 
     session.run(
         "coverage",
