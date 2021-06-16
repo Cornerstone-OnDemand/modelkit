@@ -15,6 +15,7 @@ from tenacity import (
 
 from modelkit.core.model import AsyncModel, Model
 from modelkit.core.types import ItemType, ReturnType
+from modelkit.utils.serialization import safe_np_dump
 
 logger = get_logger(__name__)
 
@@ -35,16 +36,6 @@ try:
 
 except ModuleNotFoundError:
     logger.info("Tensorflow serving is not installed")
-
-
-def safe_np_dump(obj):
-    if isinstance(obj, np.integer):
-        return int(obj)
-    elif isinstance(obj, np.floating):
-        return float(obj)
-    elif isinstance(obj, np.ndarray):
-        return obj.tolist()
-    return obj.item()
 
 
 class TensorflowModel(Model[ItemType, ReturnType]):
