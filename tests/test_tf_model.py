@@ -3,39 +3,54 @@ import os
 import numpy as np
 import pytest
 
-from modelkit import ModelLibrary
-from modelkit.core.models.tensorflow_model import AsyncTensorflowModel, TensorflowModel
+from modelkit import ModelLibrary, testing
 from modelkit.core.settings import LibrarySettings
-from modelkit.testing import tf_serving_fixture
 from tests import TEST_DIR
 from tests.conftest import skip_unless
 
+try:
+    from modelkit.core.models.tensorflow_model import (
+        AsyncTensorflowModel,
+        TensorflowModel,
+    )
+    from modelkit.testing import tf_serving_fixture
+    from modelkit.utils.tensorflow import write_config
+except NameError:
+    # This occurs because type annotations in
+    # modelkit.core.models.tensorflow_model will raise
+    # `NameError: name 'prediction_service_pb2_grpc' is not defined`
+    # when tensorflow-serving-api is not installed
+    pass
 
-class DummyTFModel(TensorflowModel):
-    CONFIGURATIONS = {
-        "dummy_tf_model": {
-            "asset": "dummy_tf_model:0.0",
-            "model_settings": {
-                "output_dtypes": {"lambda": np.float32},
-                "output_tensor_mapping": {"lambda": "nothing"},
-                "output_shapes": {"lambda": (3, 2, 1)},
-            },
+
+@pytest.fixture
+def dummy_tf_models():
+    class DummyTFModel(TensorflowModel):
+        CONFIGURATIONS = {
+            "dummy_tf_model": {
+                "asset": "dummy_tf_model:0.0",
+                "model_settings": {
+                    "output_dtypes": {"lambda": np.float32},
+                    "output_tensor_mapping": {"lambda": "nothing"},
+                    "output_shapes": {"lambda": (3, 2, 1)},
+                },
+            }
         }
-    }
 
-
-class DummyTFModelAsync(AsyncTensorflowModel):
-    CONFIGURATIONS = {
-        "dummy_tf_model_async": {
-            "asset": "dummy_tf_model:0.0",
-            "model_settings": {
-                "output_dtypes": {"lambda": np.float32},
-                "output_tensor_mapping": {"lambda": "nothing"},
-                "output_shapes": {"lambda": (3, 2, 1)},
-                "tf_model_name": "dummy_tf_model",
-            },
+    class DummyTFModelAsync(AsyncTensorflowModel):
+        CONFIGURATIONS = {
+            "dummy_tf_model_async": {
+                "asset": "dummy_tf_model:0.0",
+                "model_settings": {
+                    "output_dtypes": {"lambda": np.float32},
+                    "output_tensor_mapping": {"lambda": "nothing"},
+                    "output_shapes": {"lambda": (3, 2, 1)},
+                    "tf_model_name": "dummy_tf_model",
+                },
+            }
         }
-    }
+
+    return DummyTFModel, DummyTFModelAsync
 
 
 TEST_ITEMS = [
@@ -46,7 +61,9 @@ TEST_ITEMS = [
 ]
 
 
-def test_tf_model_local_path():
+@skip_unless("ENABLE_TF_TEST", "True")
+def test_tf_model_local_path(dummy_tf_models):
+    DummyTFModel, _ = dummy_tf_models
     model = DummyTFModel(
         asset_path=os.path.join(TEST_DIR, "testdata", "dummy_tf_model", "0.0"),
         model_settings={
@@ -59,7 +76,10 @@ def test_tf_model_local_path():
     assert np.allclose(v, model({"input_1": v})["lambda"])
 
 
-def test_tf_model(monkeypatch, working_dir):
+@skip_unless("ENABLE_TF_SERVING_TEST", "True")
+@skip_unless("ENABLE_TF_TEST", "True")
+def test_tf_model(monkeypatch, working_dir, dummy_tf_models):
+    DummyTFModel, _ = dummy_tf_models
     monkeypatch.setenv("MODELKIT_STORAGE_BUCKET", TEST_DIR)
     monkeypatch.setenv("MODELKIT_STORAGE_PREFIX", "testdata")
     monkeypatch.setenv("MODELKIT_STORAGE_PROVIDER", "local")
@@ -73,7 +93,8 @@ def test_tf_model(monkeypatch, working_dir):
 
 
 @pytest.fixture(scope="function")
-def tf_serving(request, monkeypatch, working_dir):
+def tf_serving(request, monkeypatch, working_dir, dummy_tf_models):
+    DummyTFModel, _ = dummy_tf_models
     monkeypatch.setenv("MODELKIT_ASSETS_DIR", working_dir)
     monkeypatch.setenv("MODELKIT_STORAGE_BUCKET", TEST_DIR)
     monkeypatch.setenv("MODELKIT_STORAGE_PREFIX", "testdata")
@@ -85,7 +106,9 @@ def tf_serving(request, monkeypatch, working_dir):
 
 @pytest.mark.asyncio
 @skip_unless("ENABLE_TF_SERVING_TEST", "True")
-async def test_iso_serving_mode(tf_serving, event_loop):
+@skip_unless("ENABLE_TF_TEST", "True")
+async def test_iso_serving_mode(tf_serving, event_loop, dummy_tf_models):
+    DummyTFModel, _ = dummy_tf_models
     model_name = "dummy_tf_model"
     # Get the prediction service running TF with gRPC serving
     lib_serving_grpc = ModelLibrary(
@@ -211,7 +234,10 @@ def _compare_models(model0, model1, items, tolerance=1e-2):
 
 @pytest.mark.asyncio
 @skip_unless("ENABLE_TF_SERVING_TEST", "True")
-async def test_iso_async(tf_serving, event_loop):
+@skip_unless("ENABLE_TF_TEST", "True")
+async def test_iso_async(tf_serving, event_loop, dummy_tf_models):
+    DummyTFModel, DummyTFModelAsync = dummy_tf_models
+
     # Get the prediction service running TF with REST serving
     lib = ModelLibrary(
         required_models=["dummy_tf_model", "dummy_tf_model_async"],
@@ -272,3 +298,11 @@ async def _compare_models_async(model, model_async, items, tolerance=1e-2):
         raise AssertionError(
             f"Models predictions on single and batches differ\n{e.args[0]}"
         )
+
+
+@skip_unless("ENABLE_TF_TEST", "True")
+def test_write_tf_serving_config(base_dir, assetsmanager_settings):
+    write_config(os.path.join(base_dir, "test.config"), {"model0": "/some/path"})
+    ref = testing.ReferenceText(os.path.join(TEST_DIR, "testdata"))
+    with open(os.path.join(base_dir, "test.config")) as f:
+        ref.assert_equal("test.config", f.read())

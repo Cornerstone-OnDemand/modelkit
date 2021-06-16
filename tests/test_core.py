@@ -3,7 +3,6 @@ import os
 
 import pytest
 
-from modelkit import testing
 from modelkit.core.library import (
     ConfigurationNotFoundException,
     ModelLibrary,
@@ -18,8 +17,6 @@ from modelkit.core.model_configuration import (
     list_assets,
 )
 from modelkit.core.settings import LibrarySettings
-from modelkit.utils.tensorflow import write_config
-from tests import TEST_DIR
 
 
 def test_override_asset():
@@ -240,20 +237,6 @@ def test_list_assets():
     )
 
 
-@pytest.fixture
-def assetsmanager_settings(working_dir):
-    yield {
-        "remote_store": {
-            "driver": {
-                "storage_provider": "local",
-                "bucket": os.path.join(TEST_DIR, "testdata", "test-bucket"),
-            },
-            "storage_prefix": "assets-prefix",
-        },
-        "assets_dir": working_dir,
-    }
-
-
 def test_download_assets_version(assetsmanager_settings):
     class SomeModel(Asset):
         CONFIGURATIONS = {"model0": {"asset": "category/asset:0.0"}}
@@ -304,13 +287,6 @@ def test_download_assets_dependencies(assetsmanager_settings):
     assert model_assets["model1"] == {"category/asset:0", "category/asset"}
     assert assets_info["category/asset"].version == "1.0"
     assert assets_info["category/asset:0"].version == "0.1"
-
-
-def test_write_tf_serving_config(base_dir, assetsmanager_settings):
-    write_config(os.path.join(base_dir, "test.config"), {"model0": "/some/path"})
-    ref = testing.ReferenceText(os.path.join(TEST_DIR, "testdata"))
-    with open(os.path.join(base_dir, "test.config")) as f:
-        ref.assert_equal("test.config", f.read())
 
 
 def test_load_model():
