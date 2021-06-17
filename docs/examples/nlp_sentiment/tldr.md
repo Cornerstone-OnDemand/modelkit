@@ -17,7 +17,7 @@ class Tokenizer(modelkit.Model[str, List[str]]):
             {"item": "", "result": []},
             {"item": "NLP 101", "result": ["nlp"]},
             {
-                "item": "I'm loving the Spacy 101 course !!!ù*`^@😀",
+                "item": "I'm loving the spaCy 101 course !!!ù*`^@😀",
                 "result": ["loving", "spacy", "course"],
             },
             {

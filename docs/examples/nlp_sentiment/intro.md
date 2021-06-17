@@ -2,7 +2,7 @@ In this tutorial, you will learn how to leverage Modelkit as a support for a com
 
 You will see how Modelkit can be useful as you progress along the following steps:
 
-1. Implementing the Tokenizer leveraging Spacy
+1. Implementing the Tokenizer leveraging spaCy
 2. Implementing the Vectorizer leveraging Scikit-Learn
 3. Building a simple Classifier leveraging Keras to predict whether a review is negative or positive
 

@@ -1,4 +1,4 @@
-In this section, we will cover the basics of `modelkit`'s API, and use Spacy as tokenizer for our NLP pipeline.
+In this section, we will cover the basics of `modelkit`'s API, and use spaCy as tokenizer for our NLP pipeline.
 
 ## Installation 
 Once you have set up a fresh python environment, let's install `modelkit`, `spacy` and grab the small english model.
@@ -55,7 +55,7 @@ tokenizer.predict("I am a Data Scientist from Amiens, France")
 
 ### Complex `Model` initialization
 
-Let's now use [Spacy](https://spacy.io/) to get closer to a production-ready tokenizer.
+Let's now use [spaCy](https://spacy.io/) to get closer to a production-ready tokenizer.
 
 This will also help demonstrate additional Modelkit features.
 
@@ -97,7 +97,7 @@ Since we will only be using the tokenizer and not the many other cool spacy feat
 We can instantiate the model and get predictions as before:
 ```python
 tokenizer = Tokenizer() # _load is called
-tokenizer.predict("Spacy is a great lib for NLP 😀")
+tokenizer.predict("spaCy is a great lib for NLP 😀")
 # ['spacy', 'great', 'lib', 'nlp']
 ```
 
@@ -105,11 +105,11 @@ tokenizer.predict("Spacy is a great lib for NLP 😀")
 
 So far, we have only implemented the `_predict` method, which tokenizes items one by one. 
 
-In many instances, however, models will be called with many items at once, and we can leverage vectorization for speedups. This is partilarily true when using other frameworks (Numpy, Spacy, Tensorflow, PyTorch etc.), or distant calls (TF Serving, database accesses etc.).
+In many instances, however, models will be called with many items at once, and we can leverage vectorization for speedups. This is partilarily true when using other frameworks (Numpy, spaCy, Tensorflow, PyTorch etc.), or distant calls (TF Serving, database accesses etc.).
 
 To leverage batching, modelkit allows you to define a `_predict_batch` method to process lists of items, and thus _kill multiple birds with one stone_.
 
-Here we use Spacy's `pipe` method to tokenize items in batch:
+Here we use spaCy's `pipe` method to tokenize items in batch:
 
 ```python
 import modelkit
@@ -151,10 +151,10 @@ Compared to the implementation with a `_predict` call, the time needed to tokeni
 
 For example, using ipython's `timeit` to process a list of a 100 strings:
 ```
-%timeit [Tokenizer().predict("Spacy is a great lib for NLP") for _ in range(100)]
+%timeit [Tokenizer().predict("spaCy is a great lib for NLP") for _ in range(100)]
 # 11.1 ms ± 203 µs per loop on a 2020 Macbook Pro.
 
-%timeit Tokenizer().predict_batch(["Spacy is a great lib for NLP] * 100, batch_size=64)
+%timeit Tokenizer().predict_batch(["spaCy is a great lib for NLP] * 100, batch_size=64)
 # 5.5 ms ± 105 µs per loop on a 2020 Macbook Pro.
 ```
 
@@ -181,7 +181,7 @@ class Tokenizer(modelkit.Model):
             {"item": "", "result": []},
             {"item": "NLP 101", "result": ["nlp"]},
             {
-                "item": "I'm loving the Spacy 101 course !!!ù*`^@😀",
+                "item": "I'm loving the spaCy 101 course !!!ù*`^@😀",
                 "result": ["loving", "spacy", "course"],
             },
             {
@@ -269,7 +269,7 @@ class Tokenizer(modelkit.Model[str, List[str]]):
             {"item": "", "result": []},
             {"item": "NLP 101", "result": ["nlp"]},
             {
-                "item": "I'm loving the Spacy 101 course !!!ù*`^@😀",
+                "item": "I'm loving the spaCy 101 course !!!ù*`^@😀",
                 "result": ["loving", "spacy", "course"],
             },
             {
@@ -352,7 +352,7 @@ class Tokenizer(modelkit.Model[str, List[str]]):
             {"item": "", "result": []},
             {"item": "NLP 101", "result": ["nlp"]},
             {
-                "item": "I'm loving the Spacy 101 course !!!ù*`^@😀",
+                "item": "I'm loving the spaCy 101 course !!!ù*`^@😀",
                 "result": ["loving", "spacy", "course"],
             },
             {
