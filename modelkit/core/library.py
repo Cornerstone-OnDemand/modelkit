@@ -366,13 +366,6 @@ class ModelLibrary:
             if isinstance(model, AsyncModel):
                 await model.close()
 
-    def _iterate_test_cases(self):
-        model_types = {type(model_type) for model_type in self._models.values()}
-        for model_type in model_types:
-            for model_key, item, result in model_type._iterate_test_cases():
-                if model_key in self.models:
-                    yield self.get(model_key), item, result
-
     def describe(self, console=None) -> None:
         if not console:
             console = Console()
