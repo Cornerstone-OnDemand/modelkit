@@ -23,7 +23,12 @@ from rich.tree import Tree
 from structlog import get_logger
 
 from modelkit.core.settings import LibrarySettings
-from modelkit.core.types import ItemType, ModelTestingConfiguration, ReturnType
+from modelkit.core.types import (
+    ItemType,
+    ModelTestingConfiguration,
+    ReturnType,
+    TestCases,
+)
 from modelkit.utils import traceback
 from modelkit.utils.cache import Cache, CacheItem
 from modelkit.utils.memory import PerformanceTracker
@@ -256,20 +261,40 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
         self.initialize_validation_models()
 
     @classmethod
-    def _iterate_test_cases(cls, model_keys=None):
-        if not hasattr(cls, "TEST_CASES"):
-            logger.debug("No TEST_CASES defined", model_type=cls.__name__)
+    def _iterate_test_cases(cls, model_key: Optional[str] = None):
+        if (
+            not hasattr(cls, "TEST_CASES")
+            and not (
+                model_key
+                or any("test_cases" in conf for conf in cls.CONFIGURATIONS.values())
+            )
+            and (model_key and "test_cases" not in cls.CONFIGURATIONS[model_key])
+        ) or (model_key and model_key not in cls.CONFIGURATIONS):
+            logger.debug("No test cases defined", model_type=cls.__name__)
             return
-        if isinstance(cls.TEST_CASES, dict):
-            # This used to be OK with type instantiation but fails with a pydantic
-            # error since 1.18
-            # test_cases = ModelTestingConfiguration[ItemType, ReturnType]
-            test_cases = ModelTestingConfiguration(**cls.TEST_CASES)
-        else:
-            test_cases = cls.TEST_CASES
-        model_keys = model_keys or test_cases.model_keys or cls.CONFIGURATIONS.keys()
+
+        model_keys = [model_key] if model_key else cls.CONFIGURATIONS.keys()
+        cls_test_cases: List[TestCases] = []
+
+        if hasattr(cls, "TEST_CASES"):
+            if isinstance(cls.TEST_CASES, dict):
+                # This used to be OK with type instantiation but fails with a pydantic
+                # error since 1.18
+                # test_cases = ModelTestingConfiguration[ItemType, ReturnType]
+                cls_test_cases = ModelTestingConfiguration(**cls.TEST_CASES).cases
+            else:
+                cls_test_cases = cls.TEST_CASES.cases
+
         for model_key in model_keys:
-            for case in test_cases.cases:
+            for case in cls_test_cases:
+                yield model_key, case.item, case.result, case.keyword_args
+
+            conf = cls.CONFIGURATIONS[model_key]
+            if "test_cases" not in conf:
+                continue
+            for case in conf["test_cases"]["cases"]:
+                if isinstance(case, dict):
+                    case = TestCases(**case)
                 yield model_key, case.item, case.result, case.keyword_args
 
     def describe(self, t=None):
@@ -350,7 +375,7 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
     def test(self):
         console = Console()
         for i, (model_key, item, expected, keyword_args) in enumerate(
-            self._iterate_test_cases(model_keys=[self.configuration_key])
+            self._iterate_test_cases(model_key=self.configuration_key)
         ):
             result = None
             try:
