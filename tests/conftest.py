@@ -4,6 +4,8 @@ import tempfile
 
 import pytest
 
+from tests import TEST_DIR
+
 
 @pytest.fixture(scope="function")
 def base_dir():
@@ -17,6 +19,20 @@ def working_dir(base_dir):
     os.makedirs(working_dir)
 
     yield working_dir
+
+
+@pytest.fixture
+def assetsmanager_settings(working_dir):
+    yield {
+        "remote_store": {
+            "driver": {
+                "storage_provider": "local",
+                "bucket": os.path.join(TEST_DIR, "testdata", "test-bucket"),
+            },
+            "storage_prefix": "assets-prefix",
+        },
+        "assets_dir": working_dir,
+    }
 
 
 def clean_env():

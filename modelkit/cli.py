@@ -20,7 +20,7 @@ from modelkit import ModelLibrary
 from modelkit.api import ModelkitAutoAPIRouter
 from modelkit.assets.cli import assets_cli
 from modelkit.core.model_configuration import configure, list_assets
-from modelkit.core.models.tensorflow_model import safe_np_dump
+from modelkit.utils.serialization import safe_np_dump
 from modelkit.utils.tensorflow import deploy_tf_models
 
 
