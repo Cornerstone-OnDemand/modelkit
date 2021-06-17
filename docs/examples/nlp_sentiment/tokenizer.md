@@ -105,7 +105,7 @@ tokenizer.predict("spaCy is a great lib for NLP 😀")
 
 So far, we have only implemented the `_predict` method, which tokenizes items one by one. 
 
-In many instances, however, models will be called with many items at once, and we can leverage vectorization for speedups. This is partilarily true when using other frameworks (Numpy, spaCy, Tensorflow, PyTorch etc.), or distant calls (TF Serving, database accesses etc.).
+In many instances, however, models will be called with many items at once, and we can leverage vectorization for speedups. This is particularly true when using other frameworks (Numpy, spaCy, Tensorflow, PyTorch etc.), or distant calls (TF Serving, database accesses etc.).
 
 To leverage batching, modelkit allows you to define a `_predict_batch` method to process lists of items, and thus _kill multiple birds with one stone_.
 
