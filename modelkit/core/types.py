@@ -1,5 +1,5 @@
 from types import ModuleType
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
+from typing import Any, Dict, Generic, List, Type, TypeVar, Union
 
 import pydantic
 import pydantic.generics
@@ -21,10 +21,3 @@ class TestCases(pydantic.generics.GenericModel, Generic[TestItemType, TestReturn
     item: TestItemType
     result: TestReturnType
     keyword_args: Dict[str, Any] = {}
-
-
-class ModelTestingConfiguration(
-    pydantic.generics.GenericModel, Generic[TestItemType, TestReturnType]
-):
-    model_keys: Optional[List[str]]
-    cases: List[TestCases[TestItemType, TestReturnType]]

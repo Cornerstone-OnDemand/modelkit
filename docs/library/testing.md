@@ -41,12 +41,10 @@ In the following example, 4 test cases will be ran:
 class TestableModel(Model[ModelItemType, ModelItemType]):
     CONFIGURATIONS: Dict[str, Dict] = {"some_model_a": {}, "some_model_b": {}}
 
-    TEST_CASES = {
-        "cases": [
+    TEST_CASES = [
             {"item": {"x": 1}, "result": {"x": 1}},
             {"item": {"x": 2}, "result": {"x": 2}},
         ]
-    }
 
     def _predict(self, item):
         return item
