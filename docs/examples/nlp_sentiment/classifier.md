@@ -129,8 +129,8 @@ training_set = (
     tf.data.Dataset.from_generator(
         lambda: process(
             os.path.join("aclImdb", "train"),
-            tokenizer.predict,
-            vectorizer.predict,
+            tokenizer,
+            vectorizer,
             length=LENGTH,
             batch_size=BATCH_SIZE,
         ),
@@ -144,8 +144,8 @@ validation_set = (
     tf.data.Dataset.from_generator(
         lambda: process(
             os.path.join("aclImdb", "test"),
-            tokenizer.predict,
-            vectorizer.predict,
+            tokenizer,
+            vectorizer,
             length=LENGTH,
             batch_size=BATCH_SIZE,
         ),
