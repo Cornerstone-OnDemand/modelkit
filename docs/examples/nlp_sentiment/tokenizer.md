@@ -1,21 +1,21 @@
-In this section, we will cover the basics of Modelkit's API, and use Spacy as tokenizer for our NLP pipeline.
+In this section, we will cover the basics of `modelkit`'s API, and use Spacy as tokenizer for our NLP pipeline.
 
-### Initialization
-Once you have set up a fresh python environment, let's install modelkit, spacy and grab the small english model.
+## Installation 
+Once you have set up a fresh python environment, let's install `modelkit`, `spacy` and grab the small english model.
 
 ```
 pip install modelkit spacy
 python -m spacy download en_core_web_sm
 ```
 
-### Basics
+## Simple Model predict
 
-To define a Modelkit Model, you need to:
+To define a modelkit `Model`, you need to:
 
 - create class inheriting from `modelkit.Model` 
 - implement a `_predict` method
 
-To begin with, let's create a minimal tokenizer in the most concise way:
+To begin with, let's create a minimal tokenizer:
 
 ```python
 import modelkit
@@ -26,31 +26,36 @@ class Tokenizer(modelkit.Model):
         return text.split()
 ```
 
-That's it ! As you can see, it is _very_ minimal, and probably not sufficient for a lot of usages.
+That's it! It is _very_ minimal, but sufficient to define a modelkit `Model`.
 
-It is just the necessary to define a Modelkit Model.
+You can now instantiate and call the `Model`:
 
-You are now able to instantiate and call it using the following methods:
 ```python
 tokenizer = Tokenizer()
 
-# for single predictions
-tokenizer("I am a Data Scientist from Amiens, France")
 tokenizer.predict("I am a Data Scientist from Amiens, France")
-
-# for batch predictions
-tokenizer.predict_batch(["I am a Data Scientist from Amiens, France"])
-
-# for generators
-tokenizer.predict_gen(("I am a Data Scientist from Amiens, France",))
-
 ```
 
-### Leveraging spacy
+??? note "Other ways to call predict"
+    It is also possible to get predictions for batches (lists of items):
 
-For now, the tokenizer pipeline is too simple to show-off.
+    ```python
+    tokenizer.predict_batch([
+        "I am a Data Scientist from Amiens, France", 
+        "And I use modelkit"
+    ])
+    ```
 
-Let's make use of Spacy and complexify things a little, so that to have a prod-like tokenizer. (fortunately, we will not be digging into weird customer rules)
+    or call predict as a generator:
+
+    ```python
+    for prediction in tokenizer.predict_gen(("I am a Data Scientist from Amiens, France",)):
+        print(prediction)
+    ```
+
+### Complex `Model` initialization
+
+Let's now use [Spacy](https://spacy.io/) to get closer to a production-ready tokenizer.
 
 This will also help demonstrate additional Modelkit features.
 
@@ -76,38 +81,35 @@ class Tokenizer(modelkit.Model):
         text = " ".join(text.replace("<br", "").replace("/>", "").split())
         return [
             t.lower_
-            for t in self.nlp(text)
+            for t in self.nlp(text)  # self.nlp is guaranteed to be initialized
             if t.is_ascii and len(t) > 1 and not (t.is_punct or t.is_stop or t.is_digit)
         ]
 ```
 
-Spacy pipelines come with several different cool features.
+We implement a `_load` method, which is where any asset, artifact, and other complex model attributes are created. 
 
-Since we will only be using the tokenizer, let's not forget to disable the ones we will not be needing.
+This method will be called exactly once in the lifetime of the `Model` object. 
 
-As you can see, the `_load` method was implemented: it is where all the assets, artefacts, models etc. are loaded once the model is instantiated.
+We define the spacy pipeline in the `_load` method (as opposed to `_predict` or the `__init__` methods), because it allows your model to benefit from advanced `modelkit` features such as *lazy loading* and *dependency management*.
 
-This way, your model will benefit from further features that will be covered in the next sections such as *lazy_loading* and *dependency management*.
+Since we will only be using the tokenizer and not the many other cool spacy features, let's not forget to disable them.
 
-This is why we store the spacy pipeline in the `_load` method, not in the `_predict` nor the `__init__` methods.
-
+We can instantiate the model and get predictions as before:
 ```python
-tokenizer = Tokenizer()
+tokenizer = Tokenizer() # _load is called
 tokenizer.predict("Spacy is a great lib for NLP 😀")
 # ['spacy', 'great', 'lib', 'nlp']
-
 ```
 
-### Batch computing
+### Batch computation
 
-So far, we have only implemented the `_predict` method so that to tokenize one sentence at a time.
+So far, we have only implemented the `_predict` method, which tokenizes items one by one. 
 
-While this is relevant for many usages, when calls are rather simple and straightforward (such as the `text.split()` tokenizer),
-it's a whole other thing when you deal with more complex functions leveraging heavy weapons (Spacy, Tensorflow, PyTorch etc.) or distant calls (TF Serving, database accesses etc.) 
+In many instances, however, models will be called with many items at once, and we can leverage vectorization for speedups. This is partilarily true when using other frameworks (Numpy, Spacy, Tensorflow, PyTorch etc.), or distant calls (TF Serving, database accesses etc.).
 
-To do so, Modelkit allows you to define a `_predict_batch` method to _kill N birds with one stone_.
+To leverage batching, modelkit allows you to define a `_predict_batch` method to process lists of items, and thus _kill multiple birds with one stone_.
 
-The following section shows how to properly use Spacy's `pipe` method to tokenize items by batch.
+Here we use Spacy's `pipe` method to tokenize items in batch:
 
 ```python
 import modelkit
@@ -145,9 +147,9 @@ class Tokenizer(modelkit.Model):
         ]
 ```
 
-This way, we reduce by two the time needed to tokenize batches of data, compared to a simple `_predict` call.
+Compared to the implementation with a `_predict` call, the time needed to tokenize batches of data is divided by 2.
 
-Benchmark example using ipython:
+For example, using ipython's `timeit` to process a list of a 100 strings:
 ```
 %timeit [Tokenizer().predict("Spacy is a great lib for NLP") for _ in range(100)]
 # 11.1 ms ± 203 µs per loop on a 2020 Macbook Pro.
@@ -156,11 +158,17 @@ Benchmark example using ipython:
 # 5.5 ms ± 105 µs per loop on a 2020 Macbook Pro.
 ```
 
-### Testing
+??? note "Caching predictions"
+    `modelkit` also allows you to use prediction caching (using Redis, or Python native caches) to improve computation times when the same items are seen over and over
 
-So far, more or less complex rules have been designed.
 
-Modelkit allows you to add tests right next to your class definition to serve as documentation, in addition to ensuring everything behaves as intended.
+## Additional features
+
+### Tests
+
+So far the tokenizer is relatively simple, but it is always useful to test your code.
+
+`modelkit` encourages you to add test cases alongside the `Model` class definition to ensure that it behaves as intended, and serve as documentation.
 
 ```python
 import modelkit
@@ -217,9 +225,8 @@ class Tokenizer(modelkit.Model):
         ]
 ```
 
-These tests can be executed in two ways.
+You can run these test cases in the interactive programming tool of your choice (e.g. `ipython`, `jupyter` etc.) using the `test` method:
 
-Manually, in an interative programming tool such as ipython, jupyter etc. using the `test` method:
 ```python
 Tokenizer().test()
 # TEST 1: SUCCESS
@@ -232,21 +239,22 @@ Tokenizer().test()
 # result = list instance                                                                       
 ```
 
-Or with pytest via [the Modelkit autotesting fixture](../library/testing.html#modellibrary-fixture-and-autotesting)
+??? note "Run using pytest"
+    It is also possible to automatically test all models using the `pytest` integration, using [the Modelkit autotesting fixture](../library/testing.html#modellibrary-fixture-and-autotesting).
 
 Woops, seems like we need to fix the last test!
 
-### Typing
+### Input and output specification
 
-When it comes to production, it is good practice to type models' inputs and outputs to ensure consistency and validation between calls, dependencies and services.
+It is good practice to specify inputs and outputs of models in production code
 
-It also allows you to better/faster understand how to use a given model, in addition to benefit from static type checkers such as mypy.
+This allows calls to be validated, thus ensuring consistency between calls, dependencies, services, and raising alerts when Models are not called as expected.
 
-Modelkit manages typing in the following way: `Model[input_type, output_type]`
+This is also good for documentation, to understand how to use a given model, and during development to benefit from static type checking (e.g. with [mypy](https://github.com/python/mypy)).
 
-It also support the power of Pydantic, as we will see in the next section.
+`modelkit` allows you to define the expected input and output types of your model by subclassing `Model[input_type, output_type]`, where `input_type` and `output_type` can be standard Python types, dataclasses, or complex [pydantic](https://pydantic-docs.helpmanual.io/) models.
 
-Let's type our previous Tokenizer and conclude this first part:
+Let's add specification our Tokenizer to conclude this first part:
 
 ```python
 from typing import List
@@ -305,21 +313,30 @@ class Tokenizer(modelkit.Model[str, List[str]]):
         ]
 ```
 
-This way, the following will raise a Modelkit `ItemValidationException`:
+Calling the model with an unexpected type will raise a Modelkit `ItemValidationException`:
 
 ```python
-Tokenizer().predict(["list", "of", "tokens", "will", "raise", "an", "exception"])
+Tokenizer().predict([1, 2, 3, 4])
 ```
 
-That's it! To sum up this first Modelkit overview, you have learned:
+And `mypy` will raise errors if it encounters calls that are not correct:
+```python
+result : int = Tokenizer().predict("some text")
+```
 
-- How to create a basic Model class by inheriting from `modelkit.Model` and implementing a `_predict` method
-- How to correctly load artefacts/assets by overloading the `_load` method
-- How to leverage batch computing to speed up execution by implementing a `_predict_batch` method
-- How to add tests to ensure everything works as intended using `TEST_CASES` right in your model definition
-- How to add typing to ensure consistency and validation: `modelkit.Model[input_type, output_type]`
+## Conclusion
 
-### Final tokenizer
+That's it! 
+
+In this `modelkit` introduction, you have learned:
+
+- How to create a basic `Model` by inheriting from `modelkit.Model` and implementing a `_predict` method
+- How to correctly *load* artefacts/assets by overriding the `_load` method
+- How to leverage *batch computing* to speed up execution by implementing a `_predict_batch` method
+- How to *add tests* to ensure everything works as intended using `TEST_CASES` right in your model definition
+- How to add specification to your model's inputs and outputs using `modelkit.Model[input_type, output_type]`
+
+### Final Tokenizer code
 
 ```python
 from typing import List
@@ -379,5 +396,6 @@ class Tokenizer(modelkit.Model[str, List[str]]):
         ]
 
 ```
+
 As you may have seen, there is a `CONFIGURATIONS` map in the class definition, we will cover it in the next section.
 
