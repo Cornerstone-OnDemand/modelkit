@@ -187,9 +187,7 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
     that either take items or lists of items.
     """
 
-    # The correct type below raises an error with pydantic after version 0.18
-    # TEST_CASES: Union[ModelTestingConfiguration[ItemType, ReturnType], Dict]
-    TEST_CASES: Any
+    TEST_CASES: List[Union[TestCase[ItemType, ReturnType], Dict]]
 
     def __init__(
         self,
@@ -269,7 +267,7 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
             return
 
         model_keys = [model_key] if model_key else cls.CONFIGURATIONS.keys()
-        cls_test_cases: List[TestCase] = []
+        cls_test_cases: List[Union[TestCase[ItemType, ReturnType], Dict]] = []
 
         if hasattr(cls, "TEST_CASES"):
             cls_test_cases = cls.TEST_CASES
