@@ -1,16 +1,14 @@
-In this section, we will be implementing a simple sentiment classifier leveraging Keras, plugging the different components we have been developping so far.
+In this section, we will implement a sentiment classifier with Keras, using the components we have been developping so far.
 
-### Data processing
+## Data preparation
 
-We will reuse the `read_dataset` function, in addition to a few other helper functions 
-which will continue taking advantage of generators to avoid loading up the entire dataset into memory:
+We will reuse the `read_dataset` function, in addition to a few other helper functions which will continue taking advantage of generators to avoid loading up the entire dataset into memory:
 
-- `alternate(f, g)`: to yield items alternatively between the f and g generators 
+- `alternate(f, g)`: to yield items alternatively between the f and g generators
 - `alternate_labels()`: to yield 1 and 0, alternatively, in sync with the previous `alternate` function
 
-
 ```python
-import glob 
+import glob
 import os
 
 from typing import Generator, Any
@@ -61,6 +59,7 @@ def process(path, tokenizer, vectorizer, length, batch_size):
 ```
 
 Let's try it out on the first examples:
+
 ```python
 
 i = 0
@@ -76,26 +75,28 @@ for review, label in process(
     if i >= 10:
         break
 ```
+
 ### Model library
 
-So far, we have only be using instantiating the `Tokenizer` and `Vectorizer` classes as standard objects.
+So far, we have instantiated `Tokenizer` and `Vectorizer` classes as standard objects. Modelkit provides a simpler and more powerful way to instantiate `Models`, the library: `modelkit.ModelLibrary`.
 
-Modelkit provides another, simpler and better way to instantiate those: `modelkit.ModelLibrary`.
+The purpose of the `ModelLibrary` is to have a single way to load any of the models that are defined, any way you decide to keep them organized.
 
-Its different features make the usage of `ModelLibrary` the best way to load models:
+With a library `ModelLibrary` you can
 
-- you can fetch models by their `CONFIGURATIONS` name using the `get` method
-- two calls to `get` will not create two models, only one
-- it supports prediction caching: [Prediction Caching](../library/model_library.html#prediction-caching)
-- it allows you to lazy load your models: [Lazy Loading](../library/model_library.html#lazy-loading)
-- you can parametrize your models through it: [Settings](../library/model_library.html#modellibrary)
-- it encourages you to keep your models organized:  [Organizing Models](../library/organizing.html)
+- fetch models by their configuration key using `ModelLibrary.get` while ensuring that models are only loaded once
+- use prediction caching: [Prediction Caching](../../library/model_library.md#prediction-caching)
+- use lazy loading for models: [Lazy Loading](../../library/model_library.md#lazy-loading)
+- override model parameters: [Settings](../../library/model_library.md#modellibrary)
 
-We will not deal with package organization in this tutorial, so let's see how we can take advantage of the `ModelLibrary` with our previous work.
+Although we will not cover all of these features here, let's see how we can take advantage of the `ModelLibrary` with our previous work.
 
+Let us define a model library, it can take the clases of models as input:
 
 ```python
 import modelkit
+
+... # define Vectorizer and Tokenizer classes
 
 model_library = modelkit.ModelLibrary(models=[Vectorizer, Tokenizer])
 tokenizer = model_library.get("imdb_tokenizer")
@@ -103,13 +104,21 @@ vectorizer = model_library.get("imdb_vectorizer")
 
 ```
 
-Another tutorial will cover how to package these models as a python package, and how to benefit even more from Modelkit's `ModelLibrary` powerful features.
+Or, alternatively use the modules they are present in:
 
-### Keras training
-
-We now need to create a `TF Dataset` from our data processing generators:
- 
 ```python
+import module_with_models
+
+model_library = modelkit.ModelLibrary(models=module_with_models)
+```
+
+This method is the preferred method, because it encourages you to adopt a package-like organisation of your `Models` (see [Organizing Models](../../library/organizing.md))
+
+### Using models to create a TF.Dataset
+
+Now that we know how to reach out models, let us use them to create a `TF Dataset` from our data processing generators:
+
+```python hl_lines="11 12 26 27"
 import os
 import tensorflow as tf
 
@@ -120,8 +129,8 @@ training_set = (
     tf.data.Dataset.from_generator(
         lambda: process(
             os.path.join("aclImdb", "train"),
-            tokenizer,
-            vectorizer,
+            tokenizer.predict,
+            vectorizer.predict,
             length=LENGTH,
             batch_size=BATCH_SIZE,
         ),
@@ -135,8 +144,8 @@ validation_set = (
     tf.data.Dataset.from_generator(
         lambda: process(
             os.path.join("aclImdb", "test"),
-            tokenizer,
-            vectorizer,
+            tokenizer.predict,
+            vectorizer.predict,
             length=LENGTH,
             batch_size=BATCH_SIZE,
         ),
@@ -150,7 +159,7 @@ validation_set = (
 
 ```
 
-This is it for the data processing part. 
+## Training a Keras model
 
 Let's train a basic Keras classifier to predict whether an IMDB review is positive or negative, and save it to disk.
 
@@ -184,8 +193,9 @@ model.save(
 )
 ```
 
-### Final classifier 
-Voila ! As we already did for the Vectorizer, we will embed the just-saved `imdb_model.h5` in a basic Modelkit `Model` which we will further upgrade in the next section.
+### Classifier Model
+
+Voilà ! As we already did for the Vectorizer, we will embed the just-saved `imdb_model.h5` in a basic Modelkit `Model` which we will further upgrade in the next section.
 
 ```python
 import modelkit
@@ -204,15 +214,13 @@ class Classifier(modelkit.Model[List[int], float]):
         return self.model.predict(vectorized_reviews)
 ```
 
-The same way we did for the Vectorizer, the `MovieReviewToSentiment` model has a `movie_review_to_sentiment` configuration which points to the `imdb_model.h5`.
+Much like we did for the `Vectorizer`, the `Classifier` model has a `imdb_classifier` configuration with an asset pointing to the `imdb_model.h5`.
 
 We also benefit from Keras' `predict` ability to batch predictions in our `_predict_batch` method.
 
+## End-to-end prediction
 
-### End-to-end example
-
-To sum up, this is one way we can chain together the Tokenizer, Vectorizer and Classifier:
-
+To summarize, here is how we would want to chain our `Tokenizer`, `Vectorizer` and `Classifier`:
 
 ```python
 import modelkit
@@ -229,3 +237,4 @@ vectorized_review = vectorizer(tokenized_review)  # or vectorizer.predict
 prediction = classifier(vectorized_review)  # or classifier.predict
 ```
 
+In the next (and final) section, we will see how `modelkit` can be used to perform this operation in a single `Model`.
