@@ -184,7 +184,8 @@ We use `np.vectorize` to map a tokens list to an indices list, which we store in
 
 
 We also add keyword arguments to the `_predict`:  `length` and `drop_oov`. These can be used during prediction as well, and would be passed to `_predict` or `_predict_batch`:
-```
+
+```python
 vectorizer = Vectorizer()
 vectorizer.predict(item, length=10, drop_oov=False)
 vectorizer.predict_batch(items, length=10, drop_oov=False)
@@ -198,7 +199,7 @@ Now let us add test cases too. The only trick here is that we have to add the in
 
 To do so, we use the `keyword_args` field in the test cases:
 
-```python hl_lines="7 12 19 24 29"
+```python hl_lines="7 12 18 23 28"
 class Vectorizer(modelkit.Model[List[str], List[int]]):
     ...
 
