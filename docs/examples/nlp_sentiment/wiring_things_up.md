@@ -1,28 +1,16 @@
-You have now seen most dev features, implementing them from the Tokenizer to the Classifier.
+You have now seen most development features and how to implement everything from the Tokenizer to the Classifier.
 
-While it works from end-to-end, the API is still not really user-friendly and asks to wire things up as we did in the last section.
+Let's see how we can put it all together, while reviewing all Modelkit's features we have seen so far and introducing a powerful new feature: model dependencies.
 
-Moreover, the classifier still seems kind of basic, and does not implement many features that make Modelkit relevant.
+## Composing models
 
-Let's see how we can enhance it, and take the opportuniy to review all Modelkit's features we have seen so far, and discover new features too.
+`modelkit`'s allows you to add models as dependencies of other models, and use them in the `_predict` methods.
 
-### Dependency management
+For example, it is desirable for our classifier to take string reviews as input, and output a class label ("good" or "bad") alongside the score. This can be achieved using model dependencies.
 
-Modelkit's Asset Management system allows you to add other models as dependencies.
-
-For our use-case, it might be relevant for the classifier to take raw string reviews as input, and output a class label ("good" or "bad").
-
-This could be done using the `model_dependencies` key in the `CONFIGURATIONS` map, and by adding the `Tokenizer` and the `Vectorizer` as dependencies.
-
-Modelkit takes care of loading up the dependencies right before your model's instantiation.
-As such, loaded dependencies are discoverable from `self.model_dependencies` anytime after the `_load` method is called.
+We nee to specify the `model_dependencies` key in the `CONFIGURATIONS` map to add the `Tokenizer` and the `Vectorizer` as dependencies:
 
 ```python
-import numpy as np
-import modelkit
-import tensorflow as tf
-
-
 class Classifier(modelkit.Model[str, str]):
     CONFIGURATIONS = {
         "imdb_classifier": {
@@ -30,114 +18,60 @@ class Classifier(modelkit.Model[str, str]):
             "model_dependencies": {"imdb_tokenizer", "imdb_vectorizer"}
         },
     }
-    def _load(self):
-        self.model = tf.keras.models.load_model(self.asset_path)
-        self.tokenizer = self.model_dependencies["imdb_tokenizer"]
-        self.vectorizer = self.model_dependencies["imdb_vectorizer"]
-        self.prediction_mapper = np.vectorize(lambda x: "good" if x >= 0.5 else "bad")
-
-    def _predict_batch(self, reviews):
-        # this looks like the previous end-to-end example from the previous section
-        cleaned_reviews = self.tokenizer.predict_batch(reviews)
-        vectorized_reviews = self.vectorizer.predict_batch(cleaned_reviews, length=64)
-        predictions_scores = self.model.predict(vectorized_reviews)
-        predictions_classes = self.prediction_mapper(predictions_scores).reshape(-1)
-        return predictions_classes
-
-
-model_library = modelkit.ModelLibrary(models=[Tokenizer, Vectorizer, Classifier])
-classifier = model_library.get("imdb_classifier")
-classifier.predict("This movie is freaking awesome, I love the main character")
-# good
-classifier.predict("this movie sucks, it's the worst I have ever seen")
-# bad
 ```
-This definitely looks easier to use, and the classifier now seems more relevant.
 
-### Tests, again
+The `modelkit.ModelLibrary` will take care of loading the model dependencies  before your model is available. They are then made available in the `model_dependencies` attribute, and can readily be used in the `_predict` method.
 
-We might want to add the score, in addition to some tests as well:
+For example:
 
 ```python
-import numpy as np
-import modelkit
-import tensorflow as tf
-
-from typing import Dict, Union
-
-class Classifier(modelkit.Model[str, Dict[str, Union[str, float]]]):
+class Classifier(modelkit.Model):
     CONFIGURATIONS = {
         "imdb_classifier": {
             "asset": "imdb_model.h5",
-            "model_dependencies": {"imdb_tokenizer", "imdb_vectorizer"},
+            "model_dependencies": {"imdb_tokenizer", "imdb_vectorizer"}
         },
     }
-    TEST_CASES = {
-        "cases": [
-            {
-                "item": "i love this film, it's the best i've ever seen",
-                "result": {"score": 0.8441019058227539, "label": "good"},
-            },
-            {
-                "item": "this movie sucks, it's the worst I have ever seen",
-                "result": {"score": 0.1625385582447052, "label": "bad"},
-            },
-        ]
-    }
-
-    def _load(self):
-        self.model = tf.keras.models.load_model(self.asset_path)
-        self.tokenizer = self.model_dependencies["imdb_tokenizer"]
-        self.vectorizer = self.model_dependencies["imdb_vectorizer"]
-        self.prediction_mapper = np.vectorize(lambda x: "good" if x >= 0.5 else "bad")
-
+    ...
     def _predict_batch(self, reviews):
-        cleaned_reviews = self.tokenizer.predict_batch(reviews)
-        vectorized_reviews = self.vectorizer.predict_batch(cleaned_reviews, length=64)
+        # this looks like the previous end-to-end example from the previous section
+        cleaned_reviews = self.model_dependencies["imdb_tokenizer"].predict_batch(reviews)
+        vectorized_reviews = self.model_dependencies["imdb_vectorizer"].predict_batch(cleaned_reviews, length=64)
         predictions_scores = self.model.predict(vectorized_reviews)
-        predictions_classes = self.prediction_mapper(predictions_scores).reshape(-1)
-        predictions = [
-            {"score": score, "label": label}
-            for score, label in zip(predictions_scores, predictions_classes)
-        ]
-        return predictions
-
-
-model_library = modelkit.ModelLibrary(models=[Tokenizer, Vectorizer, Classifier])
-classifier = model_library.get("imdb_classifier")
-classifier.test()
+        return predictions_scores
 ```
 
-### Pydantic
-
-We now output a score and its corresponding label in a `Dict`.
-
-For production usages, Modelkit can leverage the power of Pydantic to validate both input and output items, instead of the standard python way.
-
-It is even more relevant, readable and understandable as your number of input / output features grow (such as a `rating` field in the next example)
-
-The only usage difference: inputs and outputs are now python objects and need to be managed as such.
-
+This end-to-end classifier is much easier to use, and still loadable easily: let us use a `ModelLibrary`:
 
 ```python
+# define the model library with all necessary models
+model_library = modelkit.ModelLibrary(models=[Tokenizer, Vectorizer, Classifier])
 
-from typing import Optional
+# this will load all models
+classifier = model_library.get("imdb_classifier")
+classifier.predict("This movie is freaking awesome, I love the main character")
+```
+## Adding complex output
 
+We may want to output the score as well as a class when using the model. 
+
+Although we could return a dictionary, this can just as easily be achieved by outputing a Pydantic model, which offers more advanced validation features (and is used under the hood in `modelkit`), and can readily be used in fastapi endpoints.
+
+This is really good practice, as it makes your code more understandable (even more so as your number of models grow).
+
+Let us modify our code to specify a `pydantic.BaseModel` as the output of our `Model`, which contains a label and the score.
+
+```python hl_lines="6-8 42"
 import modelkit
 import numpy as np
 import pydantic
 import tensorflow as tf
 
-
-class MovieReviewItem(pydantic.BaseModel):
-    text: str
-    rating: Optional[float] = None  # could be useful in the future ? but not mandatory
-
 class MovieSentimentItem(pydantic.BaseModel):
     label: str
     score: float
 
-class Classifier(modelkit.Model[MovieReviewItem, MovieSentimentItem]):
+class Classifier(modelkit.Model[str, MovieSentimentItem]):
     CONFIGURATIONS = {
         "imdb_classifier": {
             "asset": "imdb_model.h5",
@@ -164,17 +98,24 @@ class Classifier(modelkit.Model[MovieReviewItem, MovieSentimentItem]):
         self.prediction_mapper = np.vectorize(lambda x: "good" if x >= 0.5 else "bad")
 
     def _predict_batch(self, reviews):
-        texts = (review.text for review in reviews)
-        cleaned_reviews = self.tokenizer.predict_batch(texts)
+        cleaned_reviews = self.tokenizer.predict_batch(reviews)
         vectorized_reviews = self.vectorizer.predict_batch(cleaned_reviews, length=64)
         predictions_scores = self.model.predict(vectorized_reviews)
         predictions_classes = self.prediction_mapper(predictions_scores).reshape(-1)
-        predictions = [
+        return [
             {"score": score, "label": label}
             for score, label in zip(predictions_scores, predictions_classes)
         ]
-        return predictions
+```
 
+We also added some `TEST_CASES` to make sure that our model still behaves correctly.
+
+!!! note
+    Although we return a dictionary, it will be turned into a `MovieSentimentItem`, and validated by Pydantic.
+
+We can now test the `Model`:
+
+```python
 model_library = modelkit.ModelLibrary(models=[Tokenizer, Vectorizer, Classifier])
 classifier = model_library.get("imdb_classifier")
 classifier.test()
@@ -187,53 +128,21 @@ print(prediction.score)
 # 0.6801363825798035
 ```
 
-You can also rename your model dependencies from within the `CONFIGURATIONS` map, 
-so that to make some tricky dependencies names more understandable, of if you do not know their exact name in advance:
+## Multiple Model configurations
 
-```python
-import modelkit
+To conclude this tutorial, let us briefly see how to define multiple configurations, and why one would want to do that.
 
-class Classifier(modelkit.Model[MovieReviewItem, MovieSentimentItem]):
-    CONFIGURATIONS = {
-        "imdb_classifier": {
-            "asset": "imdb_model.h5",
-            "model_dependencies": {
-                "tokenizer": "imdb_tokenizer",
-                "vectorizer": "imdb_vectorizer",
-            },  # renaming dependencies here
-        },
-    }
-    def _load(self):
-        self.tokenizer = self.model_dependencies[
-            "tokenizer"
-        ]
-        self.vectorizer = self.model_dependencies[
-            "vectorizer"
-        ]
-    ...
+Assume that our `Classifier` model goes to production and most users are happy with it, but some are not. You start from scratch: redefine a tokenizer, vectorizer, train a new classifier with a different architecture and more data, and save it preciously.
 
-```
+Since you have always been the original guy in the room, all the new models now have a "_SOTA" suffix. You managed to keep the same inputs, outputs, pipeline architecture and made your process reproductible.
 
-### Multiple configurations
+"That should do it !", you yell across the open space.
 
-To conclude this tutorial, let's briefly see how to define multiple configurations, and why.
-
-What if this model went to production, most clients are happy with it, but some are not. 
-You start from scratch: redefining your tokenizer, then your vectorizer, 
-then re-ran your classifier's training loop with a different architecture and more data, and saved it preciously.
-Since you have always been the original guy in the room, all the new models now have a "_SOTA" suffix.
-
-You managed to keep the same inputs, outputs, pipeline architecture and made your process reproductible.
-
-"That should do it !", you are yelling across the open space.
-
-However, you probably do not want to surprise your clients with a new model without informing them before.
-
-Some might want to stick with the old one, while the unhappy ones would want to change ASAP.
+However, you probably do not want to surprise your clients with a new model without informing them before.Some might want to stick with the old one, while the unhappy ones would want to change ASAP.
 
 Modelkit has got your back, and allows you to define multiple configurations while keeping the exact same code.
 
-Here is how you would process:
+Here is how you go about doing this:
 
 ```python
 import modelkit
@@ -280,13 +189,29 @@ class Classifier(modelkit.Model[MovieReviewItem, MovieSentimentItem]):
         },
     }
     ...
+```
 
+In order to use the same code within `_predict`, we have renamed the dependencies, by using a dictionary instead of a set in `model_dependencies`.
+
+The `model_dependencies` attribute of `classifier` and `classifier_SOTA` will have the same `tokenizer` and `vectorizer` keys, but pointing to different `Model`s.
+Also, the `tests_cases` are now part of each individual configuration so that to test each one independently.
+
+Now both of your models are available through the same library:
+
+```python
 model_library = modelkit.ModelLibrary(models=[Tokenizer, Vectorizer, Classifier])
-classifier_deprecated = model_library.get("imdb_classifier")
-classifier_SOTA = model_library.get("imdb_classifier_SOTA")
+classifier_deprecated = model_library.get("classifier")
+classifier_SOTA = model_library.get("classifier_SOTA")
+```
+
+Additionally, you can decide to filter out which one you are interested in (and avoid it being loaded in memory if it is unused), by specifying the `required_models` keyword argument:
+
+```python
+model_library = modelkit.ModelLibrary(
+    required_models=["classifier_SOTA"]
+    models=[Tokenizer, Vectorizer, Classifier]
+)
 ```
 
 As you can see, the `CONFIGURATIONS` map and the dependency renaming helped make this task easier than we may have thought in the first instance.
-
-Also, the `tests_cases` are now part of each individual configuration so that to test each one independently.
 
