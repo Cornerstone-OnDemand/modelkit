@@ -17,7 +17,7 @@ TestItemType = TypeVar("TestItemType")
 LibraryModelsType = Union[ModuleType, Type, List, str]
 
 
-class TestCases(pydantic.generics.GenericModel, Generic[TestItemType, TestReturnType]):
+class TestCase(pydantic.generics.GenericModel, Generic[TestItemType, TestReturnType]):
     item: TestItemType
     result: TestReturnType
     keyword_args: Dict[str, Any] = {}

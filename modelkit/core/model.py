@@ -23,7 +23,7 @@ from rich.tree import Tree
 from structlog import get_logger
 
 from modelkit.core.settings import LibrarySettings
-from modelkit.core.types import ItemType, ReturnType, TestCases
+from modelkit.core.types import ItemType, ReturnType, TestCase
 from modelkit.utils import traceback
 from modelkit.utils.cache import Cache, CacheItem
 from modelkit.utils.memory import PerformanceTracker
@@ -269,7 +269,7 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
             return
 
         model_keys = [model_key] if model_key else cls.CONFIGURATIONS.keys()
-        cls_test_cases: List[TestCases] = []
+        cls_test_cases: List[TestCase] = []
 
         if hasattr(cls, "TEST_CASES"):
             cls_test_cases = cls.TEST_CASES
@@ -277,7 +277,7 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
         for model_key in model_keys:
             for case in cls_test_cases:
                 if isinstance(case, dict):
-                    case = TestCases(**case)
+                    case = TestCase(**case)
                 yield model_key, case.item, case.result, case.keyword_args
 
             conf = cls.CONFIGURATIONS[model_key]
@@ -285,7 +285,7 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
                 continue
             for case in conf["test_cases"]:
                 if isinstance(case, dict):
-                    case = TestCases(**case)
+                    case = TestCase(**case)
                 yield model_key, case.item, case.result, case.keyword_args
 
     def describe(self, t=None):
