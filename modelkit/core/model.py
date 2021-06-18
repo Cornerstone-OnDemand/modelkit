@@ -390,17 +390,17 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
             raise NoPredictOverridenError
 
 
-class ActionWithAttributes(Protocol):
+class CallableWithAttribute(Protocol):
     __call__: Callable
     __not_overriden__: Optional[bool]
 
 
-def not_overriden(func: Callable) -> ActionWithAttributes:
+def not_overriden(func: Callable) -> CallableWithAttribute:
     # Decorating with an attribute while preserving
     # typing is slightly tricky
     # https://github.com/python/mypy/issues/2087
 
-    func_with_attributes = cast(ActionWithAttributes, func)
+    func_with_attributes = cast(CallableWithAttribute, func)
     func_with_attributes.__not_overriden__ = True
     return func_with_attributes
 
