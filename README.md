@@ -5,26 +5,30 @@
     
 ---
 
-`modelkit` is a Python framework to maintain and run machine learning (ML) code in production environments.
+`modelkit` is a Python framework meant to make your ML models robust, reusable and performant in all situations you need to use them.
 
-The key features are:
+It is meant to bridge the gap between the different uses of your algorithms. With `modelkit` you can ensure that the same exact code will run in production, on your machine, or on data processing pipelines.
 
-- **type-safe** Models' inputs and outputs can be validated by [pydantic](https://pydantic-docs.helpmanual.io/)
-- **composable** Models are *composable*: they can depend on other models. 
-- **organized** Store and share your models as regular Python packages.
-- **extensible** Models can rely on arbitrary supporting configurations files called *assets* hosted on local or cloud object stores
+## Features
+
+`modelkit`'s key features are:
+
+- **simple** `modelkit` is just a Python library, you pip install it and you are done.
+- **custom** `modelkit` is useful whenever you need to go beyond off-the-shelf models: custom processing, heuristics, business logic, different frameworks, etc.
+- **framework agnostic** you bring your own framework to the table, and you can use whatever code or library you want. Similarly, `modelkit` is not opinionated about how you build or train your models.
+- **organized** `modelkit` encourages you to version and share you ML library and artifacts with others, as a Python package or as a service. Let others use and evaluate your models!
+- **fast** `modelkit` add minimal overhead to prediction calls. Model predictions can be batched for speed (you define the batching logic).
+- **fast to code** Models only need to define their prediction logic and that's it. No cumbersome pre or postprocessing logic, branching options, etc... The boilerplate code is minimal and sensible.
+- **fast to deploy** Models can be served in a single CLI call using [fastapi](https://fastapi.tiangolo.com/)
+
+And more:
+
+- **composable** Models can depend on other models, and evaluate them however you need tp.
+- **extensible** Models can rely on arbitrary supporting configurations files called _assets_ hosted on local or cloud object stores
+- **type-safe** Models' inputs and outputs can be validated by [pydantic](https://pydantic-docs.helpmanual.io/), you get type annotations for your predictions and can catch errors with static type analysis tools during development.
+- **async** Models support async and sync prediction functions. `modelkit` supports calling async code from sync code so you don't have to suffer from partially async code.
 - **testable** Models carry their own unit test cases, and unit testing fixtures are available for [pytest](https://docs.pytest.org/en/6.2.x/)
-- **fast to code** Models can be served in a single CLI call using [fastapi](https://fastapi.tiangolo.com/)
-- **fast** Models' predictions can be batched for speed
-- **async** Models support async and synchronous prediction functions
-
-The philoshy:
-
-- **a clear focus on ML inference/prediction services** ModelKit is not meant to tool ML activities as data mining, model exploration (design, feature engineering) or model evaluation. Our framework is meant for production-ready ML models and focus the robustness, reusability and technical performance of their related prediction services.
-- **as simple and transparent as possible** No magic auto-deployment of model into production, no modelKit UI with workflows or internal states. This is just a python framework to organize your model code and build related apis.
-- **meant for custom models** ModelKit find its strength if you need to go beyond off-the-shelf models: python custom processings, inter-dependencies to other custom models, custom "batch predict" implementations, custom model configurations...
-- **meant to follow software development good practices** every code and configuration will be on your git, models are meant to be tested in git and versionned on file stores, related services are created with specific list of models in input to allow RAM/CPU optimization, etc.
-- **meant to easily share your models with others** As ModelKit models can be easily shared as python package or api, this is a powerful way to let other people or teams use your model and deploy them in production if needed
+- **robust** `modelkit` helps you follow software development best practices: all configurations and artifacts are explicitly versioned and tested.
 
 ## Installation
 
