@@ -28,6 +28,9 @@ class AssetsManager:
         self.remote_assets_store = None
         if settings.remote_store:
             self.remote_assets_store = RemoteAssetsStore(**settings.remote_store.dict())
+            logger.debug("AssetsManager created with remote storage provider")
+        else:
+            logger.debug("AssetsManager created without a remote storage provider")
 
     def get_local_versions_info(self, name):
         if os.path.isdir(name):
