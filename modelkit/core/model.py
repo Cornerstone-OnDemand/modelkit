@@ -387,7 +387,7 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
                 raise BothPredictsOverridenError()
             self._predict_mode = PredictMode.BATCH
         if not self._predict_mode:
-            raise NoPredictOverridenError
+            raise NoPredictOverridenError("_predict or _predict_batch must be overriden")
 
 
 class CallableWithAttribute(Protocol):
