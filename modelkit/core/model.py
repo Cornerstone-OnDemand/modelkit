@@ -22,9 +22,9 @@ from rich.markup import escape
 from rich.tree import Tree
 from structlog import get_logger
 
+from modelkit.core import errors
 from modelkit.core.settings import LibrarySettings
 from modelkit.core.types import ItemType, ReturnType, TestCase
-from modelkit.utils import traceback
 from modelkit.utils.cache import Cache, CacheItem
 from modelkit.utils.memory import PerformanceTracker
 from modelkit.utils.pretty import describe, pretty_print_type
@@ -186,7 +186,7 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
                         __base__=InternalDataModel,
                     )
         except Exception as exc:
-            raise traceback.ValidationInitializationException(
+            raise errors.ValidationInitializationException(
                 f"{self.__class__.__name__}[{self.configuration_key}]", pydantic_exc=exc
             )
 
@@ -290,7 +290,7 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
         self,
         item: Any,
         model: Union[Type[InternalDataModel], None],
-        exception: Type[traceback.ModelkitDataValidationException],
+        exception: Type[errors.ModelkitDataValidationException],
     ):
         if model:
             try:
@@ -356,7 +356,7 @@ class Model(AbstractModel[ItemType, ReturnType]):
     def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
         return [self._predict(p, **kwargs) for p in items]
 
-    @traceback.wrap_modelkit_exceptions
+    @errors.wrap_modelkit_exceptions
     def __call__(
         self,
         item: ItemType,
@@ -367,7 +367,7 @@ class Model(AbstractModel[ItemType, ReturnType]):
             item, _force_compute=_force_compute, __internal=True, **kwargs
         )
 
-    @traceback.wrap_modelkit_exceptions
+    @errors.wrap_modelkit_exceptions
     def predict(
         self,
         item: ItemType,
@@ -380,7 +380,7 @@ class Model(AbstractModel[ItemType, ReturnType]):
             )
         )
 
-    @traceback.wrap_modelkit_exceptions
+    @errors.wrap_modelkit_exceptions
     def predict_batch(
         self,
         items: List[ItemType],
@@ -403,7 +403,7 @@ class Model(AbstractModel[ItemType, ReturnType]):
             )
         )
 
-    @traceback.wrap_modelkit_exceptions_gen
+    @errors.wrap_modelkit_exceptions_gen
     def predict_gen(
         self,
         items: Iterator[ItemType],
@@ -487,16 +487,14 @@ class Model(AbstractModel[ItemType, ReturnType]):
         **kwargs,
     ) -> Iterator[ReturnType]:
         batch = [
-            self._validate(
-                res.item, self._item_model, traceback.ItemValidationException
-            )
+            self._validate(res.item, self._item_model, errors.ItemValidationException)
             for res in cache_items
             if res.missing
         ]
         try:
             predictions = iter(self._predict_batch(batch, **kwargs))
         except BaseException as exc:
-            raise traceback.PredictionError(exc=exc)
+            raise errors.PredictionError(exc=exc)
         for cache_item in cache_items:
             if cache_item.missing:
                 r = next(predictions)
@@ -510,13 +508,13 @@ class Model(AbstractModel[ItemType, ReturnType]):
                 yield self._validate(
                     r,
                     self._return_model,
-                    traceback.ReturnValueValidationException,
+                    errors.ReturnValueValidationException,
                 )
             else:
                 yield self._validate(
                     cache_item.cache_value,
                     self._return_model,
-                    traceback.ReturnValueValidationException,
+                    errors.ReturnValueValidationException,
                 )
         if _callback:
             _callback(_step, batch, predictions)
@@ -533,7 +531,7 @@ class AsyncModel(AbstractModel[ItemType, ReturnType]):
     async def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
         return [await self._predict(p, **kwargs) for p in items]
 
-    @traceback.wrap_modelkit_exceptions_async
+    @errors.wrap_modelkit_exceptions_async
     async def __call__(
         self,
         item: ItemType,
@@ -544,7 +542,7 @@ class AsyncModel(AbstractModel[ItemType, ReturnType]):
             item, _force_compute=_force_compute, __internal=True, **kwargs
         )
 
-    @traceback.wrap_modelkit_exceptions_async
+    @errors.wrap_modelkit_exceptions_async
     async def predict(
         self,
         item: ItemType,
@@ -557,7 +555,7 @@ class AsyncModel(AbstractModel[ItemType, ReturnType]):
             break
         return r
 
-    @traceback.wrap_modelkit_exceptions_async
+    @errors.wrap_modelkit_exceptions_async
     async def predict_batch(
         self,
         items: List[ItemType],
@@ -581,7 +579,7 @@ class AsyncModel(AbstractModel[ItemType, ReturnType]):
             )
         ]
 
-    @traceback.wrap_modelkit_exceptions_gen_async
+    @errors.wrap_modelkit_exceptions_gen_async
     async def predict_gen(
         self,
         items: Iterator[ItemType],
@@ -654,16 +652,14 @@ class AsyncModel(AbstractModel[ItemType, ReturnType]):
         **kwargs,
     ) -> AsyncIterator[ReturnType]:
         batch = [
-            self._validate(
-                res.item, self._item_model, traceback.ItemValidationException
-            )
+            self._validate(res.item, self._item_model, errors.ItemValidationException)
             for res in cache_items
             if res.missing
         ]
         try:
             predictions = iter(await self._predict_batch(batch, **kwargs))
         except BaseException as exc:
-            raise traceback.PredictionError(exc=exc)
+            raise errors.PredictionError(exc=exc)
         for cache_item in cache_items:
             if cache_item.missing:
                 r = next(predictions)
@@ -677,13 +673,13 @@ class AsyncModel(AbstractModel[ItemType, ReturnType]):
                 yield self._validate(
                     r,
                     self._return_model,
-                    traceback.ReturnValueValidationException,
+                    errors.ReturnValueValidationException,
                 )
             else:
                 yield self._validate(
                     cache_item.cache_value,
                     self._return_model,
-                    traceback.ReturnValueValidationException,
+                    errors.ReturnValueValidationException,
                 )
         if _callback:
             _callback(_step, batch, predictions)
