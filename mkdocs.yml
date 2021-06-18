@@ -4,7 +4,7 @@ site_description: 'Library for machine learning models'
 
 nav:
   - Home: 'index.md'
-  - Tutorial:
+  - Developer guides:
     - Models: 'library/overview.md'
     - Getting predictions: 'library/using_models.md'
     - Developing models: 'library/developing_modelkit.md'
@@ -14,6 +14,14 @@ nav:
     - Specific models:
       - Tensorflow models: 'library/special/tensorflow.md'
       - Distant Models: 'library/special/distant.md'
+  - Tutorials:
+      - NLP x Sentiment Analysis:
+        - 'examples/nlp_sentiment/intro.md'
+        - Tokenizer: 'examples/nlp_sentiment/tokenizer.md'
+        - Vectorizer: 'examples/nlp_sentiment/vectorizer.md'
+        - Classifier: 'examples/nlp_sentiment/classifier.md'
+        - Advanced models: 'examples/nlp_sentiment/advanced_models.md'
+        - "TL;DR": 'examples/nlp_sentiment/tldr.md'
   - Configuration:
     - Configuration: 'configuration.md'
   - CLI: 'cli.md'
@@ -28,6 +36,8 @@ theme:
   name: 'material'
   features:
     - tabs
+    - navigation.indexes
+    - navigation.instant
 
 markdown_extensions:
   - pymdownx.highlight
