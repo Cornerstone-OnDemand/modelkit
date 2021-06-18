@@ -203,35 +203,33 @@ To do so, we use the `keyword_args` field in the test cases:
 class Vectorizer(modelkit.Model[List[str], List[int]]):
     ...
 
-    TEST_CASES = {
-        "cases": [
-            {"item": [], "result": []},
-            {"item": [], "keyword_args": {"length": 10}, "result": [0] * 10},
-            {"item": ["movie"], "result": [888]},
-            {"item": ["unknown_token"], "result": []},
-            {
-                "item": ["unknown_token"],
-                "keyword_args": {"drop_oov": False},
-                "result": [1],
-            },
-            {"item": ["movie", "unknown_token", "scenes"], "result": [888, 1156]},
-            {
-                "item": ["movie", "unknown_token", "scenes"],
-                "keyword_args": {"drop_oov": False},
-                "result": [888, 1, 1156],
-            },
-            {
-                "item": ["movie", "unknown_token", "scenes"],
-                "keyword_args": {"length": 10},
-                "result": [888, 1156, 0, 0, 0, 0, 0, 0, 0, 0],
-            },
-            {
-                "item": ["movie", "unknown_token", "scenes"],
-                "keyword_args": {"length": 10, "drop_oov": False},
-                "result": [888, 1, 1156, 0, 0, 0, 0, 0, 0, 0],
-            },
-        ]
-    }
+    TEST_CASES = [
+        {"item": [], "result": []},
+        {"item": [], "keyword_args": {"length": 10}, "result": [0] * 10},
+        {"item": ["movie"], "result": [888]},
+        {"item": ["unknown_token"], "result": []},
+        {
+            "item": ["unknown_token"],
+            "keyword_args": {"drop_oov": False},
+            "result": [1],
+        },
+        {"item": ["movie", "unknown_token", "scenes"], "result": [888, 1156]},
+        {
+            "item": ["movie", "unknown_token", "scenes"],
+            "keyword_args": {"drop_oov": False},
+            "result": [888, 1, 1156],
+        },
+        {
+            "item": ["movie", "unknown_token", "scenes"],
+            "keyword_args": {"length": 10},
+            "result": [888, 1156, 0, 0, 0, 0, 0, 0, 0, 0],
+        },
+        {
+            "item": ["movie", "unknown_token", "scenes"],
+            "keyword_args": {"length": 10, "drop_oov": False},
+            "result": [888, 1, 1156, 0, 0, 0, 0, 0, 0, 0],
+        },
+    ]
     ...
 ``` 
 
@@ -248,35 +246,33 @@ from typing import List
 
 class Vectorizer(modelkit.Model[List[str], List[int]]):
     CONFIGURATIONS = {"imdb_vectorizer": {"asset": "vocabulary.txt"}}
-    TEST_CASES = {
-        "cases": [
-            {"item": [], "result": []},
-            {"item": [], "keyword_args": {"length": 10}, "result": [0] * 10},
-            {"item": ["movie"], "result": [888]},
-            {"item": ["unknown_token"], "result": []},
-            {
-                "item": ["unknown_token"],
-                "keyword_args": {"drop_oov": False},
-                "result": [1],
-            },
-            {"item": ["movie", "unknown_token", "scenes"], "result": [888, 1156]},
-            {
-                "item": ["movie", "unknown_token", "scenes"],
-                "keyword_args": {"drop_oov": False},
-                "result": [888, 1, 1156],
-            },
-            {
-                "item": ["movie", "unknown_token", "scenes"],
-                "keyword_args": {"length": 10},
-                "result": [888, 1156, 0, 0, 0, 0, 0, 0, 0, 0],
-            },
-            {
-                "item": ["movie", "unknown_token", "scenes"],
-                "keyword_args": {"length": 10, "drop_oov": False},
-                "result": [888, 1, 1156, 0, 0, 0, 0, 0, 0, 0],
-            },
-        ]
-    }
+    TEST_CASES = [
+        {"item": [], "result": []},
+        {"item": [], "keyword_args": {"length": 10}, "result": [0] * 10},
+        {"item": ["movie"], "result": [888]},
+        {"item": ["unknown_token"], "result": []},
+        {
+            "item": ["unknown_token"],
+            "keyword_args": {"drop_oov": False},
+            "result": [1],
+        },
+        {"item": ["movie", "unknown_token", "scenes"], "result": [888, 1156]},
+        {
+            "item": ["movie", "unknown_token", "scenes"],
+            "keyword_args": {"drop_oov": False},
+            "result": [888, 1, 1156],
+        },
+        {
+            "item": ["movie", "unknown_token", "scenes"],
+            "keyword_args": {"length": 10},
+            "result": [888, 1156, 0, 0, 0, 0, 0, 0, 0, 0],
+        },
+        {
+            "item": ["movie", "unknown_token", "scenes"],
+            "keyword_args": {"length": 10, "drop_oov": False},
+            "result": [888, 1, 1156, 0, 0, 0, 0, 0, 0, 0],
+        },
+    ]
 
     def _load(self):
         self.vocabulary = {}

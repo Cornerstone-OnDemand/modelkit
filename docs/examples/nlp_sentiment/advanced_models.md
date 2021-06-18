@@ -6,11 +6,13 @@ Let's see how we can put it all together, while reviewing all Modelkit's feature
 
 `modelkit`'s allows you to add models as dependencies of other models, and use them in the `_predict` methods.
 
-For example, it is desirable for our classifier to take string reviews as input, and output a class label ("good" or "bad") alongside the score. This can be achieved using model dependencies.
+For example, it is desirable for our classifier to take string reviews as input, and output a class label ("good" or "bad"). This can be achieved using model dependencies.
 
-We nee to specify the `model_dependencies` key in the `CONFIGURATIONS` map to add the `Tokenizer` and the `Vectorizer` as dependencies:
+We need to specify the `model_dependencies` key in the `CONFIGURATIONS` map to add the `Tokenizer` and the `Vectorizer` as dependencies:
 
 ```python
+import modelkit
+
 class Classifier(modelkit.Model[str, str]):
     CONFIGURATIONS = {
         "imdb_classifier": {
@@ -25,7 +27,9 @@ The `modelkit.ModelLibrary` will take care of loading the model dependencies  be
 For example:
 
 ```python
-class Classifier(modelkit.Model):
+import modelkit
+
+class Classifier(modelkit.Model[str, str]):
     CONFIGURATIONS = {
         "imdb_classifier": {
             "asset": "imdb_model.h5",
@@ -35,10 +39,11 @@ class Classifier(modelkit.Model):
     ...
     def _predict_batch(self, reviews):
         # this looks like the previous end-to-end example from the previous section
-        cleaned_reviews = self.model_dependencies["imdb_tokenizer"].predict_batch(reviews)
-        vectorized_reviews = self.model_dependencies["imdb_vectorizer"].predict_batch(cleaned_reviews, length=64)
+        tokenized_reviews = self.model_dependencies["imdb_tokenizer"].predict_batch(reviews)
+        vectorized_reviews = self.model_dependencies["imdb_vectorizer"].predict_batch(tokenized_reviews, length=64)
         predictions_scores = self.model.predict(vectorized_reviews)
-        return predictions_scores
+        predictions_classes = ["good" if score >= 0.5 else "bad" for score in predictions_scores]
+        return predictions_classes
 ```
 
 This end-to-end classifier is much easier to use, and still loadable easily: let us use a `ModelLibrary`:
@@ -50,6 +55,7 @@ model_library = modelkit.ModelLibrary(models=[Tokenizer, Vectorizer, Classifier]
 # this will load all models
 classifier = model_library.get("imdb_classifier")
 classifier.predict("This movie is freaking awesome, I love the main character")
+# good 
 ```
 ## Adding complex output
 
@@ -78,33 +84,30 @@ class Classifier(modelkit.Model[str, MovieSentimentItem]):
             "model_dependencies": {"imdb_tokenizer", "imdb_vectorizer"},
         },
     }
-    TEST_CASES = {
-        "cases": [
-            {
-                "item": {"text": "i love this film, it's the best I've ever seen"},
-                "result": {"score": 0.8441019058227539, "label": "good"},
-            },
-            {
-                "item": {"text": "this movie sucks, it's the worst I have ever seen"},
-                "result": {"score": 0.1625385582447052, "label": "bad"},
-            },
-        ]
-    }
+    TEST_CASES = [
+        {
+            "item": {"text": "i love this film, it's the best I've ever seen"},
+            "result": {"score": 0.8441019058227539, "label": "good"},
+        },
+        {
+            "item": {"text": "this movie sucks, it's the worst I have ever seen"},
+            "result": {"score": 0.1625385582447052, "label": "bad"},
+        },
+    ]
 
     def _load(self):
         self.model = tf.keras.models.load_model(self.asset_path)
         self.tokenizer = self.model_dependencies["imdb_tokenizer"]
         self.vectorizer = self.model_dependencies["imdb_vectorizer"]
-        self.prediction_mapper = np.vectorize(lambda x: "good" if x >= 0.5 else "bad")
 
     def _predict_batch(self, reviews):
-        cleaned_reviews = self.tokenizer.predict_batch(reviews)
-        vectorized_reviews = self.vectorizer.predict_batch(cleaned_reviews, length=64)
+        texts = [reviews.text for review in reviews]
+        tokenized_reviews = self.tokenizer.predict_batch(texts)
+        vectorized_reviews = self.vectorizer.predict_batch(tokenized_reviews, length=64)
         predictions_scores = self.model.predict(vectorized_reviews)
-        predictions_classes = self.prediction_mapper(predictions_scores).reshape(-1)
         return [
-            {"score": score, "label": label}
-            for score, label in zip(predictions_scores, predictions_classes)
+            {"score": score, "label": "good" if score >= 0.5 else "bad"}
+            for score in predictions_scores
         ]
 ```
 

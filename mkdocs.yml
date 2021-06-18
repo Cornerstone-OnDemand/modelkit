@@ -20,7 +20,7 @@ nav:
         - Tokenizer: 'examples/nlp_sentiment/tokenizer.md'
         - Vectorizer: 'examples/nlp_sentiment/vectorizer.md'
         - Classifier: 'examples/nlp_sentiment/classifier.md'
-        - Advanced models: 'examples/nlp_sentiment/wiring_things_up.md'
+        - Advanced models: 'examples/nlp_sentiment/advanced_models.md'
         - "TL;DR": 'examples/nlp_sentiment/tldr.md'
   - Configuration:
     - Configuration: 'configuration.md'

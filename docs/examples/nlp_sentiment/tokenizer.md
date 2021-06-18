@@ -176,24 +176,22 @@ import spacy
 
 
 class Tokenizer(modelkit.Model):
-    TEST_CASES = {
-        "cases": [
-            {"item": "", "result": []},
-            {"item": "NLP 101", "result": ["nlp"]},
-            {
-                "item": "I'm loving the spaCy 101 course !!!ù*`^@😀",
-                "result": ["loving", "spacy", "course"],
-            },
-            {
-                "item": "<br/>prepare things for IMDB<br/>",
-                "result": ["prepare", "things", "imdb"],
-            },
-            {
-                "item": "<br/>a b c data<br/>      e scientist",
-                "result": ["data", "scientist", "failing", "test"],
-            },  # fails as intended
-        ]
-    }
+    TEST_CASES = [
+        {"item": "", "result": []},
+        {"item": "NLP 101", "result": ["nlp"]},
+        {
+            "item": "I'm loving the spaCy 101 course !!!ù*`^@😀",
+            "result": ["loving", "spacy", "course"],
+        },
+        {
+            "item": "<br/>prepare things for IMDB<br/>",
+            "result": ["prepare", "things", "imdb"],
+        },
+        {
+            "item": "<br/>a b c data<br/>      e scientist",
+            "result": ["data", "scientist", "failing", "test"],
+        },  # fails as intended
+    ]
 
     def _load(self):
         self.nlp = spacy.load(
@@ -264,24 +262,22 @@ import spacy
 
 
 class Tokenizer(modelkit.Model[str, List[str]]):
-    TEST_CASES = {
-        "cases": [
-            {"item": "", "result": []},
-            {"item": "NLP 101", "result": ["nlp"]},
-            {
-                "item": "I'm loving the spaCy 101 course !!!ù*`^@😀",
-                "result": ["loving", "spacy", "course"],
-            },
-            {
-                "item": "<br/>prepare things for IMDB<br/>",
-                "result": ["prepare", "things", "imdb"],
-            },
-            {
-                "item": "<br/>a b c data<br/>      e scientist",
-                "result": ["data", "scientist", "failing", "test"],
-            },  # fails as intended
-        ]
-    }
+    TEST_CASES = [
+        {"item": "", "result": []},
+        {"item": "NLP 101", "result": ["nlp"]},
+        {
+            "item": "I'm loving the spaCy 101 course !!!ù*`^@😀",
+            "result": ["loving", "spacy", "course"],
+        },
+        {
+            "item": "<br/>prepare things for IMDB<br/>",
+            "result": ["prepare", "things", "imdb"],
+        },
+        {
+            "item": "<br/>a b c data<br/>      e scientist",
+            "result": ["data", "scientist", "failing", "test"],
+        },  # fails as intended
+    ]
 
     def _load(self):
         self.nlp = spacy.load(
@@ -347,24 +343,22 @@ import spacy
 
 class Tokenizer(modelkit.Model[str, List[str]]):
     CONFIGURATIONS = {"imdb_tokenizer": {}}
-    TEST_CASES = {
-        "cases": [
-            {"item": "", "result": []},
-            {"item": "NLP 101", "result": ["nlp"]},
-            {
-                "item": "I'm loving the spaCy 101 course !!!ù*`^@😀",
-                "result": ["loving", "spacy", "course"],
-            },
-            {
-                "item": "<br/>prepare things for IMDB<br/>",
-                "result": ["prepare", "things", "imdb"],
-            },
-            {
-                "item": "<br/>a b c data<br/>      e scientist",
-                "result": ["data", "scientist"],
-            },
-        ]
-    }
+    TEST_CASES = [
+        {"item": "", "result": []},
+        {"item": "NLP 101", "result": ["nlp"]},
+        {
+            "item": "I'm loving the spaCy 101 course !!!ù*`^@😀",
+            "result": ["loving", "spacy", "course"],
+        },
+        {
+            "item": "<br/>prepare things for IMDB<br/>",
+            "result": ["prepare", "things", "imdb"],
+        },
+        {
+            "item": "<br/>a b c data<br/>      e scientist",
+            "result": ["data", "scientist"],
+        },
+    ]
 
     def _load(self):
         self.nlp = spacy.load(

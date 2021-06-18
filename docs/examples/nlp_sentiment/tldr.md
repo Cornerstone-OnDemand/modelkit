@@ -12,24 +12,22 @@ import tensorflow as tf
 
 class Tokenizer(modelkit.Model[str, List[str]]):
     CONFIGURATIONS = {"imdb_tokenizer": {}}
-    TEST_CASES = {
-        "cases": [
-            {"item": "", "result": []},
-            {"item": "NLP 101", "result": ["nlp"]},
-            {
-                "item": "I'm loving the spaCy 101 course !!!ù*`^@😀",
-                "result": ["loving", "spacy", "course"],
-            },
-            {
-                "item": "<br/>prepare things for IMDB<br/>",
-                "result": ["prepare", "things", "imdb"],
-            },
-            {
-                "item": "<br/>a b c data<br/>      e scientist",
-                "result": ["data", "scientist"],
-            },
-        ]
-    }
+    TEST_CASES = [
+        {"item": "", "result": []},
+        {"item": "NLP 101", "result": ["nlp"]},
+        {
+            "item": "I'm loving the spaCy 101 course !!!ù*`^@😀",
+            "result": ["loving", "spacy", "course"],
+        },
+        {
+            "item": "<br/>prepare things for IMDB<br/>",
+            "result": ["prepare", "things", "imdb"],
+        },
+        {
+            "item": "<br/>a b c data<br/>      e scientist",
+            "result": ["data", "scientist"],
+        },
+    ]
 
     def _load(self):
         self.nlp = spacy.load(
@@ -63,35 +61,33 @@ class Tokenizer(modelkit.Model[str, List[str]]):
 
 class Vectorizer(modelkit.Model[List[str], List[int]]):
     CONFIGURATIONS = {"imdb_vectorizer": {"asset": "vocabulary.txt"}}
-    TEST_CASES = {
-        "cases": [
-            {"item": [], "result": []},
-            {"item": [], "keyword_args": {"length": 10}, "result": [0] * 10},
-            {"item": ["movie"], "result": [888]},
-            {"item": ["unknown_token"], "result": []},
-            {
-                "item": ["unknown_token"],
-                "keyword_args": {"drop_oov": False},
-                "result": [1],
-            },
-            {"item": ["movie", "unknown_token", "scenes"], "result": [888, 1156]},
-            {
-                "item": ["movie", "unknown_token", "scenes"],
-                "keyword_args": {"drop_oov": False},
-                "result": [888, 1, 1156],
-            },
-            {
-                "item": ["movie", "unknown_token", "scenes"],
-                "keyword_args": {"length": 10},
-                "result": [888, 1156, 0, 0, 0, 0, 0, 0, 0, 0],
-            },
-            {
-                "item": ["movie", "unknown_token", "scenes"],
-                "keyword_args": {"length": 10, "drop_oov": False},
-                "result": [888, 1, 1156, 0, 0, 0, 0, 0, 0, 0],
-            },
-        ]
-    }
+    TEST_CASES = [
+        {"item": [], "result": []},
+        {"item": [], "keyword_args": {"length": 10}, "result": [0] * 10},
+        {"item": ["movie"], "result": [888]},
+        {"item": ["unknown_token"], "result": []},
+        {
+            "item": ["unknown_token"],
+            "keyword_args": {"drop_oov": False},
+            "result": [1],
+        },
+        {"item": ["movie", "unknown_token", "scenes"], "result": [888, 1156]},
+        {
+            "item": ["movie", "unknown_token", "scenes"],
+            "keyword_args": {"drop_oov": False},
+            "result": [888, 1, 1156],
+        },
+        {
+            "item": ["movie", "unknown_token", "scenes"],
+            "keyword_args": {"length": 10},
+            "result": [888, 1156, 0, 0, 0, 0, 0, 0, 0, 0],
+        },
+        {
+            "item": ["movie", "unknown_token", "scenes"],
+            "keyword_args": {"length": 10, "drop_oov": False},
+            "result": [888, 1, 1156, 0, 0, 0, 0, 0, 0, 0],
+        },
+    ]
 
     def _load(self):
         self.vocabulary = {}
@@ -118,9 +114,7 @@ class Vectorizer(modelkit.Model[List[str], List[int]]):
 
 class MovieReviewItem(pydantic.BaseModel):
     text: str
-    rating: Optional[
-        float
-    ] = None  # could be useful in the future ? but not mandatory
+    rating: Optional[float] = None  # could be useful in the future ? but not mandatory
 
 
 class MovieSentimentItem(pydantic.BaseModel):
@@ -138,34 +132,30 @@ class Classifier(modelkit.Model[MovieReviewItem, MovieSentimentItem]):
             },
         },
     }
-    TEST_CASES = {
-        "cases": [
-            {
-                "item": {"text": "i love this film, it's the best I've ever seen"},
-                "result": {"score": 0.8441019058227539, "label": "good"},
-            },
-            {
-                "item": {"text": "this movie sucks, it's the worst I have ever seen"},
-                "result": {"score": 0.1625385582447052, "label": "bad"},
-            },
-        ]
-    }
+    TEST_CASES = [
+        {
+            "item": {"text": "i love this film, it's the best I've ever seen"},
+            "result": {"score": 0.8441019058227539, "label": "good"},
+        },
+        {
+            "item": {"text": "this movie sucks, it's the worst I have ever seen"},
+            "result": {"score": 0.1625385582447052, "label": "bad"},
+        },
+    ]
 
     def _load(self):
         self.model = tf.keras.models.load_model(self.asset_path)
         self.tokenizer = self.model_dependencies["tokenizer"]
         self.vectorizer = self.model_dependencies["vectorizer"]
-        self.prediction_mapper = np.vectorize(lambda x: "good" if x >= 0.5 else "bad")
 
     def _predict_batch(self, reviews):
-        texts = (review.text for review in reviews)
-        cleaned_reviews = self.tokenizer.predict_batch(texts)
-        vectorized_reviews = self.vectorizer.predict_batch(cleaned_reviews, length=64)
+        texts = [review.text for review in reviews]
+        tokenized_reviews = self.tokenizer.predict_batch(texts)
+        vectorized_reviews = self.vectorizer.predict_batch(tokenized_reviews, length=64)
         predictions_scores = self.model.predict(vectorized_reviews)
-        predictions_classes = self.prediction_mapper(predictions_scores).reshape(-1)
         predictions = [
-            {"score": score, "label": label}
-            for score, label in zip(predictions_scores, predictions_classes)
+            {"score": score, "label": "good" if score >= 0.5 else "bad"}
+            for score in predictions_scores
         ]
         return predictions
 
@@ -173,6 +163,5 @@ class Classifier(modelkit.Model[MovieReviewItem, MovieSentimentItem]):
 model_library = modelkit.ModelLibrary(models=[Tokenizer, Vectorizer, Classifier])
 classifier = model_library.get("imdb_classifier")
 prediction = classifier.predict({"text": "I love the main character"})
-print(prediction)
-# good
+print(prediction.label)
 ```
