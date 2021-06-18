@@ -25,9 +25,9 @@ from rich.tree import Tree
 from structlog import get_logger
 from typing_extensions import Protocol
 
+from modelkit.core import errors
 from modelkit.core.settings import LibrarySettings
 from modelkit.core.types import ItemType, ReturnType, TestCase
-from modelkit.utils import traceback
 from modelkit.utils.cache import Cache, CacheItem
 from modelkit.utils.memory import PerformanceTracker
 from modelkit.utils.pretty import describe, pretty_print_type
@@ -122,59 +122,6 @@ class InternalDataModel(pydantic.BaseModel):
 PYDANTIC_ERROR_TRUNCATION = 20
 
 
-class ModelkitDataValidationException(Exception):
-    def __init__(
-        self,
-        model_identifier: str,
-        pydantic_exc: Optional[pydantic.error_wrappers.ValidationError] = None,
-        error_str: str = "Data validation error in model",
-    ):
-        pydantic_exc_output = ""
-        if pydantic_exc:
-            exc_lines = str(pydantic_exc).split("\n")
-            if len(exc_lines) > PYDANTIC_ERROR_TRUNCATION:
-                pydantic_exc_output += "Pydantic error message "
-                pydantic_exc_output += (
-                    f"(truncated to {PYDANTIC_ERROR_TRUNCATION} lines):\n"
-                )
-                pydantic_exc_output += "\n".join(exc_lines[:PYDANTIC_ERROR_TRUNCATION])
-                pydantic_exc_output += (
-                    f"\n({len(exc_lines)-PYDANTIC_ERROR_TRUNCATION} lines truncated)"
-                )
-            else:
-                pydantic_exc_output += "Pydantic error message:\n"
-                pydantic_exc_output += str(pydantic_exc)
-
-        super().__init__(f"{error_str} `{model_identifier}`.\n" + pydantic_exc_output)
-
-
-class ValidationInitializationException(ModelkitDataValidationException):
-    def __init__(self, *args, **kwargs):
-        super().__init__(
-            *args,
-            error_str="Exception when setting up pydantic validation models",
-            pydantic_exc=kwargs.pop("pydantic_exc"),
-        )
-
-
-class ReturnValueValidationException(ModelkitDataValidationException):
-    def __init__(self, *args, **kwargs):
-        super().__init__(
-            *args,
-            error_str="Return value validation error when calling model",
-            pydantic_exc=kwargs.pop("pydantic_exc"),
-        )
-
-
-class ItemValidationException(ModelkitDataValidationException):
-    def __init__(self, *args, **kwargs):
-        super().__init__(
-            *args,
-            error_str="Predict item validation error when calling model",
-            pydantic_exc=kwargs.pop("pydantic_exc"),
-        )
-
-
 class AbstractModel(Asset, Generic[ItemType, ReturnType]):
     """
     Model
@@ -244,7 +191,7 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
                         __base__=InternalDataModel,
                     )
         except Exception as exc:
-            raise ValidationInitializationException(
+            raise errors.ValidationInitializationException(
                 f"{self.__class__.__name__}[{self.configuration_key}]", pydantic_exc=exc
             )
 
@@ -348,7 +295,7 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
         self,
         item: Any,
         model: Union[Type[InternalDataModel], None],
-        exception: Type[ModelkitDataValidationException],
+        exception: Type[errors.ModelkitDataValidationException],
     ):
         if model:
             try:
@@ -454,16 +401,18 @@ class Model(AbstractModel[ItemType, ReturnType]):
     def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
         return [self._predict(p, **kwargs) for p in items]
 
-    @traceback.wrap_modelkit_exceptions
+    @errors.wrap_modelkit_exceptions
     def __call__(
         self,
         item: ItemType,
         _force_compute: bool = False,
         **kwargs,
     ) -> ReturnType:
-        return self.predict(item, _force_compute=_force_compute, **kwargs)
+        return self.predict(
+            item, _force_compute=_force_compute, __internal=True, **kwargs
+        )
 
-    @traceback.wrap_modelkit_exceptions
+    @errors.wrap_modelkit_exceptions
     def predict(
         self,
         item: ItemType,
@@ -471,10 +420,12 @@ class Model(AbstractModel[ItemType, ReturnType]):
         **kwargs,
     ) -> ReturnType:
         return next(
-            self.predict_gen(iter((item,)), _force_compute=_force_compute, **kwargs)
+            self.predict_gen(
+                iter((item,)), _force_compute=_force_compute, __internal=True, **kwargs
+            )
         )
 
-    @traceback.wrap_modelkit_exceptions
+    @errors.wrap_modelkit_exceptions
     def predict_batch(
         self,
         items: List[ItemType],
@@ -492,11 +443,12 @@ class Model(AbstractModel[ItemType, ReturnType]):
                 _callback=_callback,
                 batch_size=batch_size,
                 _force_compute=_force_compute,
+                __internal=True,
                 **kwargs,
             )
         )
 
-    @traceback.wrap_modelkit_exceptions_gen
+    @errors.wrap_modelkit_exceptions_gen
     def predict_gen(
         self,
         items: Iterator[ItemType],
@@ -580,11 +532,14 @@ class Model(AbstractModel[ItemType, ReturnType]):
         **kwargs,
     ) -> Iterator[ReturnType]:
         batch = [
-            self._validate(res.item, self._item_model, ItemValidationException)
+            self._validate(res.item, self._item_model, errors.ItemValidationException)
             for res in cache_items
             if res.missing
         ]
-        predictions = iter(self._predict_batch(batch, **kwargs))
+        try:
+            predictions = iter(self._predict_batch(batch, **kwargs))
+        except BaseException as exc:
+            raise errors.PredictionError(exc=exc)
         for cache_item in cache_items:
             if cache_item.missing:
                 r = next(predictions)
@@ -598,13 +553,13 @@ class Model(AbstractModel[ItemType, ReturnType]):
                 yield self._validate(
                     r,
                     self._return_model,
-                    ReturnValueValidationException,
+                    errors.ReturnValueValidationException,
                 )
             else:
                 yield self._validate(
                     cache_item.cache_value,
                     self._return_model,
-                    ReturnValueValidationException,
+                    errors.ReturnValueValidationException,
                 )
         if _callback:
             _callback(_step, batch, predictions)
@@ -623,16 +578,18 @@ class AsyncModel(AbstractModel[ItemType, ReturnType]):
     async def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
         return [await self._predict(p, **kwargs) for p in items]
 
-    @traceback.wrap_modelkit_exceptions_async
+    @errors.wrap_modelkit_exceptions_async
     async def __call__(
         self,
         item: ItemType,
         _force_compute: bool = False,
         **kwargs,
     ) -> ReturnType:
-        return await self.predict(item, _force_compute=_force_compute, **kwargs)
+        return await self.predict(
+            item, _force_compute=_force_compute, __internal=True, **kwargs
+        )
 
-    @traceback.wrap_modelkit_exceptions_async
+    @errors.wrap_modelkit_exceptions_async
     async def predict(
         self,
         item: ItemType,
@@ -640,12 +597,12 @@ class AsyncModel(AbstractModel[ItemType, ReturnType]):
         **kwargs,
     ) -> ReturnType:
         async for r in self.predict_gen(
-            iter((item,)), _force_compute=_force_compute, **kwargs
+            iter((item,)), _force_compute=_force_compute, __internal=True, **kwargs
         ):
             break
         return r
 
-    @traceback.wrap_modelkit_exceptions_async
+    @errors.wrap_modelkit_exceptions_async
     async def predict_batch(
         self,
         items: List[ItemType],
@@ -664,11 +621,12 @@ class AsyncModel(AbstractModel[ItemType, ReturnType]):
                 _callback=_callback,
                 batch_size=batch_size,
                 _force_compute=_force_compute,
+                __internal=True,
                 **kwargs,
             )
         ]
 
-    @traceback.wrap_modelkit_exceptions_gen_async
+    @errors.wrap_modelkit_exceptions_gen_async
     async def predict_gen(
         self,
         items: Iterator[ItemType],
@@ -741,11 +699,14 @@ class AsyncModel(AbstractModel[ItemType, ReturnType]):
         **kwargs,
     ) -> AsyncIterator[ReturnType]:
         batch = [
-            self._validate(res.item, self._item_model, ItemValidationException)
+            self._validate(res.item, self._item_model, errors.ItemValidationException)
             for res in cache_items
             if res.missing
         ]
-        predictions = iter(await self._predict_batch(batch, **kwargs))
+        try:
+            predictions = iter(await self._predict_batch(batch, **kwargs))
+        except BaseException as exc:
+            raise errors.PredictionError(exc=exc)
         for cache_item in cache_items:
             if cache_item.missing:
                 r = next(predictions)
@@ -759,13 +720,13 @@ class AsyncModel(AbstractModel[ItemType, ReturnType]):
                 yield self._validate(
                     r,
                     self._return_model,
-                    ReturnValueValidationException,
+                    errors.ReturnValueValidationException,
                 )
             else:
                 yield self._validate(
                     cache_item.cache_value,
                     self._return_model,
-                    ReturnValueValidationException,
+                    errors.ReturnValueValidationException,
                 )
         if _callback:
             _callback(_step, batch, predictions)

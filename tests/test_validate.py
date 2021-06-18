@@ -3,11 +3,8 @@ from typing import Any, Dict, List
 import pydantic
 import pytest
 
-from modelkit.core.model import (
-    ItemValidationException,
-    Model,
-    ReturnValueValidationException,
-)
+from modelkit.core.errors import ItemValidationException, ReturnValueValidationException
+from modelkit.core.model import Model
 from modelkit.core.settings import LibrarySettings
 from modelkit.utils.pydantic import construct_recursive
 
