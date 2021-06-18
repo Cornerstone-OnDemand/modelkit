@@ -32,7 +32,7 @@ class DriverSettings(BaseSettings):
             return {"storage_provider": None, "settings": None}
         if storage_provider not in SUPPORTED_MODELKIT_STORAGE_PROVIDERS:
             logger.error(
-                f"Unkown storage provider `{storage_provider}`, "
+                f"Unknown storage provider `{storage_provider}`, "
                 "no remote storage will be available"
             )
             raise ValueError
