@@ -427,14 +427,12 @@ def test_override_prefix(assetsmanager_settings):
     assert prediction.endswith(os.path.join("category", "override-asset", "1.0"))
 
 
-SYNC_ASYNC_TEST_CASES = {
-    "cases": [
-        {"item": "", "result": 0},
-        {"item": "a", "result": 1},
-        {"item": ["a", "b", "c"], "result": 3},
-        {"item": range(100), "result": 100},
-    ]
-}
+SYNC_ASYNC_TEST_CASES = [
+    {"item": "", "result": 0},
+    {"item": "a", "result": 1},
+    {"item": ["a", "b", "c"], "result": 3},
+    {"item": range(100), "result": 100},
+]
 
 
 def test_model_sync_test():

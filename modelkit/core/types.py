@@ -1,5 +1,5 @@
 from types import ModuleType
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
+from typing import Any, Dict, Generic, List, Type, TypeVar, Union
 
 import pydantic
 import pydantic.generics
@@ -17,14 +17,7 @@ TestItemType = TypeVar("TestItemType")
 LibraryModelsType = Union[ModuleType, Type, List, str]
 
 
-class TestCases(pydantic.generics.GenericModel, Generic[TestItemType, TestReturnType]):
+class TestCase(pydantic.generics.GenericModel, Generic[TestItemType, TestReturnType]):
     item: TestItemType
     result: TestReturnType
     keyword_args: Dict[str, Any] = {}
-
-
-class ModelTestingConfiguration(
-    pydantic.generics.GenericModel, Generic[TestItemType, TestReturnType]
-):
-    model_keys: Optional[List[str]]
-    cases: List[TestCases[TestItemType, TestReturnType]]

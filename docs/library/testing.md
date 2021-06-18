@@ -25,23 +25,57 @@ In addition, it creates a test called `test_auto_model_library` that iterates th
 
 ### Defining test cases
 
-Any `modelkit.core.Model` can define its own test cases which are discoverable by the test created by `make_modellibrary_test`:
+Any `modelkit.core.Model` can define its own test cases which are discoverable by the test created by `make_modellibrary_test`.
+
+There are two ways of defining test cases.
+
+#### Adding TEST_CASES as a class attribute
+
+Tests added to the TEST_CASES class attribute are shared across the different models defined in the CONFIGURATIONS map.
+
+In the following example, 4 test cases will be ran:
+- 2 for `some_model_a`
+- 2 for `some_model_b`
 
 ```python
 class TestableModel(Model[ModelItemType, ModelItemType]):
-    CONFIGURATIONS: Dict[str, Dict] = {"some_model": {}}
+    CONFIGURATIONS: Dict[str, Dict] = {"some_model_a": {}, "some_model_b": {}}
 
-    TEST_CASES = {
-        "cases": [
+    TEST_CASES = [
             {"item": {"x": 1}, "result": {"x": 1}},
             {"item": {"x": 2}, "result": {"x": 2}},
         ]
+
+    def _predict(self, item):
+        return item
+
+```
+
+#### Adding test_cases to the CONFIGURATIONS map
+
+Tests added to the CONFIGURATIONS map are restricted to their parent.
+
+In the following example, 2 test cases will be ran for `some_model_a`:
+
+```python
+class TestableModel(Model[ModelItemType, ModelItemType]):
+    CONFIGURATIONS: Dict[str, Dict] = {
+        "some_model_a": { 
+            "test_cases": {
+                "cases": [
+                    {"item": {"x": 1}, "result": {"x": 1}},
+                    {"item": {"x": 2}, "result": {"x": 2}},
+                ],
+            }
+        },
+        "some_model_b": {},
     }
 
     def _predict(self, item):
         return item
 
 ```
+Both ways of testing can be used simultaneously and interchangeably.
 
 Each test is instantiated with an item value and a result value, the automatic test will iterate through them and run the equivalent of:
 
