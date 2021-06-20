@@ -13,7 +13,7 @@ It is meant to bridge the gap between the different uses of your algorithms. Wit
 
 `modelkit`'s key features are:
 
-- **simple** `modelkit` is just a Python library, you pip install it and you are done.
+- **simple** `modelkit` is just a Python library, use pip to install it and you are done.
 - **custom** `modelkit` is useful whenever you need to go beyond off-the-shelf models: custom processing, heuristics, business logic, different frameworks, etc.
 - **framework agnostic** you bring your own framework to the table, and you can use whatever code or library you want. Similarly, `modelkit` is not opinionated about how you build or train your models.
 - **organized** `modelkit` encourages you to version and share you ML library and artifacts with others, as a Python package or as a service. Let others use and evaluate your models!
@@ -23,7 +23,7 @@ It is meant to bridge the gap between the different uses of your algorithms. Wit
 
 And more:
 
-- **composable** Models can depend on other models, and evaluate them however you need tp.
+- **composable** Models can depend on other models, and evaluate them however you need to
 - **extensible** Models can rely on arbitrary supporting configurations files called _assets_ hosted on local or cloud object stores
 - **type-safe** Models' inputs and outputs can be validated by [pydantic](https://pydantic-docs.helpmanual.io/), you get type annotations for your predictions and can catch errors with static type analysis tools during development.
 - **async** Models support async and sync prediction functions. `modelkit` supports calling async code from sync code so you don't have to suffer from partially async code.
