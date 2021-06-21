@@ -35,7 +35,7 @@ class SomeModel(Model):
         },
         "some_model_2": {
             "model_dependencies": {
-                "cleaner": "sentence_piece_cleaner_2
+                "cleaner": "sentence_piece_cleaner_2"
             }
         }
     }
