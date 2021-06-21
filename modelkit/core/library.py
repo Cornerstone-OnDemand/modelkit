@@ -323,8 +323,8 @@ class ModelLibrary:
         if version:
             asset_spec = AssetSpec.from_string(asset_spec.name + ":" + version)
 
-        try:
-            if self.override_assets_manager:
+        if self.override_assets_manager:
+            try:
                 self.assets_info[configuration.asset] = AssetInfo(
                     **self.override_assets_manager.fetch_asset(
                         spec=AssetSpec(
@@ -337,11 +337,12 @@ class ModelLibrary:
                     "Asset has been loaded with overriden prefix",
                     name=asset_spec.name,
                 )
-        except modelkit.assets.errors.ObjectDoesNotExistError:
-            logger.debug(
-                "Asset not found in overriden prefix",
-                name=asset_spec.name,
-            )
+            except modelkit.assets.errors.ObjectDoesNotExistError:
+                logger.debug(
+                    "Asset not found in overriden prefix",
+                    name=asset_spec.name,
+                )
+
         if configuration.asset not in self.assets_info:
             self.assets_info[configuration.asset] = AssetInfo(
                 **self.asset_manager.fetch_asset(asset_spec, return_info=True)
