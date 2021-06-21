@@ -4,6 +4,8 @@
 Sometimes models will simply need to call another microservice, in this case `DistantHTTPModel` are the way to go. They are instantiated with a POST endpoint URL.
 
 ```python
+from modelkit.core.models.distant_model import DistantHTTPModel
+
 class SomeDistantHTTPModel(DistantHTTPModel):
     CONFIGURATIONS = {
         "some_model": {
