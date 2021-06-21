@@ -73,7 +73,7 @@ Typically, one would first implement `_predict` to get the logic right, and late
 
 ### Controling batch size
 
-The default batch size for the `Model` object is controlled its `batch_size` attribute. It defaults to `None`, which means that `_predict_batch` will by default always get:
+The default batch size for the `Model` object is controlled by its `batch_size` attribute. It defaults to `None`, which means that `_predict_batch` will by default always get:
 
 - a single, full length batch with all the items when called via `predict_batch`
 - as many batches of size one as there are items when called via `predict_gen`
@@ -92,7 +92,7 @@ This is useful to avoid computing batches that are too large and may take up too
 
 Note that, although `modelkit` will attempt to build batches of even size, this is not always the case:
 
-- **remaining items** if you request 10 predictions with a batch size of 3, the last batch will only contain one
+- **remaining items** if you request 10 predictions with a batch size of 3, the last batch will only contain one.
 - **caching** when caching, `modelkit` will yield if sufficiently many predictions can be fetched in the cache, and compute the rest, wich will lead to smaller batches than expected.
 
 If you do need to access the number of items in a batch, use `len(items)` inside the `_predict_batch`. If you need to make sure that it is contant, you will have to implement padding yourself.
