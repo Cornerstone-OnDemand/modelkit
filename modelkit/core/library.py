@@ -246,7 +246,9 @@ class ModelLibrary:
         This function loads dependent models for the current models, populating
         the _models dictionary with the instantiated model objects.
         """
+        logger.debug("Loading model", model_name=model_name)
         if model_name in self.models:
+            logger.debug("Model already loaded", model_name=model_name)
             return
 
         configuration = self.configuration[model_name]
@@ -263,6 +265,7 @@ class ModelLibrary:
             **self.required_models.get(model_name, {}),
         }
 
+        logger.debug("Instantiating Model object", model_name=model_name)
         self.models[model_name] = configuration.model_type(
             asset_path=self.assets_info[configuration.asset].path
             if configuration.asset
@@ -273,13 +276,15 @@ class ModelLibrary:
             configuration_key=model_name,
             cache=self.cache,
         )
+        logger.debug("Done loading Model", model_name=model_name)
 
-    def _resolve_assets(self, configuration_key):
+    def _resolve_assets(self, model_name):
         """
         This function fetches assets for the current model and its dependent models
         and populates the assets_info dictionary with the paths.
         """
-        configuration = self.configuration[configuration_key]
+        logger.debug("Resolving asset for Model", model_name=model_name)
+        configuration = self.configuration[model_name]
         # First, resolve assets from dependent models
         for dep_name in configuration.model_dependencies.values():
             self._resolve_assets(dep_name)
@@ -290,14 +295,18 @@ class ModelLibrary:
 
         model_settings = {
             **configuration.model_settings,
-            **self.required_models.get(configuration_key, {}),
+            **self.required_models.get(model_name, {}),
         }
 
         # If the asset is overriden in the model_settings
         if "asset_path" in model_settings:
-            self.assets_info[configuration.asset] = AssetInfo(
-                path=model_settings.pop("asset_path")
+            asset_path = model_settings.pop("asset_path")
+            logger.debug(
+                "Overriding asset from Model settings",
+                model_name=model_name,
+                asset_path=asset_path,
             )
+            self.assets_info[configuration.asset] = AssetInfo(path=asset_path)
 
         asset_spec = AssetSpec.from_string(configuration.asset)
 
@@ -307,8 +316,8 @@ class ModelLibrary:
         )
         local_file = os.environ.get(venv)
         if local_file:
-            logger.info(
-                "Overriding asset from env variable",
+            logger.debug(
+                "Overriding asset from environment variable",
                 asset_name=asset_spec.name,
                 path=local_file,
             )
@@ -321,6 +330,11 @@ class ModelLibrary:
         )
         version = os.environ.get(venv)
         if version:
+            logger.debug(
+                "Overriding asset version from environment variable",
+                asset_name=asset_spec.name,
+                path=local_file,
+            )
             asset_spec = AssetSpec.from_string(asset_spec.name + ":" + version)
 
         if self.override_assets_manager:
@@ -333,7 +347,7 @@ class ModelLibrary:
                         return_info=True,
                     )
                 )
-                logger.info(
+                logger.debug(
                     "Asset has been loaded with overriden prefix",
                     name=asset_spec.name,
                 )
