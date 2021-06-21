@@ -12,7 +12,7 @@ Main arguments:
 - `models` a module, `Model` (or list of either) which is used to find configurations
   of the models to be loaded
 - `configuration` allows you to provide an explicit configuration to override the ones present in the `Model.CONFIGURATIONS` attributes.
-- `required_models` a list of models to load by the prediction service. This allows you to restrict the models that will actually be loaded onto memory. By default all models are loaded (`required_models=None`), pass the empty list to not load any models (or use the lazy mode). Names in this list have to be defined in the configurations of the models passed via `models`. You can pass a dictionary to override the asset for each model (see [here](developing_modelkit.md)).
+- `required_models` a list of models to load by the library. This allows you to restrict the models that will actually be loaded into memory. By default all models from `models` are loaded (`required_models=None`), pass the empty list to not load any models (or use the lazy mode). Names in this list have to be defined in the configurations of the models passed via `models`. You can pass a dictionary to override the asset for each model (see [here](models/model_with_assets.md)).
 
 Additionally, the `ModelLibrary` takes a `settings` keyword argument which allows you to provide advanced settings:
 

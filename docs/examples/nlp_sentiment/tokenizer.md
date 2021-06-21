@@ -238,7 +238,7 @@ Tokenizer().test()
 ```
 
 ??? note "Run using pytest"
-    It is also possible to automatically test all models using the `pytest` integration, using [the Modelkit autotesting fixture](../library/testing.md#modellibrary-fixture-and-autotesting).
+    It is also possible to automatically test all models using the `pytest` integration, using [the Modelkit autotesting fixture](../../library/models/testing.md#modellibrary-fixture-and-autotesting).
 
 Woops, seems like we need to fix the last test!
 

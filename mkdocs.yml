@@ -4,13 +4,20 @@ site_description: 'Library for machine learning models'
 
 nav:
   - Home: 'index.md'
-  - Developer guides:
-    - Models: 'library/overview.md'
-    - Getting predictions: 'library/using_models.md'
-    - Developing models: 'library/developing_modelkit.md'
-    - Organizing models: 'library/organizing.md'
-    - Prediction service: 'library/model_library.md'
-    - Testing: 'library/testing.md'
+  - Developer guide:
+    - 'library/overview.md'
+    - Models: 
+      - 'library/models/overview.md'
+      - Getting predictions: 'library/models/using_models.md'
+      - Configuring models: 'library/models/configuring_models.md'
+      - Assets: 'library/models/model_with_assets.md'
+      - Dependencies: 'library/models/models_with_dependencies.md'
+      - Validation: 'library/models/validation.md'
+      - Batching: 'library/models/batching.md'
+      - Testing: 'library/models/testing.md'
+      - Async: 'library/models/asynchronous_models.md'
+      - Organizing models: 'library/models/organizing.md'
+    - Model Library: 'library/model_library.md'
     - Specific models:
       - Tensorflow models: 'library/special/tensorflow.md'
       - Distant Models: 'library/special/distant.md'
