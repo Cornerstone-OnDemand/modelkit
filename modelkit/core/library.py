@@ -246,6 +246,9 @@ class ModelLibrary:
         This function loads dependent models for the current models, populating
         the _models dictionary with the instantiated model objects.
         """
+        if model_name in self.models:
+            return
+
         configuration = self.configuration[model_name]
 
         # First, load dependent predictors and add them to the model
@@ -270,8 +273,6 @@ class ModelLibrary:
             configuration_key=model_name,
             cache=self.cache,
         )
-        if not self.settings.lazy_loading:
-            self.models[model_name].load()
 
     def _resolve_assets(self, configuration_key):
         """
