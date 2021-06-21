@@ -32,4 +32,12 @@ jobs:
         run: scripts/ci_tests.sh
         env:
           OS_NAME: "${{ matrix.os }}"
-          
+
+      - name: Add & Commit Badges
+        if: ${{matrix.os == 'ubuntu-latest'}}
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add docs/badges
+          git commit -m "generate badges"
+          git push

@@ -5,6 +5,16 @@
     
 ---
 
+<p align="center">
+  <img src="https://img.shields.io/github/workflow/status/clustree/modelkit/CI/main" />
+  <img src="docs/badges/tests.svg" />
+  <img src="docs/badges/coverage.svg" />
+  <img src="https://img.shields.io/pypi/v/modelkit" />
+  <img src="https://img.shields.io/pypi/pyversions/modelkit" />
+  <a href="https://clustree.github.io/modelkit/index.html"><img src="https://img.shields.io/badge/docs-latest-blue" /></a>
+  <img src="https://img.shields.io/github/license/clustree/modelkit" />
+</p>
+
 `modelkit` is a Python framework meant to make your ML models robust, reusable and performant in all situations you need to use them.
 
 It is meant to bridge the gap between the different uses of your algorithms. With `modelkit` you can ensure that the same exact code will run in production, on your machine, or on data processing pipelines.
