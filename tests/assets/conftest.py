@@ -2,6 +2,7 @@ import os
 import subprocess
 import uuid
 
+import boto3
 import pytest
 import requests
 import urllib3
@@ -125,7 +126,6 @@ def _start_s3_manager(working_dir):
             "storage_prefix": f"test-assets-{uuid.uuid1().hex}",
         },
     )
-    mng.remote_assets_store.driver.client.create_bucket(Bucket="test-assets")
     return mng
 
 
@@ -149,6 +149,13 @@ def s3_assetsmanager(request, working_dir):
             "/data",
         ]
     )
+    client = boto3.client(
+        "s3",
+        aws_access_key_id="minioadmin",
+        aws_secret_access_key="minioadmin",
+        endpoint_url="http://127.0.0.1:9000",
+    )
+    client.create_bucket(Bucket="test-assets")
 
     yield _start_s3_manager(working_dir)
 
