@@ -57,7 +57,7 @@ class TensorflowModel(Model[ItemType, ReturnType]):
         self.output_dtypes = (
             output_dtypes
             or kwargs["model_settings"].get("output_dtypes")
-            or {name: np.float for name in self.output_tensor_mapping}
+            or {name: float for name in self.output_tensor_mapping}
         )
         # sanity checks
         assert self.output_tensor_mapping.keys() == self.output_dtypes.keys()
@@ -233,7 +233,7 @@ class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType]):
         self.output_dtypes = (
             output_dtypes
             or kwargs["model_settings"].get("output_dtypes")
-            or {name: np.float for name in self.output_tensor_mapping}
+            or {name: float for name in self.output_tensor_mapping}
         )
         # sanity checks
         assert self.output_tensor_mapping.keys() == self.output_dtypes.keys()
