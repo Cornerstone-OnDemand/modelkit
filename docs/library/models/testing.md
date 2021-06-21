@@ -41,11 +41,9 @@ class TestableModel(Model[ModelItemType, ModelItemType]):
     CONFIGURATIONS: Dict[str, Dict] = {
         "some_model_a": {
             "test_cases": [
-                "cases": [
-                    {"item": {"x": 1}, "result": {"x": 1}},
-                    {"item": {"x": 2}, "result": {"x": 2}},
-                ],
-            }
+                {"item": {"x": 1}, "result": {"x": 1}},
+                {"item": {"x": 2}, "result": {"x": 2}},
+            ],
         },
         "some_model_b": {},
     }
