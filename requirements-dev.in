@@ -1,0 +1,31 @@
+-c requirements.txt
+-r requirements.in
+
+# tests
+mypy==0.812
+coverage
+pytest
+pytest-asyncio
+uvicorn
+fastapi
+black
+flake8
+isort
+nox
+google-api-core
+google-cloud-storage
+tenacity
+# cli
+memory-profiler
+networkx
+# releases
+bump2version
+# optional
+grpcio
+tensorflow
+tensorflow-serving-api
+# docs
+mkdocs-material
+pymdown-extensions
+# pip
+pip-tools

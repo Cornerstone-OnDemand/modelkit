@@ -5,15 +5,16 @@ cachetools
 click
 filelock
 humanize
-numpy
+numpy~=1.19.3
 pydantic
 python-dateutil
 redis
 rich
 sniffio
 asgiref
+six==1.15.0
 structlog
 tenacity
 tqdm
-typing_extensions; python_version<"3.8"
+typing_extensions==3.7.4.3; python_version<"3.8"
 prettytable
