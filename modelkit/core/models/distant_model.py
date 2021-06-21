@@ -62,6 +62,7 @@ class AsyncDistantHTTPModel(AsyncModel[ItemType, ReturnType]):
         async with self.aiohttp_session.post(
             self.endpoint,
             data=json.dumps(item),
+            headers={"content-type": "application/json"},
         ) as response:
             if response.status != 200:
                 raise DistantHTTPModelError(
@@ -90,6 +91,7 @@ class DistantHTTPModel(Model[ItemType, ReturnType]):
         response = self.requests_session.post(
             self.endpoint,
             data=json.dumps(item),
+            headers={"content-type": "application/json"},
         )
         if response.status_code != 200:
             raise DistantHTTPModelError(
