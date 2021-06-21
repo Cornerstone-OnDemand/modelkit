@@ -19,6 +19,10 @@ from modelkit.utils.logging import ContextualizedLogging
 logger = get_logger(__name__)
 
 
+class AssetFetchError(Exception):
+    pass
+
+
 class AssetsManager:
     def __init__(self, **settings):
         if isinstance(settings, dict):
@@ -187,4 +191,15 @@ class AssetsManager:
         with filelock.FileLock(lock_path, timeout=5):
             asset_info = self._fetch_asset(spec, return_info=return_info)
         logger.debug("Fetched asset", spec=spec, asset_info=asset_info)
+        if not os.path.exists(asset_info["path"]):
+            logger.error(
+                "An unknown error occured when fetching asset."
+                "The path does not exist.",
+                asset_info=asset_info,
+                spec=spec,
+            )
+            raise AssetFetchError(
+                f"An unknown error occured when fetching asset {spec}."
+                f"The path {asset_info['path']} does not exist."
+            )
         return asset_info
