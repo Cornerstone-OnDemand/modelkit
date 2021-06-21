@@ -1,4 +1,4 @@
-## Model organization
+## Models organization
 
 `modelkit` encourages you to organise models in python packages which can be tested and shared between members of the same team.
 
@@ -50,7 +50,7 @@ PYTHONPATH
 from modelkit import ModelLibrary
 import my_ml_package
 
-service = ModelLibrary(models=package)
+service = ModelLibrary(models=my_ml_package)
 ```
 
 !!! note 
@@ -62,5 +62,5 @@ In order to restrict the models that are actually being loaded, pass a list of `
 service = ModelLibrary(
     models=[package.module_2, package.subpackage],
     required_models=["some_model"]
-    )
+)
 ```
