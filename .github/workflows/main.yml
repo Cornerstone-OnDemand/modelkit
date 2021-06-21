@@ -34,7 +34,7 @@ jobs:
           OS_NAME: "${{ matrix.os }}"
 
       - name: Add & Commit Badges
-        if: ${{matrix.os == 'ubuntu-latest' && matrix.python-version == '3.7' && github.ref == 'main'}}
+        if: ${{matrix.os == 'ubuntu-latest' && matrix.python-version == '3.7' && github.ref == 'refs/heads/main'}}
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
