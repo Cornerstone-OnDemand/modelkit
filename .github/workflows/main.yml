@@ -32,4 +32,11 @@ jobs:
         run: scripts/ci_tests.sh
         env:
           OS_NAME: "${{ matrix.os }}"
-          
+
+      - name: Add & Commit Badges
+        if: ${{matrix.os == 'ubuntu-latest'}}
+        uses: EndBug/add-and-commit@v7.2.1
+        with:
+          add: 'docs/badges'
+          message: 'generate badges'
+          default_author: github_actions

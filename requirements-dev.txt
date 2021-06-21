@@ -23,5 +23,4 @@ tensorflow-serving-api
 # docs
 mkdocs-material
 pymdown-extensions
-# pip
 pip-tools
