@@ -46,6 +46,20 @@ class SomeModel(Model):
         return self.model_dependencies["cleaner"].predict(item)
 ```
 
+??? note "Renaming several dependencies"
+    All your dependencies must be mapped (with an identity mapping for not renamed ones)
+    e.g. :
+    ```python
+        CONFIGURATIONS = {
+            "some_model": {
+                "model_dependencies": {
+                    "renamed_model_1": "model_1",
+                    "model_2": "model_2",
+                }
+            }
+        }
+    ```
+    
 ### Dependencies in `load`
 
 Whenever a model's `_load` method is called, `modelkit` guarantees that all dependent models are also loaded, such that the `model_dependencies` attribute is populated by completely loaded models too.
