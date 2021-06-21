@@ -112,7 +112,7 @@ import module_with_models
 model_library = modelkit.ModelLibrary(models=module_with_models)
 ```
 
-This method is the preferred method, because it encourages you to adopt a package-like organisation of your `Models` (see [Organizing Models](../../library/organizing.md))
+This method is the preferred method, because it encourages you to adopt a package-like organisation of your `Models` (see [Organizing Models](../../library/models/organizing.md))
 
 ### Using models to create a TF.Dataset
 

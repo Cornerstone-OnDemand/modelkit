@@ -2,6 +2,33 @@
 
 `modelkit` encourages you to organise models in python packages which can be tested and shared between members of the same team.
 
+### ModelLibrary from a package
+
+For example, assuming we have a modelkit model configured as `my_favorite_model` somewhere under the `my_models` module.
+
+```python
+from modelkit import ModelLibrary
+import my_models # contains subclasses of `Model`
+
+# Create the library
+# This downloads assets and instantiates model_dependencies
+library = ModelLibrary(models=my_models)
+model = library.get("my_favorite_model")
+```
+
+!!! note "Shortcuts"
+
+    For development, it is also possible to load a single model without a `ModelLibrary`:
+
+    ```python
+    from modelkit import load_model
+    model = load_model("my_favorite_model", models="my_models")
+    ```
+
+    If you have set the `MODELKIT_DEFAULT_PACKAGE` environment variable, you can also skip the `models=...` part.
+
+### Organizing code
+
 A typical `modelkit` model repository follows the same organisation as any other Python package.
 
 ```
