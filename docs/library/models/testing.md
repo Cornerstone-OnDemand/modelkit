@@ -1,4 +1,4 @@
-`modelkit` provides helper functions to test `modelkit.Model` instances eitehr directly or with `pytest`
+`modelkit` provides helper functions to test `modelkit.Model` instances either directly or with `pytest`
 
 Since test cases constitute essential documentation for developers and as a result should appear close to the code of the model itself, much like the signature.
 
@@ -40,7 +40,7 @@ In the following example, 2 test cases will be ran for `some_model_a`:
 class TestableModel(Model[ModelItemType, ModelItemType]):
     CONFIGURATIONS: Dict[str, Dict] = {
         "some_model_a": {
-            "test_cases": {
+            "test_cases": [
                 "cases": [
                     {"item": {"x": 1}, "result": {"x": 1}},
                     {"item": {"x": 2}, "result": {"x": 2}},
@@ -68,13 +68,11 @@ from modelkit import Model
 
 class NOTModel(Model):
     CONFIGURATIONS = {"not_model": {}}
-    TEST_CASES = {
-        "cases": [
-            {"item": True, "result": False},
-            {"item": False, "result": False}  # this should raise an error
-        ]
-    }
-    def predict(self, item: bool, **_) -> bool:
+    TEST_CASES = [
+        {"item": True, "result": False},
+        {"item": False, "result": False}  # this should raise an error
+    ]
+    def _predict(self, item: bool, **_) -> bool:
         return not item
 
 # Execute tests
