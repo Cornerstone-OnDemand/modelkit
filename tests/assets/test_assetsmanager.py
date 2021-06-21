@@ -138,24 +138,3 @@ def test_download_object_or_prefix_cli(gcs_assetsmanager):
                 ),
                 destination_dir=tmp_dir,
             )
-
-
-@skip_unless("ENABLE_S3_TEST", "True")
-def test_s3_assetsmanager_fail_on_init(s3_assetsmanager):
-    with tempfile.TemporaryDirectory() as tmp_d:
-        with pytest.raises(botocore.exceptions.ClientError):
-            AssetsManager(
-                assets_dir=tmp_d,
-                remote_store={
-                    "driver": {
-                        "storage_provider": "s3",
-                        "aws_default_region": "us-east-1",
-                        "bucket": "DOESNOTEXIST",
-                        "aws_access_key_id": "minioadmin",
-                        "aws_secret_access_key": "minioadmin",
-                        "aws_session_token": None,
-                        "s3_endpoint": "http://127.0.0.1:9000",
-                    },
-                    "storage_prefix": "test-assets-prefix",
-                },
-            )

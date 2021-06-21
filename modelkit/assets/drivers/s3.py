@@ -43,11 +43,6 @@ class S3StorageDriver:
             region_name=settings.aws_default_region,
         )
         self.bucket = settings.bucket
-        try:
-            self.client.head_bucket(Bucket=self.bucket)
-        except self.client.exceptions.ClientError:
-            logger.error(f"Bucket {self.bucket} does not exist")
-            raise
 
     @retry(**RETRY_POLICY)
     def iterate_objects(self, prefix=None):
