@@ -1,6 +1,5 @@
 import asyncio
 import os
-from json import load
 
 import pytest
 
