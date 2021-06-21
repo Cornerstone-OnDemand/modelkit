@@ -87,7 +87,7 @@ def test_local_manager_with_versions(working_dir):
         assert res["path"] == os.path.abspath(os.path.join(local_dir, ".."))
 
         abs_path_to_readme = os.path.join(os.path.abspath(local_dir), "README.md")
-        res = manager.fetch_asset(abs_path_to_readme)
+        res = manager.fetch_asset(abs_path_to_readme, return_info=True)
         assert res["path"] == abs_path_to_readme
     finally:
         shutil.rmtree("tmp-local-asset")

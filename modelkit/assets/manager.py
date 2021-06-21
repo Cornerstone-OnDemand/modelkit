@@ -56,7 +56,7 @@ class AssetsManager:
         else:
             return []
 
-    def _fetch_asset(self, spec: AssetSpec, return_info=False):
+    def _fetch_asset(self, spec: AssetSpec):
         with ContextualizedLogging(name=spec.name):
             local_name = os.path.join(self.assets_dir, *spec.name.split("/"))
             local_versions_list = self.get_local_versions_info(local_name)
@@ -173,10 +173,7 @@ class AssetsManager:
                     )
                     asset_dict["path"] = local_sub_part
 
-            if return_info:
-                return asset_dict
-            else:
-                return asset_dict["path"]
+            return asset_dict
 
     def fetch_asset(self, spec: Union[AssetSpec, str], return_info=False):
         logger.info("Fetching asset", spec=spec, return_info=return_info)
@@ -189,17 +186,20 @@ class AssetsManager:
         )
         os.makedirs(os.path.dirname(lock_path), exist_ok=True)
         with filelock.FileLock(lock_path, timeout=5):
-            asset_info = self._fetch_asset(spec, return_info=return_info)
+            asset_info = self._fetch_asset(spec)
         logger.debug("Fetched asset", spec=spec, asset_info=asset_info)
-        if not os.path.exists(asset_info["path"]):
+        path = asset_info["path"]
+        if not os.path.exists(path):
             logger.error(
                 "An unknown error occured when fetching asset."
                 "The path does not exist.",
-                asset_info=asset_info,
+                path=path,
                 spec=spec,
             )
             raise AssetFetchError(
                 f"An unknown error occured when fetching asset {spec}."
-                f"The path {asset_info['path']} does not exist."
+                f"The path {path} does not exist."
             )
+        if not return_info:
+            return path
         return asset_info
