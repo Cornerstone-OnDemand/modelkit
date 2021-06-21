@@ -1,6 +1,6 @@
 ## Model typing
 
-It is also possible to provide types for a `Model` subclass, such that linters and callers know exactly which `item` type is expected, and what the result of a `Model` call look like.
+It is also possible to provide types for a `Model` subclass, such that linters and callers know exactly which `item` type is expected, and what the result of a `Model` call looks like.
 
 Types are specified when instantiating the `Model` class:
 
@@ -56,8 +56,17 @@ m = SomeValidatedModel()
 # although we return a dict from the _predict method, return value
 # is turned into a `ReturnModel` instance.
 y : ReturnModel = m({"x": 1})
-# which also works with lists of items
-y : List[ReturnModel] = m([{"x": 1}, {"x": 2}])
+```
+
+This also works with list of items
+
+```python
+class SomeValidatedModelBatch(Model[ItemModel, ReturnModel]):
+    def _predict_batch(self, items):
+        return [{"x": item.x} for item in items]
+
+m = SomeValidatedModelBatch()
+y : List[ReturnModel] = m.predict_batch(items=[{"x": 1}, {"x": 2}])
 ```
 
 !!! note
