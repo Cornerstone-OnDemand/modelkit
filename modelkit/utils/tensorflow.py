@@ -32,7 +32,7 @@ def deploy_tf_models(lib, mode, config_name="config", verbose=False):
     for model_name in lib.required_models:
         model_configuration = configuration[model_name]
         if not issubclass(model_configuration.model_type, TensorflowModel):
-            logger.info(f"Skipping non TF model `{model_name}`")
+            logger.debug(f"Skipping non TF model `{model_name}`")
             continue
         if not model_configuration.asset:
             raise ValueError(f"TensorFlow model `{model_name}` does not have an asset")
