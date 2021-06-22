@@ -58,6 +58,13 @@ class AssetsManager:
         else:
             return []
 
+    def _has_succeeded(self, local_path):
+        if os.path.isdir(local_path):
+            return os.path.exists(os.path.join(local_path, ".SUCCESS"))
+        else:
+            return os.path.exists(local_path+".SUCCESS")
+
+
     def _fetch_asset(self, spec: AssetSpec, _force_download=False):
         with ContextualizedLogging(name=spec.name):
             local_name = os.path.join(self.assets_dir, *spec.name.split("/"))
@@ -145,6 +152,13 @@ class AssetsManager:
                 local_path = os.path.join(
                     self.assets_dir, *spec.name.split("/"), version
                 )
+                if not self._has_succeeded(local_path):
+                    if os.path.exists(local_path):
+                        if os.path.isdir(local_path):
+                            shutil.rmtree(local_path)
+                        else:
+                            os.unlink(local_path)
+                    _force_download = True
                 if not _force_download and (version in local_versions_list):
                     asset_dict = {
                         "from_cache": True,
@@ -157,11 +171,6 @@ class AssetsManager:
                             "Fetching distant asset",
                             local_versions=local_versions_list,
                         )
-                        if os.path.exists(local_path):
-                            if os.path.isdir(local_path):
-                                shutil.rmtree(local_path)
-                            else:
-                                os.unlink(local_path)
                         asset_download_info = self.remote_assets_store.download(
                             spec.name, version, self.assets_dir
                         )
