@@ -1,6 +1,7 @@
 import os
 import re
-from typing import Union, cast
+import shutil
+from typing import Optional, Union, cast
 
 import filelock
 from structlog import get_logger
@@ -57,7 +58,7 @@ class AssetsManager:
         else:
             return []
 
-    def _fetch_asset(self, spec: AssetSpec):
+    def _fetch_asset(self, spec: AssetSpec, _force_download=False):
         with ContextualizedLogging(name=spec.name):
             local_name = os.path.join(self.assets_dir, *spec.name.split("/"))
             local_versions_list = self.get_local_versions_info(local_name)
@@ -141,23 +142,35 @@ class AssetsManager:
 
             version = f"{spec.major_version}.{spec.minor_version}"
             with ContextualizedLogging(version=version):
-                asset_dict = {
-                    "from_cache": True,
-                    "version": version,
-                    "path": os.path.join(
-                        self.assets_dir, *spec.name.split("/"), version
-                    ),
-                }
-                if version not in local_versions_list:
+                local_path = os.path.join(
+                    self.assets_dir, *spec.name.split("/"), version
+                )
+                if not _force_download and (version in local_versions_list):
+                    asset_dict = {
+                        "from_cache": True,
+                        "version": version,
+                        "path": local_path,
+                    }
+                else:
                     if self.remote_assets_store:
                         logger.info(
                             "Fetching distant asset",
                             local_versions=local_versions_list,
                         )
+                        if os.path.exists(local_path):
+                            if os.path.isdir(local_path):
+                                shutil.rmtree(local_path)
+                            else:
+                                os.unlink(local_path)
                         asset_download_info = self.remote_assets_store.download(
                             spec.name, version, self.assets_dir
                         )
-                        asset_dict.update({**asset_download_info, "from_cache": False})
+                        asset_dict = {
+                            **asset_download_info,
+                            "from_cache": False,
+                            "version": version,
+                            "path": local_path,
+                        }
                     else:
                         raise errors.LocalAssetDoesNotExistError(
                             name=spec.name,
@@ -176,18 +189,30 @@ class AssetsManager:
 
             return asset_dict
 
-    def fetch_asset(self, spec: Union[AssetSpec, str], return_info=False):
-        logger.info("Fetching asset", spec=spec, return_info=return_info)
-
+    def fetch_asset(
+        self,
+        spec: Union[AssetSpec, str],
+        return_info=False,
+        force_download: Optional[bool] = None,
+    ):
         if isinstance(spec, str):
             spec = cast(AssetSpec, AssetSpec.from_string(spec))
+        if force_download is None and self.remote_assets_store:
+            force_download = self.remote_assets_store.force_download
+
+        logger.info(
+            "Fetching asset",
+            spec=spec,
+            return_info=return_info,
+            force_download=force_download,
+        )
 
         lock_path = (
             os.path.join(self.assets_dir, ".cache", *spec.name.split("/")) + ".lock"
         )
         os.makedirs(os.path.dirname(lock_path), exist_ok=True)
         with filelock.FileLock(lock_path, timeout=self.timeout):
-            asset_info = self._fetch_asset(spec)
+            asset_info = self._fetch_asset(spec, _force_download=force_download)
         logger.debug("Fetched asset", spec=spec, asset_info=asset_info)
         path = asset_info["path"]
         if not os.path.exists(path):

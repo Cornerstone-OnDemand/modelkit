@@ -41,6 +41,7 @@ class RemoteAssetsStore:
             self.bucket = self.driver.bucket
             self.timeout = settings.timeout_s
             self.prefix = settings.storage_prefix
+            self.force_download = settings.storage_force_download
 
     def get_object_name(self, name, version):
         return "/".join((self.prefix, name, version))
