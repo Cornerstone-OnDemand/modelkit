@@ -19,6 +19,10 @@ from modelkit.utils.logging import ContextualizedLogging
 logger = get_logger(__name__)
 
 
+class AssetFetchError(Exception):
+    pass
+
+
 class AssetsManager:
     def __init__(self, **settings):
         if isinstance(settings, dict):
@@ -31,7 +35,10 @@ class AssetsManager:
                 self.remote_assets_store = RemoteAssetsStore(
                     **settings.remote_store.dict()
                 )
-                logger.debug("AssetsManager created with remote storage provider")
+                logger.debug(
+                    "AssetsManager created with remote storage provider",
+                    driver=self.remote_assets_store.driver,
+                )
             except BaseException:
                 # A remote store was parametrized, but it could not be instantiated
                 logger.error(
@@ -49,97 +56,124 @@ class AssetsManager:
         else:
             return []
 
-    def _fetch_asset(self, spec: AssetSpec, return_info=False):
-        local_name = os.path.join(self.assets_dir, *spec.name.split("/"))
-        local_versions_list = self.get_local_versions_info(local_name)
-        remote_versions_list = []
-        if self.remote_assets_store and (
-            not spec.major_version or not spec.minor_version
-        ):
-            remote_versions_list = self.remote_assets_store.get_versions_info(spec.name)
-        all_versions_list = sort_versions(
-            list({x for x in local_versions_list + remote_versions_list})
-        )
-        if not spec.major_version and not spec.minor_version:
-            # no version is specified
-            if not all_versions_list:
-                # and none exist
-                # in this case, the asset spec is likely a relative or absolute
-                # path to a file/directory
-                if os.path.exists(local_name):
-                    # if the asset spec resolves to MODELKIT_ASSETS_DIR/spec.name
-                    return {"path": local_name}
-                elif os.path.exists(os.path.join(os.getcwd(), *spec.name.split("/"))):
-                    # if the assect spec resolves to cwd/spec.name
-                    return {"path": os.path.join(os.getcwd(), *spec.name.split("/"))}
-                elif os.path.exists(spec.name):
-                    # if the asset spec is a valid absolute path
-                    return {"path": spec.name}
-                else:
-                    raise errors.AssetDoesNotExistError(spec.name)
-
-        if not spec.major_version or not spec.minor_version:
-            if not all_versions_list:
-                raise errors.LocalAssetDoesNotExistError(
-                    name=spec.name,
-                    major=spec.major_version,
-                    minor=spec.minor_version,
-                    local_versions=local_versions_list,
+    def _fetch_asset(self, spec: AssetSpec):
+        with ContextualizedLogging(name=spec.name):
+            local_name = os.path.join(self.assets_dir, *spec.name.split("/"))
+            local_versions_list = self.get_local_versions_info(local_name)
+            logger.debug("Local versions list", local_versions_list=local_versions_list)
+            remote_versions_list = []
+            if self.remote_assets_store and (
+                not spec.major_version or not spec.minor_version
+            ):
+                remote_versions_list = self.remote_assets_store.get_versions_info(
+                    spec.name
                 )
-
-            # at least one version info is missing, fetch the latest
-            if not spec.major_version:
-                spec.major_version, spec.minor_version = parse_version(
-                    all_versions_list[0]
+                logger.debug(
+                    "Fetched remote versions list",
+                    remote_versions_list=remote_versions_list,
                 )
-            elif not spec.minor_version:
-                spec.major_version, spec.minor_version = parse_version(
-                    filter_versions(all_versions_list, major=spec.major_version)[0]
-                )
-            logger.debug(
-                "Resolved latest version",
-                name=spec.name,
-                major=spec.major_version,
-                minor=spec.minor_version,
+            all_versions_list = sort_versions(
+                list({x for x in local_versions_list + remote_versions_list})
             )
+            if not spec.major_version and not spec.minor_version:
+                logger.debug("Asset has no version information")
+                # no version is specified
+                if not all_versions_list:
+                    # and none exist
+                    # in this case, the asset spec is likely a relative or absolute
+                    # path to a file/directory
+                    if os.path.exists(local_name):
+                        logger.debug(
+                            "Asset is a valid local path relative to ASSETS_DIR",
+                            local_name=local_name,
+                        )
+                        # if the asset spec resolves to MODELKIT_ASSETS_DIR/spec.name
+                        return {"path": local_name}
+                    elif os.path.exists(
+                        os.path.join(os.getcwd(), *spec.name.split("/"))
+                    ):
+                        logger.debug(
+                            "Asset is a valid relative local path",
+                            local_name=os.path.exists(
+                                os.path.join(os.getcwd(), *spec.name.split("/"))
+                            ),
+                        )
+                        # if the assect spec resolves to cwd/spec.name
+                        return {
+                            "path": os.path.join(os.getcwd(), *spec.name.split("/"))
+                        }
+                    elif os.path.exists(spec.name):
+                        logger.debug(
+                            "Asset is a valid absolute local path",
+                            local_name=os.path.exists(
+                                os.path.join(os.getcwd(), *spec.name.split("/"))
+                            ),
+                        )
+                        # if the asset spec is a valid absolute path
+                        return {"path": spec.name}
+                    else:
+                        raise errors.AssetDoesNotExistError(spec.name)
 
-        version = f"{spec.major_version}.{spec.minor_version}"
-        with ContextualizedLogging(name=spec.name, version=version):
-            asset_dict = {
-                "from_cache": True,
-                "version": version,
-                "path": os.path.join(self.assets_dir, *spec.name.split("/"), version),
-            }
-            if version not in local_versions_list:
-                if self.remote_assets_store:
-                    logger.info(
-                        "Fetching distant asset",
-                        local_versions=local_versions_list,
-                    )
-                    asset_download_info = self.remote_assets_store.download(
-                        spec.name, version, self.assets_dir
-                    )
-                    asset_dict.update({**asset_download_info, "from_cache": False})
-                else:
+            if not spec.major_version or not spec.minor_version:
+                if not all_versions_list:
                     raise errors.LocalAssetDoesNotExistError(
                         name=spec.name,
                         major=spec.major_version,
                         minor=spec.minor_version,
                         local_versions=local_versions_list,
                     )
-            if spec.sub_part:
-                local_sub_part = os.path.join(
-                    *(
-                        list(os.path.split(str(asset_dict["path"])))
-                        + [p for p in spec.sub_part.split("/") if p]
-                    )
-                )
-                asset_dict["path"] = local_sub_part
 
-        if return_info:
+                # at least one version info is missing, fetch the latest
+                if not spec.major_version:
+                    spec.major_version, spec.minor_version = parse_version(
+                        all_versions_list[0]
+                    )
+                elif not spec.minor_version:
+                    spec.major_version, spec.minor_version = parse_version(
+                        filter_versions(all_versions_list, major=spec.major_version)[0]
+                    )
+                logger.debug(
+                    "Resolved latest version",
+                    major=spec.major_version,
+                    minor=spec.minor_version,
+                )
+
+            version = f"{spec.major_version}.{spec.minor_version}"
+            with ContextualizedLogging(version=version):
+                asset_dict = {
+                    "from_cache": True,
+                    "version": version,
+                    "path": os.path.join(
+                        self.assets_dir, *spec.name.split("/"), version
+                    ),
+                }
+                if version not in local_versions_list:
+                    if self.remote_assets_store:
+                        logger.info(
+                            "Fetching distant asset",
+                            local_versions=local_versions_list,
+                        )
+                        asset_download_info = self.remote_assets_store.download(
+                            spec.name, version, self.assets_dir
+                        )
+                        asset_dict.update({**asset_download_info, "from_cache": False})
+                    else:
+                        raise errors.LocalAssetDoesNotExistError(
+                            name=spec.name,
+                            major=spec.major_version,
+                            minor=spec.minor_version,
+                            local_versions=local_versions_list,
+                        )
+                if spec.sub_part:
+                    local_sub_part = os.path.join(
+                        *(
+                            list(os.path.split(str(asset_dict["path"])))
+                            + [p for p in spec.sub_part.split("/") if p]
+                        )
+                    )
+                    asset_dict["path"] = local_sub_part
+
             return asset_dict
-        else:
-            return asset_dict["path"]
 
     def fetch_asset(self, spec: Union[AssetSpec, str], return_info=False):
         logger.info("Fetching asset", spec=spec, return_info=return_info)
@@ -152,4 +186,20 @@ class AssetsManager:
         )
         os.makedirs(os.path.dirname(lock_path), exist_ok=True)
         with filelock.FileLock(lock_path, timeout=5):
-            return self._fetch_asset(spec, return_info=return_info)
+            asset_info = self._fetch_asset(spec)
+        logger.debug("Fetched asset", spec=spec, asset_info=asset_info)
+        path = asset_info["path"]
+        if not os.path.exists(path):
+            logger.error(
+                "An unknown error occured when fetching asset."
+                "The path does not exist.",
+                path=path,
+                spec=spec,
+            )
+            raise AssetFetchError(
+                f"An unknown error occured when fetching asset {spec}."
+                f"The path {path} does not exist."
+            )
+        if not return_info:
+            return path
+        return asset_info
