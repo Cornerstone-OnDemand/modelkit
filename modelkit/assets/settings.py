@@ -17,7 +17,9 @@ logger = get_logger(__name__)
 
 
 class DriverSettings(BaseSettings):
-    storage_provider: str
+    storage_provider: str = pydantic.Field(
+        None, env="MODELKIT_STORAGE_PROVIDER"
+    )
     settings: Optional[Union[GCSDriverSettings, S3DriverSettings, LocalDriverSettings]]
 
     @root_validator(pre=True)
@@ -25,11 +27,7 @@ class DriverSettings(BaseSettings):
     def dispatch_settings(cls, fields):
         if "settings" in fields:
             return fields
-        storage_provider = fields.pop("storage_provider", None) or os.getenv(
-            "MODELKIT_STORAGE_PROVIDER", None
-        )
-        if not storage_provider:
-            return {"storage_provider": None, "settings": None}
+        storage_provider = fields.pop("storage_provider", None)
         if storage_provider not in SUPPORTED_MODELKIT_STORAGE_PROVIDERS:
             logger.error(
                 f"Unknown storage provider `{storage_provider}`, "
