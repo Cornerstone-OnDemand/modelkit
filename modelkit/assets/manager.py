@@ -24,6 +24,18 @@ class AssetFetchError(Exception):
     pass
 
 
+def _success_file_path(local_path):
+    if os.path.isdir(local_path):
+        return os.path.join(local_path, ".SUCCESS")
+    else:
+        dirn, fn = os.path.split(local_path)
+        return os.path.join(dirn, f".{fn}.SUCCESS")
+
+
+def _has_succeeded(local_path):
+    return os.path.exists(_success_file_path(local_path))
+
+
 class AssetsManager:
     def __init__(self, **settings):
         if isinstance(settings, dict):
@@ -57,12 +69,6 @@ class AssetsManager:
             )
         else:
             return []
-
-    def _has_succeeded(self, local_path):
-        if os.path.isdir(local_path):
-            return os.path.exists(os.path.join(local_path, ".SUCCESS"))
-        else:
-            return os.path.exists(local_path + ".SUCCESS")
 
     def _fetch_asset(self, spec: AssetSpec, _force_download=False):
         with ContextualizedLogging(name=spec.name):
@@ -151,7 +157,7 @@ class AssetsManager:
                 local_path = os.path.join(
                     self.assets_dir, *spec.name.split("/"), version
                 )
-                if not self._has_succeeded(local_path):
+                if not _has_succeeded(local_path):
                     logger.info("Previous fetching of asset has failed, redownloading.")
                     _force_download = True
                 if _force_download:
@@ -160,8 +166,9 @@ class AssetsManager:
                             shutil.rmtree(local_path)
                         else:
                             os.unlink(local_path)
-                    if os.path.exists(local_path + ".SUCCESS"):
-                        os.unlink(local_path + ".SUCCESS")
+                    success_object_path = _success_file_path(local_path)
+                    if os.path.exists(success_object_path):
+                        os.unlink(success_object_path)
                 if not _force_download and (version in local_versions_list):
                     asset_dict = {
                         "from_cache": True,
@@ -184,9 +191,9 @@ class AssetsManager:
                             "path": local_path,
                         }
                         if os.path.isdir(local_path):
-                            open(os.path.join(local_path, ".SUCCESS"), "w").close()
+                            open(_success_file_path(local_path), "w").close()
                         else:
-                            open(local_path + ".SUCCESS", "w").close()
+                            open(_success_file_path(local_path), "w").close()
                     else:
                         raise errors.LocalAssetDoesNotExistError(
                             name=spec.name,

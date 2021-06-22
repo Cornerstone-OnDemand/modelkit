@@ -5,7 +5,7 @@ import tempfile
 import pytest
 
 import modelkit.assets.cli
-from modelkit.assets.manager import AssetsManager
+from modelkit.assets.manager import AssetsManager, _success_file_path
 from tests.conftest import skip_unless
 
 test_path = os.path.dirname(os.path.realpath(__file__))
@@ -213,9 +213,9 @@ def test_assetsmanager_retry_on_fail(base_dir, working_dir):
 
     asset_info = mng.fetch_asset("category-test/some-data.ext:1.0", return_info=True)
     assert not asset_info["from_cache"]
-    assert os.path.exists(asset_info["path"] + ".SUCCESS")
+    assert os.path.exists(_success_file_path(asset_info["path"]))
 
-    os.unlink(asset_info["path"] + ".SUCCESS")
+    os.unlink(_success_file_path(asset_info["path"]))
 
     asset_info = mng.fetch_asset("category-test/some-data.ext:1.0", return_info=True)
     assert not asset_info["from_cache"]
@@ -226,9 +226,9 @@ def test_assetsmanager_retry_on_fail(base_dir, working_dir):
 
     asset_info = mng.fetch_asset("category-test/some-data-dir:1.0", return_info=True)
     assert not asset_info["from_cache"]
-    assert os.path.exists(os.path.join(asset_info["path"], ".SUCCESS"))
+    assert os.path.exists(_success_file_path(asset_info["path"]))
 
-    os.unlink(os.path.join(asset_info["path"], ".SUCCESS"))
+    os.unlink(_success_file_path(asset_info["path"]))
 
     asset_info = mng.fetch_asset("category-test/some-data-dir:1.0", return_info=True)
     assert not asset_info["from_cache"]
