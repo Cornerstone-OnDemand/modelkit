@@ -17,7 +17,7 @@ from rich.table import Table
 from rich.tree import Tree
 
 from modelkit import ModelLibrary
-from modelkit.api import ModelkitAutoAPIRouter
+from modelkit.api import ModelkitAutoAPIRouter, create_modelkit_app
 from modelkit.assets.cli import assets_cli
 from modelkit.core.model_configuration import configure, list_assets
 from modelkit.utils.serialization import safe_np_dump
@@ -234,12 +234,7 @@ def serve(required_models, models, host, port):
 
     Run an HTTP server with specified models using FastAPI
     """
-    app = fastapi.FastAPI()
-    router = ModelkitAutoAPIRouter(
-        required_models=list(required_models) or None,
-        models=models,
-    )
-    app.include_router(router)
+    app = create_modelkit_app(models=models, required_models=list(required_models))
     uvicorn.run(app, host=host, port=port)
 
 
