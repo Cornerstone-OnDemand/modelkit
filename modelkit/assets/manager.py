@@ -28,6 +28,7 @@ class AssetsManager:
         if isinstance(settings, dict):
             settings = AssetsManagerSettings(**settings)
         self.assets_dir = settings.assets_dir
+        self.timeout = settings.timeout
 
         self.remote_assets_store = None
         if settings.remote_store:
@@ -185,7 +186,7 @@ class AssetsManager:
             os.path.join(self.assets_dir, ".cache", *spec.name.split("/")) + ".lock"
         )
         os.makedirs(os.path.dirname(lock_path), exist_ok=True)
-        with filelock.FileLock(lock_path, timeout=5):
+        with filelock.FileLock(lock_path, timeout=self.timeout):
             asset_info = self._fetch_asset(spec)
         logger.debug("Fetched asset", spec=spec, asset_info=asset_info)
         path = asset_info["path"]

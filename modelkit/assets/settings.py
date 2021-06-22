@@ -17,9 +17,7 @@ logger = get_logger(__name__)
 
 
 class DriverSettings(BaseSettings):
-    storage_provider: str = pydantic.Field(
-        None, env="MODELKIT_STORAGE_PROVIDER"
-    )
+    storage_provider: str = pydantic.Field(None, env="MODELKIT_STORAGE_PROVIDER")
     settings: Optional[Union[GCSDriverSettings, S3DriverSettings, LocalDriverSettings]]
 
     @root_validator(pre=True)
@@ -70,6 +68,7 @@ class AssetsManagerSettings(BaseSettings):
     assets_dir: pydantic.DirectoryPath = pydantic.Field(
         default_factory=lambda: os.getcwd(), env="MODELKIT_ASSETS_DIR"
     )
+    timeout: int = pydantic.Field(5, env="MODELKIT_ASSETS_TIMEOUT_S")
 
     @root_validator(pre=True)
     @classmethod
