@@ -191,3 +191,44 @@ def test_assetsmanager_force_download(monkeypatch, base_dir, working_dir):
         "category-test/some-data.ext:1.0", return_info=True
     )
     assert not asset_info_force_env["from_cache"]
+
+
+def test_assetsmanager_retry_on_fail(base_dir, working_dir):
+    # Setup a bucket
+    bucket_path = os.path.join(base_dir, "local_driver", "bucket")
+    os.makedirs(bucket_path)
+
+    mng = AssetsManager(
+        assets_dir=working_dir,
+        remote_store={
+            "driver": {
+                "storage_provider": "local",
+                "bucket": bucket_path,
+            }
+        },
+    )
+    # Try with a file asset
+    data_path = os.path.join(test_path, "testdata", "some_data.json")
+    mng.remote_assets_store.push(data_path, "category-test/some-data.ext", "1.0")
+
+    asset_info = mng.fetch_asset("category-test/some-data.ext:1.0", return_info=True)
+    assert not asset_info["from_cache"]
+    assert os.path.exists(asset_info["path"] + ".SUCCESS")
+
+    os.unlink(asset_info["path"] + ".SUCCESS")
+
+    asset_info = mng.fetch_asset("category-test/some-data.ext:1.0", return_info=True)
+    assert not asset_info["from_cache"]
+
+    # Try with a directory asset
+    data_path = os.path.join(test_path, "testdata")
+    mng.remote_assets_store.push(data_path, "category-test/some-data-dir", "1.0")
+
+    asset_info = mng.fetch_asset("category-test/some-data-dir:1.0", return_info=True)
+    assert not asset_info["from_cache"]
+    assert os.path.exists(os.path.join(asset_info["path"], ".SUCCESS"))
+
+    os.unlink(os.path.join(asset_info["path"], ".SUCCESS"))
+
+    asset_info = mng.fetch_asset("category-test/some-data-dir:1.0", return_info=True)
+    assert not asset_info["from_cache"]

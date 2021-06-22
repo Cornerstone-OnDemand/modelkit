@@ -41,12 +41,17 @@ def test_local_manager_no_versions(working_dir):
 
 def test_local_manager_with_versions(working_dir):
     os.makedirs(os.path.join(working_dir, "something", "0.0"))
+    open(os.path.join(working_dir, "something", "0.0", ".SUCCESS"), "w").close()
+
     os.makedirs(os.path.join(working_dir, "something", "0.1"))
+    open(os.path.join(working_dir, "something", "0.1", ".SUCCESS"), "w").close()
+
     os.makedirs(os.path.join(working_dir, "something", "1.1", "subpart"))
     with open(
         os.path.join(working_dir, "something", "1.1", "subpart", "deep.txt"), "w"
     ) as f:
         f.write("OK")
+    open(os.path.join(working_dir, "something", "1.1", ".SUCCESS"), "w").close()
 
     manager = AssetsManager(assets_dir=working_dir)
     res = manager.fetch_asset("something:1.1[subpart/deep.txt]", return_info=True)
@@ -76,6 +81,8 @@ def test_local_manager_with_versions(working_dir):
         manager = AssetsManager()
         local_dir = os.path.join("tmp-local-asset", "1.0", "subpart")
         os.makedirs(local_dir)
+        open(os.path.join("tmp-local-asset", "1.0", ".SUCCESS"), "w").close()
+
         shutil.copy("README.md", local_dir)
 
         res = manager.fetch_asset(
