@@ -1,10 +1,11 @@
 import abc
 import hashlib
 import pickle
-from typing import Any, Dict, Generic, NamedTuple, Optional
+from typing import Any, Dict, Generic, Optional
 
 import cachetools
 import cachetools.keys
+from dataclasses import dataclass
 import pydantic
 
 import modelkit
@@ -12,7 +13,8 @@ from modelkit.core.types import ItemType
 from modelkit.utils.redis import connect_redis
 
 
-class CacheItem(NamedTuple, Generic[ItemType]):
+@dataclass
+class CacheItem(Generic[ItemType]):
     item: Optional[ItemType] = None
     cache_key: Optional[bytes] = None
     cache_value: Optional[Any] = None
