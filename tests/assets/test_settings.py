@@ -183,3 +183,14 @@ def test_assetsmanager_default():
     settings = AssetsManagerSettings()
     assert settings.assets_dir == Path(os.getcwd())
     assert settings.remote_store is None
+
+
+def test_assetsmanager_storage_provider_bug(monkeypatch):
+    monkeypatch.setenv("STORAGE_PROVIDER", "gcs")
+    monkeypatch.setenv("MODELKIT_STORAGE_PROVIDER", "s3")
+    monkeypatch.setenv("MODELKIT_STORAGE_BUCKET", "some-bucket")
+    settings = DriverSettings()
+    assert settings.storage_provider == "s3"
+
+    settings = AssetsManagerSettings()
+    assert settings.remote_store.driver.storage_provider == "s3"
