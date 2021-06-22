@@ -2,11 +2,9 @@ import filecmp
 import os
 import tempfile
 
-import botocore
 import pytest
 
 import modelkit.assets.cli
-from modelkit.assets.manager import AssetsManager
 from tests.conftest import skip_unless
 
 test_path = os.path.dirname(os.path.realpath(__file__))
