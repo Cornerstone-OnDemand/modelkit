@@ -68,7 +68,7 @@ class AssetsManagerSettings(BaseSettings):
     assets_dir: pydantic.DirectoryPath = pydantic.Field(
         default_factory=lambda: os.getcwd(), env="MODELKIT_ASSETS_DIR"
     )
-    timeout: int = pydantic.Field(5, env="MODELKIT_ASSETS_TIMEOUT_S")
+    timeout: int = pydantic.Field(10, env="MODELKIT_ASSETS_TIMEOUT_S")
 
     @root_validator(pre=True)
     @classmethod
