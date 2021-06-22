@@ -12,7 +12,7 @@ In order to run/deploy `modelkit` endpoints, you need to provide it with the nec
     - for `MODELKIT_STORAGE_PROVIDER=gcs`, the variable `GOOGLE_APPLICATION_CREDENTIALS` need to be
       pointing to a service account credentials JSON file (this is not necessary on dev
       machines)
-    - for `MODELKIT_STORAGE_PROVIDER=s3ssm`, you need to instantiate `AWS_PROFILE`
+    - for `MODELKIT_STORAGE_PROVIDER=s3`, you need to instantiate `AWS_PROFILE`
 
 Refer to the [AssetsManager settings documentation](assets/environment.md) for more information.
 
