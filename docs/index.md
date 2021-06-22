@@ -1,3 +1,6 @@
+<p align="center">
+<img src="logo.png" alt="modelkit" height="60" />
+ </p>
 
 `modelkit` is a Python framework meant to make your ML models robust, reusable and performant in all situations you need to use them.
 

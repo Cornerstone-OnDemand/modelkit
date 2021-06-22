@@ -1,4 +1,6 @@
-<h1 align="center"> modelkit </h1>
+<p align="center">
+<img src="docs/logo.png" alt="modelkit" height="60" />
+ </p>
 <p align="center">
   <em>Python framework for production ML systems.</em>
 </p>
