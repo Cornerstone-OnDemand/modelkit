@@ -38,6 +38,7 @@ def assetsmanager_settings(working_dir):
 def clean_env():
     for env_var in [
         "MODELKIT_ASSETS_DIR",
+        "MODELKIT_ASSETS_TIMEOUT_S",
         "MODELKIT_CACHE_HOST",
         "MODELKIT_CACHE_IMPLEMENTATION",
         "MODELKIT_CACHE_MAX_SIZE",
