@@ -38,6 +38,9 @@ nav:
     - Environment: 'assets/environment.md'
     - Development: 'assets/assets.md'
     - Local cache: 'assets/assets_dir.md'
+  - Deployment:
+    - Automatic: deployment/deployment.md
+    - Integrate in existing app: deployment/integrate_fastapi.md
 
 theme:
   name: 'material'
