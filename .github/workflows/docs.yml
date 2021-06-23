@@ -1,9 +1,6 @@
 name: docs
 
 on:
-  push:
-    branches:
-      - main
   workflow_run:
     workflows: ["CI"]
     types:
@@ -13,6 +10,7 @@ jobs:
   docs:
     name: Deploy docs
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
