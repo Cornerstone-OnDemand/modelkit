@@ -10,15 +10,25 @@ nav:
       - 'library/models/overview.md'
       - Getting predictions: 'library/models/using_models.md'
       - Configuring models: 'library/models/configuring_models.md'
-      - Assets: 'library/models/model_with_assets.md'
+      - Model loading: 'library/models/model_with_load.md'
       - Dependencies: 'library/models/models_with_dependencies.md'
       - Validation: 'library/models/validation.md'
       - Batching: 'library/models/batching.md'
       - Testing: 'library/models/testing.md'
       - Async: 'library/models/asynchronous_models.md'
       - Organizing models: 'library/models/organizing.md'
-    - Model Library: 'library/model_library.md'
-    - Specific models:
+    - Model Library: 
+      - 'library/model_library.md'
+      - Caching: 'library/caching.md'
+      - Lazy loading: 'library/lazy_loading.md'
+    - Assets:
+      - Remote assets: 'assets/remote_assets.md'
+      - Storage provider: 'assets/storage_provider.md'
+      - Managing assets: 'assets/managing_assets.md'
+      - Retrieving assets: 'assets/retrieving_assets.md'
+      - Local assets dir: 'assets/assets_dir.md'
+      - Remote store organization: 'assets/store_organization.md'
+    - Special models:
       - Tensorflow models: 'library/special/tensorflow.md'
       - Distant Models: 'library/special/distant.md'
   - Tutorials:
@@ -29,18 +39,12 @@ nav:
         - Classifier: 'examples/nlp_sentiment/classifier.md'
         - Advanced models: 'examples/nlp_sentiment/advanced_models.md'
         - "TL;DR": 'examples/nlp_sentiment/tldr.md'
-  - Configuration:
-    - Configuration: 'configuration.md'
+  - Configuration: 'configuration.md'
   - CLI: 'cli.md'
-  - Assets:
-    - Introduction: 'assets/index.md'
-    - Assets push: 'assets/assets_push.md'
-    - Environment: 'assets/environment.md'
-    - Development: 'assets/assets.md'
-    - Local cache: 'assets/assets_dir.md'
   - Deployment:
     - Automatic: deployment/deployment.md
     - Integrate in existing app: deployment/integrate_fastapi.md
+    - Environment: 'assets/environment.md'
 
 theme:
   name: 'material'
