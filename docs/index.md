@@ -1,4 +1,11 @@
 
+<h1 align="center"> modelkit </h1>
+<p align="center">
+  <em>Python framework for production ML systems.</em>
+</p>
+    
+---
+
 `modelkit` is a Python framework meant to make your ML models robust, reusable and performant in all situations you need to use them.
 
 It is meant to bridge the gap between the different uses of your algorithms. With `modelkit` you can ensure that the same exact code will run in production, on your machine, or on data processing pipelines.
