@@ -47,6 +47,9 @@ class RemoteAssetsStoreSettings(BaseSettings):
     storage_prefix: str = pydantic.Field(
         "modelkit-assets", env="MODELKIT_STORAGE_PREFIX"
     )
+    storage_force_download: bool = pydantic.Field(
+        False, env="MODELKIT_STORAGE_FORCE_DOWNLOAD"
+    )
 
     @root_validator(pre=True)
     @classmethod
@@ -58,6 +61,10 @@ class RemoteAssetsStoreSettings(BaseSettings):
                 pass
 
         return fields
+
+    @validator("storage_force_download", pre=True)
+    def force_download(cls, v):
+        return v == "True" or v is True
 
 
 NAME_RE = r"[a-z0-9]([a-z0-9\-\_\.]*[a-z0-9])?"

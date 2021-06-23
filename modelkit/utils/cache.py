@@ -1,11 +1,11 @@
 import abc
 import hashlib
 import pickle
+from dataclasses import dataclass
 from typing import Any, Dict, Generic, Optional
 
 import cachetools
 import cachetools.keys
-from dataclasses import dataclass
 import pydantic
 
 import modelkit
