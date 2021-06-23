@@ -21,7 +21,7 @@ It is meant to bridge the gap between the different uses of your algorithms. Wit
 
 ## Quickstart
 
-`modelkit` provides a straightforward and consister way to wrap your prediction  code in a `Model` class:
+`modelkit` provides a straightforward and consistent way to wrap your prediction  code in a `Model` class:
 
 ```python
 from modelkit import Model
