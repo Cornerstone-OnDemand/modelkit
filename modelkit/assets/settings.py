@@ -64,8 +64,7 @@ class RemoteAssetsStoreSettings(BaseSettings):
 
     @validator("storage_force_download", pre=True)
     def force_download(cls, v):
-        return v == "True" or v is True:
-
+        return v == "True" or v is True
 
 
 NAME_RE = r"[a-z0-9]([a-z0-9\-\_\.]*[a-z0-9])?"
