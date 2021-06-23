@@ -17,6 +17,7 @@ def coverage(session):
     session.run("coverage", "run", "-m", "pytest", "--junitxml=junit.xml")
     session.run("coverage", "report", "-m")
     session.run("coverage", "xml")
+    session.run("coverage", "html", "-d", "docs/coverage")
 
     # Generate README badges using genbadge, junit.xml and coverage.xml
     session.install("genbadge[coverage,tests]")

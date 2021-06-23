@@ -8,7 +8,7 @@
 <p align="center">
   <img src="https://img.shields.io/github/workflow/status/clustree/modelkit/CI/main" />
   <img src="docs/badges/tests.svg" />
-  <img src="docs/badges/coverage.svg" />
+  <a href="https://clustree.github.io/modelkit/coverage"><img src="docs/badges/coverage.svg" /></a>
   <img src="https://img.shields.io/pypi/v/modelkit" />
   <img src="https://img.shields.io/pypi/pyversions/modelkit" />
   <a href="https://clustree.github.io/modelkit/index.html"><img src="https://img.shields.io/badge/docs-latest-blue" /></a>

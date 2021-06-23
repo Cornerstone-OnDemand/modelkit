@@ -41,3 +41,11 @@ jobs:
           git add docs/badges
           git diff-index --quiet HEAD || git commit -m "generate badges"
           git push
+
+      - name: 'Upload coverage report'
+        if: ${{matrix.os == 'ubuntu-latest' && matrix.python-version == '3.7' && github.ref == 'refs/heads/main'}}
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage
+          path: docs/coverage
+          retention-days: 1

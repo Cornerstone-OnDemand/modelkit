@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
 
 jobs:
   docs:
@@ -25,3 +29,23 @@ jobs:
         run: mkdocs gh-deploy --force
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          ref: gh-pages
+
+      - name: Download Coverage Report
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: main.yml
+          name: coverage
+          path: coverage
+
+      - name: Push Coverage Report
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add coverage
+          git commit -m "add coverage report"
+          git push
