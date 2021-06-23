@@ -6,13 +6,13 @@
 ---
 
 <p align="center">
-  <img src="https://img.shields.io/github/workflow/status/clustree/modelkit/CI/main" />
-  <img src="docs/badges/tests.svg" />
-  <a href="https://clustree.github.io/modelkit/coverage"><img src="docs/badges/coverage.svg" /></a>
-  <img src="https://img.shields.io/pypi/v/modelkit" />
-  <img src="https://img.shields.io/pypi/pyversions/modelkit" />
+  <a href="https://github.com/clustree/modelkit/actions?query=branch%3Amain+"><img src="https://img.shields.io/github/workflow/status/clustree/modelkit/CI/main" /></a>
+  <a href="https://github.com/clustree/modelkit/actions/workflows/main.yml?query=branch%3Amain+"><img src="badges/tests.svg" /></a>
+  <a href="https://clustree.github.io/modelkit/coverage/index.html"><img src="badges/coverage.svg" /></a>
+  <a href="https://pypi.org/project/modelkit/"><img src="https://img.shields.io/pypi/v/modelkit" /></a>
+  <a href="https://pypi.org/project/modelkit/"><img src="https://img.shields.io/pypi/pyversions/modelkit" /></a>
   <a href="https://clustree.github.io/modelkit/index.html"><img src="https://img.shields.io/badge/docs-latest-blue" /></a>
-  <img src="https://img.shields.io/github/license/clustree/modelkit" />
+  <a href="https://github.com/clustree/modelkit/blob/main/LICENSE"><img src="https://img.shields.io/github/license/clustree/modelkit" /></a>
 </p>
 
 `modelkit` is a Python framework meant to make your ML models robust, reusable and performant in all situations you need to use them.
