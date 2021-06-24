@@ -52,12 +52,12 @@ def api_no_type(event_loop):
         def _predict(self, item):
             return item
 
-    class SomeAsyncModel(AsyncModel):
+    class SomeAsyncModel(AsyncModel[ItemModel, ResultModel]):
         CONFIGURATIONS = {"async_model": {}}
 
         async def _predict(self, item):
             await asyncio.sleep(0)
-            return item
+            return {"sorted": "".join(sorted(item.string))}
 
     class ValidationNotSupported(Model[np.ndarray, np.ndarray]):
         CONFIGURATIONS = {"no_supported_model": {}}
@@ -118,10 +118,16 @@ def test_api_simple_type(item, api_no_type):
     assert res.json() == [item]
 
 
-@pytest.mark.parametrize("item", [{"string": "ok"}])
-def test_api_complex_type(item, api_no_type):
+@pytest.mark.parametrize(
+    "item, model",
+    [
+        ({"string": "ok"}, "some_complex_model"),
+        ({"string": "ok"}, "async_model"),
+    ],
+)
+def test_api_complex_type(item, model, api_no_type):
     res = api_no_type.post(
-        "/predict/some_complex_model",
+        f"/predict/{model}",
         headers={"Content-Type": "application/json"},
         json=item,
     )
@@ -129,7 +135,7 @@ def test_api_complex_type(item, api_no_type):
     assert res.json()["sorted"] == "".join(sorted(item["string"]))
 
     res = api_no_type.post(
-        "/predict/batch/some_complex_model",
+        f"/predict/batch/{model}",
         headers={"Content-Type": "application/json"},
         json=[item],
     )

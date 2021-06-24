@@ -147,7 +147,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
         if isinstance(model, AsyncModel):
 
             async def _aendpoint(
-                item: item_type = fastapi.Body(...),
+                item: List[item_type] = fastapi.Body(...),
                 model=fastapi.Depends(lambda: self.lib.get(model.configuration_key)),
             ):  # noqa: B008
                 return await model.predict_batch(item)
