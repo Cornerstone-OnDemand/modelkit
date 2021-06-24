@@ -8,6 +8,7 @@ import pydantic
 import pytest
 import redis
 
+import modelkit.utils.redis
 from modelkit.core.library import ModelLibrary
 from modelkit.core.model import AsyncModel, Model
 from modelkit.utils.cache import NativeCache, RedisCache
@@ -222,3 +223,17 @@ async def test_redis_cache_async(redis_service, event_loop):
 
     m_validated = lib.get("model_validated")
     await _do_model_test_async(m_validated, ITEMS)
+
+
+def test_redis_cache_error(monkeypatch):
+    class SomeModelValidated(Model):
+        CONFIGURATIONS = {"model": {"model_settings": {"cache_predictions": True}}}
+
+        def _predict_batch(self, items):
+            return items
+
+    with pytest.raises(modelkit.utils.redis.RedisCacheException):
+        ModelLibrary(
+            models=[SomeModelValidated],
+            settings={"cache": {"cache_provider": "redis"}},
+        )
