@@ -2,11 +2,6 @@ class StorageDriverError(Exception):
     pass
 
 
-class BucketDoesNotExistError(StorageDriverError):
-    def __init__(self, driver, bucket):
-        super().__init__(f"Bucket {bucket} does not exist (driver={driver})")
-
-
 class ObjectDoesNotExistError(StorageDriverError):
     def __init__(self, driver, bucket, object_name):
         super().__init__(
@@ -38,25 +33,9 @@ class AssetMajorVersionDoesNotExistError(AssetsManagerError):
         )
 
 
-class AssetMajorVersionAlreadyExistsError(AssetsManagerError):
-    def __init__(self, name, major):
-        super().__init__(
-            f"Asset major version `{major}` for `{name}` already exists."
-            "Use `update` to push a new minor version of an asset."
-        )
-
-
 class InvalidAssetSpecError(AssetsManagerError):
     def __init__(self, spec):
         super().__init__(f"Invalid asset spec `{spec}`")
-
-
-class LocalAssetVersionDoesNotExistError(AssetsManagerError):
-    def __init__(self, name, major, minor):
-        super().__init__(
-            f"Asset major version `{major}.{minor}` for `{name}` does not exist."
-            "Use `push_new_asset` to push a new major version of an asset."
-        )
 
 
 class LocalAssetDoesNotExistError(AssetsManagerError):

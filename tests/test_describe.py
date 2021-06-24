@@ -1,16 +1,35 @@
 import os
 import platform
+from typing import Any
 
 import pydantic
+import pytest
 from rich.console import Console
 
 from modelkit.core.library import ModelLibrary
 from modelkit.core.model import Model
 from modelkit.testing import ReferenceText
+from modelkit.utils.pretty import describe
 from tests import TEST_DIR
 
 
-def test_describe():
+def test_describe(monkeypatch):
+    monkeypatch.setenv(
+        "MODELKIT_ASSETS_DIR", os.path.join(TEST_DIR, "testdata", "test-bucket")
+    )
+
+    class SomeSimpleValidatedModelWithAsset(Model[str, str]):
+        """
+        This is a summary
+
+        that also has plenty more text
+        """
+
+        CONFIGURATIONS = {"some_model_a": {"asset": "assets-prefix"}}
+
+        def _predict(self, item):
+            return item
+
     class SomeSimpleValidatedModelA(Model[str, str]):
         """
         This is a summary
@@ -50,6 +69,21 @@ def test_describe():
         def _predict(self, item):
             return item
 
+    # test without a console and no models
+    library = ModelLibrary()
+    library.describe()
+
+    # test with assets
+    library = ModelLibrary(
+        models=[
+            SomeSimpleValidatedModelA,
+            SomeSimpleValidatedModelWithAsset,
+            SomeComplexValidatedModelA,
+        ]
+    )
+    library.describe()
+
+    # test with models but not assets
     library = ModelLibrary(
         models=[SomeSimpleValidatedModelA, SomeComplexValidatedModelA]
     )
@@ -71,3 +105,34 @@ def test_describe():
             if not any(x in line for x in EXCLUDED)
         )
         r.assert_equal("library_describe.txt", captured)
+
+
+class SomeObject:
+    def __init__(self) -> None:
+        self._x = 1
+        self.y = 2
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "something",
+        1,
+        2,
+        None,
+        {"x": 1},
+        [1, 2, 3],
+        [1, 2, 3, [4]],
+        object(),
+        pydantic.BaseModel(),
+        int,
+        SomeObject(),
+        float,
+        Any,
+        lambda x: 1,
+        b"ok",
+        (x for x in range(10)),
+    ],
+)
+def test_pretty_describe(value):
+    describe(value)

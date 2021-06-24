@@ -2,6 +2,9 @@ import os
 from typing import Optional
 
 import pydantic
+from google.api_core.exceptions import NotFound
+from google.cloud import storage
+from google.cloud.storage import Client
 from structlog import get_logger
 from tenacity import retry
 
@@ -9,15 +12,6 @@ from modelkit.assets import errors
 from modelkit.assets.drivers.retry import RETRY_POLICY
 
 logger = get_logger(__name__)
-try:
-    from google.api_core.exceptions import NotFound
-    from google.cloud import storage
-    from google.cloud.storage import Client
-except ImportError:
-    logger.debug(
-        "GCS is not available "
-        "(install modelkit[gcs] or google-cloud-storage directly)"
-    )
 
 
 class GCSDriverSettings(pydantic.BaseSettings):

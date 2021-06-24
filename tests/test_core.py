@@ -3,6 +3,7 @@ import os
 
 import pytest
 
+from modelkit.assets.errors import InvalidAssetSpecError
 from modelkit.core.library import (
     ConfigurationNotFoundException,
     ModelLibrary,
@@ -189,12 +190,23 @@ def test_modellibrary_required_models():
     assert m.asset_path == ""
     assert m.batch_size is None
 
+    class SomeOtherModel(Model):
+        pass
+
+    with pytest.raises(ValueError):
+        # model does not exist
+        p.get("yolo", model_type=SomeOtherModel)
+
 
 def test_modellibrary_no_models(monkeypatch):
     monkeypatch.setenv("modelkit_MODELS", "")
     p = ModelLibrary(models=None)
     assert p.configuration == {}
     assert p.required_models == {}
+
+    with pytest.raises(KeyError):
+        # model does not exist
+        p.get("some_model")
 
 
 def test_lazy_loading_dependencies():
@@ -358,6 +370,29 @@ def test_environment_asset_load(monkeypatch, assetsmanager_settings):
 
     predicted = model({})
     assert predicted == {"some key": "some data"}
+
+
+def test_environment_asset_load_version(monkeypatch, assetsmanager_settings):
+    class TestModel(Model):
+        def _load(self):
+            assert self.asset_path == "path/to/asset"
+            self.data = {"some key": "some data"}
+
+        def _predict(self, item, **kwargs):
+            return self.data
+
+    monkeypatch.setenv("MODELKIT_TESTS_TEST_ASSET_VERSION", "undef")
+
+    with pytest.raises(InvalidAssetSpecError):
+        ModelLibrary(
+            required_models=["some_asset"],
+            configuration={
+                "some_asset": ModelConfiguration(
+                    model_type=TestModel, asset="tests/test_asset"
+                )
+            },
+            assetsmanager_settings=assetsmanager_settings,
+        )
 
 
 def test_rename_dependencies():
