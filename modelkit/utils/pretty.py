@@ -59,16 +59,11 @@ def describe(obj, t=None):
                 for var in vars(obj):
                     if var.startswith("_"):
                         continue
-                    try:
-                        sub_t = t.add(
-                            f"[deep_sky_blue1]{var}[/deep_sky_blue1] [dim]: "
-                            f"{pretty_print_type(type(getattr(obj, var)).__name__)}"
-                            f"[/dim] = {escape(repr(getattr(obj, var)))}"
-                        )
-                    except TypeError:
-                        pass
+                    sub_t = t.add(
+                        f"[deep_sky_blue1]{var}[/deep_sky_blue1] [dim]: "
+                        f"{pretty_print_type(type(getattr(obj, var)).__name__)}"
+                        f"[/dim] = {escape(repr(getattr(obj, var)))}"
+                    )
             except TypeError:
-                pass
-    else:
-        t.label += f" = [orange3]{escape(str(obj))}[/orange3]"
+                t.label += f" = [orange3]{escape(str(obj))}[/orange3]"
     return t

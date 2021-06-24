@@ -1,12 +1,15 @@
 import os
 import platform
+from typing import Any
 
 import pydantic
+import pytest
 from rich.console import Console
 
 from modelkit.core.library import ModelLibrary
 from modelkit.core.model import Model
 from modelkit.testing import ReferenceText
+from modelkit.utils.pretty import describe
 from tests import TEST_DIR
 
 
@@ -102,3 +105,34 @@ def test_describe(monkeypatch):
             if not any(x in line for x in EXCLUDED)
         )
         r.assert_equal("library_describe.txt", captured)
+
+
+class SomeObject:
+    def __init__(self) -> None:
+        self._x = 1
+        self.y = 2
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "something",
+        1,
+        2,
+        None,
+        {"x": 1},
+        [1, 2, 3],
+        [1, 2, 3, [4]],
+        object(),
+        pydantic.BaseModel(),
+        int,
+        SomeObject(),
+        float,
+        Any,
+        lambda x: 1,
+        b"ok",
+        (x for x in range(10)),
+    ],
+)
+def test_pretty_describe(value):
+    describe(value)
