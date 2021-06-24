@@ -32,7 +32,7 @@ ASSETS_DIR
 ```
 
 !!! note
-    All previous versions of the assets are kept locally. It is save, however to delete local copies of the assets manually to save space.
+    All previous versions of the assets are kept locally. It is safe, however to delete local copies of the assets manually to save space.
 
     For directory assets, delete the version directory. For file assets, do not forget to delete the `.version.SUCCESS` file too.
 
