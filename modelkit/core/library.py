@@ -23,6 +23,7 @@ from typing import (
 
 import humanize
 import pydantic
+import redis
 from asgiref.sync import AsyncToSync
 from pydantic import ValidationError
 from rich.console import Console
@@ -42,11 +43,6 @@ from modelkit.utils.pretty import describe
 from modelkit.utils.redis import RedisCacheException
 
 logger = get_logger(__name__)
-
-try:
-    import redis
-except ImportError:
-    logger.debug("Redis is not available " "(install modelkit[redis] or redis)")
 
 
 class ConfigurationNotFoundException(Exception):
