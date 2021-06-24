@@ -1,9 +1,9 @@
 import asyncio
-from modelkit.assets.errors import InvalidAssetSpecError
 import os
 
 import pytest
 
+from modelkit.assets.errors import InvalidAssetSpecError
 from modelkit.core.library import (
     ConfigurationNotFoundException,
     ModelLibrary,

@@ -10,7 +10,23 @@ from modelkit.testing import ReferenceText
 from tests import TEST_DIR
 
 
-def test_describe():
+def test_describe(monkeypatch):
+    monkeypatch.setenv(
+        "MODELKIT_ASSETS_DIR", os.path.join(TEST_DIR, "testdata", "test-bucket")
+    )
+
+    class SomeSimpleValidatedModelWithAsset(Model[str, str]):
+        """
+        This is a summary
+
+        that also has plenty more text
+        """
+
+        CONFIGURATIONS = {"some_model_a": {"asset": "assets-prefix"}}
+
+        def _predict(self, item):
+            return item
+
     class SomeSimpleValidatedModelA(Model[str, str]):
         """
         This is a summary
@@ -50,6 +66,21 @@ def test_describe():
         def _predict(self, item):
             return item
 
+    # test without a console and no models
+    library = ModelLibrary()
+    library.describe()
+
+    # test with assets
+    library = ModelLibrary(
+        models=[
+            SomeSimpleValidatedModelA,
+            SomeSimpleValidatedModelWithAsset,
+            SomeComplexValidatedModelA,
+        ]
+    )
+    library.describe()
+
+    # test with models but not assets
     library = ModelLibrary(
         models=[SomeSimpleValidatedModelA, SomeComplexValidatedModelA]
     )
