@@ -99,6 +99,9 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
             try:
                 item_type.schema()  # type: ignore
             except (ValueError, AttributeError):
+                logger.info(
+                    "Discarding item type info for model", name=model_name, path=path
+                )
                 item_type = Any
 
             self.add_api_route(
