@@ -9,71 +9,80 @@ import pytest
 from starlette.testclient import TestClient
 
 from modelkit import testing
-from modelkit.api import ModelkitAutoAPIRouter
+from modelkit.api import ModelkitAutoAPIRouter, create_modelkit_app
 from modelkit.core.model import Asset, AsyncModel, Model
 from tests import TEST_DIR
 
 
+class SomeSimpleValidatedModel(Model[str, str]):
+    """
+    This is a summary
+
+    that also has plenty more text
+    """
+
+    CONFIGURATIONS = {"some_model": {}}
+
+    def _predict(self, item):
+        return item
+
+
+class ItemModel(pydantic.BaseModel):
+    string: str
+
+
+class ResultModel(pydantic.BaseModel):
+    sorted: str
+
+
+class SomeComplexValidatedModel(Model[ItemModel, ResultModel]):
+    """
+    More complex
+
+    With **a lot** of documentation
+    """
+
+    CONFIGURATIONS = {"some_complex_model": {}}
+
+    def _predict(self, item):
+        return {"sorted": "".join(sorted(item.string))}
+
+
+class NotValidatedModel(Model):
+    CONFIGURATIONS = {"unvalidated_model": {}}
+
+    def _predict(self, item):
+        return item
+
+
+class SomeAsyncModel(AsyncModel[ItemModel, ResultModel]):
+    CONFIGURATIONS = {"async_model": {}}
+
+    async def _predict(self, item):
+        await asyncio.sleep(0)
+        return {"sorted": "".join(sorted(item.string))}
+
+
+class ValidationNotSupported(Model[np.ndarray, np.ndarray]):
+    CONFIGURATIONS = {"no_supported_model": {}}
+
+    def _predict(self, item):
+        return item
+
+
+class SomeAsset(Asset):
+    """
+    This is not a Model, it won't appear in the service
+    """
+
+    CONFIGURATIONS = {"some_asset": {}}
+
+    def _predict(self, item):
+        return {"sorted": "".join(sorted(item.string))}
+
+
 @pytest.fixture(scope="module")
 def api_no_type(event_loop):
-    class SomeSimpleValidatedModel(Model[str, str]):
-        """
-        This is a summary
-
-        that also has plenty more text
-        """
-
-        CONFIGURATIONS = {"some_model": {}}
-
-        def _predict(self, item):
-            return item
-
-    class ItemModel(pydantic.BaseModel):
-        string: str
-
-    class ResultModel(pydantic.BaseModel):
-        sorted: str
-
-    class SomeComplexValidatedModel(Model[ItemModel, ResultModel]):
-        """
-        More complex
-
-        With **a lot** of documentation
-        """
-
-        CONFIGURATIONS = {"some_complex_model": {}}
-
-        def _predict(self, item):
-            return {"sorted": "".join(sorted(item.string))}
-
-    class NotValidatedModel(Model):
-        CONFIGURATIONS = {"unvalidated_model": {}}
-
-        def _predict(self, item):
-            return item
-
-    class SomeAsyncModel(AsyncModel[ItemModel, ResultModel]):
-        CONFIGURATIONS = {"async_model": {}}
-
-        async def _predict(self, item):
-            await asyncio.sleep(0)
-            return {"sorted": "".join(sorted(item.string))}
-
-    class ValidationNotSupported(Model[np.ndarray, np.ndarray]):
-        CONFIGURATIONS = {"no_supported_model": {}}
-
-        def _predict(self, item):
-            return item
-
-    class SomeAsset(Asset):
-        """
-        This is not a Model, it won't appear in the service
-        """
-
-        CONFIGURATIONS = {"some_asset": {}}
-
-        def _predict(self, item):
-            return {"sorted": "".join(sorted(item.string))}
 
     router = ModelkitAutoAPIRouter(
         required_models=[
@@ -168,3 +177,44 @@ def test_api_doc(api_no_type):
         # modelkit.utils.memory cannot track memory increment
         # and write it
         r.assert_equal("openapi.json", _strip_description_fields(res.json()))
+
+
+@pytest.mark.parametrize(
+    "required_models_env_var, models, required_models, n_endpoints",
+    [
+        (None, [SomeSimpleValidatedModel, SomeComplexValidatedModel], [], 4),
+        (
+            "some_model:some_complex_model",
+            [SomeSimpleValidatedModel, SomeComplexValidatedModel],
+            [],
+            8,
+        ),
+        (
+            "some_complex_model",
+            [SomeSimpleValidatedModel, SomeComplexValidatedModel],
+            [],
+            6,
+        ),
+        (
+            None,
+            [SomeSimpleValidatedModel, SomeComplexValidatedModel],
+            ["some_model", "some_complex_model"],
+            8,
+        ),
+        (
+            None,
+            [SomeSimpleValidatedModel, SomeComplexValidatedModel],
+            ["some_model"],
+            6,
+        ),
+    ],
+)
+def test_create_modelkit_app(
+    required_models_env_var, models, required_models, n_endpoints, monkeypatch
+):
+    if required_models_env_var:
+        monkeypatch.setenv("MODELKIT_REQUIRED_MODELS", required_models_env_var)
+    app = create_modelkit_app(models=models, required_models=required_models)
+    assert len([route.path for route in app.routes]) == n_endpoints
+    # import ipdb
+    # ipdb.set_trace()
