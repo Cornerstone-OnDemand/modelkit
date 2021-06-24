@@ -165,8 +165,8 @@ def create_modelkit_app(models=None, required_models=None):
     """
     Creates a modelkit FastAPI app with the specified models and required models.
 
-    This is meant to be used in conjunction with gunicorn or uvicorn in order to 
-    start a server.
+    This is meant to be used in conjunction with gunicorn or uvicorn in order to
+     start a server.
 
     Run with:
     ```
