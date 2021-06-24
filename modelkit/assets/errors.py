@@ -2,11 +2,6 @@ class StorageDriverError(Exception):
     pass
 
 
-class BucketDoesNotExistError(StorageDriverError):
-    def __init__(self, driver, bucket):
-        super().__init__(f"Bucket {bucket} does not exist (driver={driver})")
-
-
 class ObjectDoesNotExistError(StorageDriverError):
     def __init__(self, driver, bucket, object_name):
         super().__init__(
