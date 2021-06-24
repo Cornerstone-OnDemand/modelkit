@@ -43,7 +43,7 @@ This will open the doors to all of `modelkit`'s cool features:
 - **testable** Models carry their own unit test cases, and unit testing fixtures are available for [pytest](https://docs.pytest.org/en/6.2.x/)
 - **fast to deploy** Models can be served in a single CLI call using [fastapi](https://fastapi.tiangolo.com/)
 
-In addition, you will fined that `modelkit` is:
+In addition, you will find that `modelkit` is:
 
 - **simple** Use pip to install `modelkit`, it is just a Python library.
 - **robust** Follow software development best practices: version and test all your configurations and artifacts.
