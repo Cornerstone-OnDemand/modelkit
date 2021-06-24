@@ -166,8 +166,8 @@ async def _do_model_test_async(model, ITEMS):
     res = await model.predict_batch(ITEMS)
     assert res == ITEMS
 
-    res = await model.predict_batch(ITEMS + [{"new": "item"}])
-    assert ITEMS + [{"new": "item"}] == res
+    res = await model.predict_batch(ITEMS + [{"ok": {"boomer": [-1]}}])
+    assert ITEMS + [{"ok": {"boomer": [-1]}}] == res
 
 
 @pytest.mark.asyncio
