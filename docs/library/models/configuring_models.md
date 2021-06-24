@@ -61,16 +61,13 @@ It will print `"something"` and `"something2"`.
 
 ### Model attributes
 
-In general, `Model` have several attributes set by the `ModelLibrary` when they are initialized:
+In general, `Model` have several attributes set by the `ModelLibrary` when they are loaded:
 
 - `asset_path` the path to the asset set in the `Model`'s configuration
 - `configuration_key` the key of the model's configuration
 - `model_dependencies` a dictionary of `Model` dependencies
 - `model_settings` the `model_settings` as passed at initialization
 - `service_settings` the settings of the `ModelLibrary` that created the model
-
-And a set of attributes always present:
-
 - `batch_size` the batch size for the model: if `_predict_batch` is implemented it will default to getting batches of this size. It defaults to `None`, which means "no batching"
 
 
