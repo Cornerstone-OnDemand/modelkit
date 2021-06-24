@@ -25,7 +25,6 @@ import humanize
 import pydantic
 import redis
 from asgiref.sync import AsyncToSync
-from pydantic import ValidationError
 from rich.console import Console
 from rich.tree import Tree
 from structlog import get_logger

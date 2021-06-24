@@ -5,7 +5,6 @@ import sys
 from time import perf_counter, sleep
 
 import click
-import fastapi
 import humanize
 import networkx as nx
 import uvicorn
@@ -17,7 +16,7 @@ from rich.table import Table
 from rich.tree import Tree
 
 from modelkit import ModelLibrary
-from modelkit.api import ModelkitAutoAPIRouter, create_modelkit_app
+from modelkit.api import create_modelkit_app
 from modelkit.assets.cli import assets_cli
 from modelkit.core.model_configuration import configure, list_assets
 from modelkit.utils.serialization import safe_np_dump
