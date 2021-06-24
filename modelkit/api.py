@@ -104,7 +104,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
 
                 self.add_api_route(
                     path,
-                    self._make_model_endpoint_fn(model_name, item_type),
+                    self._make_model_endpoint_fn(m, item_type),
                     methods=["POST"],
                     description=description,
                     summary=summary,
@@ -112,7 +112,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
                 )
                 self.add_api_route(
                     batch_path,
-                    self._make_batch_model_endpoint_fn(model_name, item_type),
+                    self._make_batch_model_endpoint_fn(m, item_type),
                     methods=["POST"],
                     description=description,
                     summary=summary,
@@ -124,12 +124,12 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
                     "Could not add model to service", name=model_name, path=exc
                 )
 
-    def _make_model_endpoint_fn(self, model_name, item_type):
-        if isinstance(model_name, AsyncModel):
+    def _make_model_endpoint_fn(self, model, item_type):
+        if isinstance(model, AsyncModel):
 
             async def _aendpoint(
                 item: item_type = fastapi.Body(...),
-                model=fastapi.Depends(lambda: self.lib.get(model_name)),
+                model=fastapi.Depends(lambda: self.lib.get(model.configuration_key)),
             ):  # noqa: B008
                 return await model.predict(item)
 
@@ -137,18 +137,18 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
 
         def _endpoint(
             item: item_type = fastapi.Body(...),
-            model=fastapi.Depends(lambda: self.lib.get(model_name)),
+            model=fastapi.Depends(lambda: self.lib.get(model.configuration_key)),
         ):  # noqa: B008
             return model.predict(item)
 
         return _endpoint
 
-    def _make_batch_model_endpoint_fn(self, model_name, item_type):
-        if isinstance(model_name, AsyncModel):
+    def _make_batch_model_endpoint_fn(self, model, item_type):
+        if isinstance(model, AsyncModel):
 
             async def _aendpoint(
                 item: item_type = fastapi.Body(...),
-                model=fastapi.Depends(lambda: self.lib.get(model_name)),
+                model=fastapi.Depends(lambda: self.lib.get(model.configuration_key)),
             ):  # noqa: B008
                 return await model.predict_batch(item)
 
@@ -156,7 +156,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
 
         def _endpoint(
             item: List[item_type] = fastapi.Body(...),
-            model=fastapi.Depends(lambda: self.lib.get(model_name)),
+            model=fastapi.Depends(lambda: self.lib.get(model.configuration_key)),
         ):  # noqa: B008
             return model.predict_batch(item)
 
