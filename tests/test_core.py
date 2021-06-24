@@ -189,12 +189,23 @@ def test_modellibrary_required_models():
     assert m.asset_path == ""
     assert m.batch_size is None
 
+    class SomeOtherModel(Model):
+        pass
+
+    with pytest.raises(ValueError):
+        # model does not exist
+        p.get("yolo", model_type=SomeOtherModel)
+
 
 def test_modellibrary_no_models(monkeypatch):
     monkeypatch.setenv("modelkit_MODELS", "")
     p = ModelLibrary(models=None)
     assert p.configuration == {}
     assert p.required_models == {}
+
+    with pytest.raises(KeyError):
+        # model does not exist
+        p.get("some_model")
 
 
 def test_lazy_loading_dependencies():
