@@ -1,3 +1,8 @@
+<p align="center">
+  <a href="https://github.com/clustree/modelkit">
+    <img src="https://raw.githubusercontent.com/clustree/modelkit/main/.github/resources/logo.svg" alt="Logo" width="80" height="80">
+</a>
+</p>
 <h1 align="center"> modelkit </h1>
 <p align="center">
   <em>Python framework for production ML systems.</em>
