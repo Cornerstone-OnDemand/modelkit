@@ -89,7 +89,7 @@ assets_store.new(asset_path, name)
 
 !!! important
     Creating new assets programmatically is possible, even though it is not considered a good practice.
-    Just do it manually once using the CLI.
+    Using the CLI is the prefered and safest way to manage assets.
 
 
 
