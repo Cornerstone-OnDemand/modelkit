@@ -216,5 +216,3 @@ def test_create_modelkit_app(
         monkeypatch.setenv("MODELKIT_REQUIRED_MODELS", required_models_env_var)
     app = create_modelkit_app(models=models, required_models=required_models)
     assert len([route.path for route in app.routes]) == n_endpoints
-    # import ipdb
-    # ipdb.set_trace()
