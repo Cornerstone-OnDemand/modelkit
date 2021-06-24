@@ -50,6 +50,6 @@ mng.fetch_asset("some/directory/asset:0.1[content0]") # will point to `ASSETS_DI
 When an asset is requested with the `version` not fully specified, `modelkit` may need to consult the remote storage to find the latest version. As a result, `modelkit`'s asset manager will, in this context, have a different behavior depending on whether a remote storage provider is parametrized:
 
 - **Without a remote store** find the latest version of the asset available in the `ASSETS_DIR`
-- **With a remote store** contact the remote store to find the latest version, see if it is present locally. If it is, use the local version, otherwise download the latest version.
+- **With a remote store** contact the remote store to find the latest version, check whether it is present locally. If it is, use the local version, otherwise download the latest version.
 
 This has an important consequence, which is that unpinned assets will always require network calls when being fetched, although they may already be present. For all production purposes, you should **pin your asset versions**.
