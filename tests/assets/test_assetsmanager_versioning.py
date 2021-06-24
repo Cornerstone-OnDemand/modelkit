@@ -46,6 +46,10 @@ def _perform_mng_test(mng):
         data_path, "category-test/some-data", bump_major=True
     )
 
+    # update a major version that does not exist
+    with pytest.raises(errors.AssetMajorVersionDoesNotExistError):
+        mng.remote_assets_store.update(data_path, "category-test/some-data", major="10")
+
     # check that it is present
     mng.remote_assets_store.get_asset_meta("category-test/some-data", "1.0")
 
