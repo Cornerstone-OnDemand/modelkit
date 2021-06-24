@@ -33,14 +33,6 @@ class AssetMajorVersionDoesNotExistError(AssetsManagerError):
         )
 
 
-class AssetMajorVersionAlreadyExistsError(AssetsManagerError):
-    def __init__(self, name, major):
-        super().__init__(
-            f"Asset major version `{major}` for `{name}` already exists."
-            "Use `update` to push a new minor version of an asset."
-        )
-
-
 class InvalidAssetSpecError(AssetsManagerError):
     def __init__(self, spec):
         super().__init__(f"Invalid asset spec `{spec}`")
