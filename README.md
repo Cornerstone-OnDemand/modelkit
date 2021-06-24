@@ -36,7 +36,7 @@ class MyModel(Model):
 
 Be sure to check out our tutorials in the [documentation](https://clustree.github.io/modelkit/).
 
-## Features
+## Features
 
 Wrapping your prediction code in `modelkit` instantly gives acces to all features:
 
