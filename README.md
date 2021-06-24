@@ -34,7 +34,7 @@ class MyModel(Model):
         return result
 ```
 
-This will open the doors to all of `modelkit`'s cool features:
+This will open the doors to all of `modelkit`'s best features:
 
 - **composable** Models can depend on other models, and evaluate them however you need to
 - **extensible** Models can rely on arbitrary supporting configurations files called _assets_ hosted on local or cloud object stores
