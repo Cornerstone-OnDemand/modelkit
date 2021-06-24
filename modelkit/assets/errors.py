@@ -33,11 +33,6 @@ class AssetMajorVersionDoesNotExistError(AssetsManagerError):
         )
 
 
-class InvalidAssetSpecError(AssetsManagerError):
-    def __init__(self, spec):
-        super().__init__(f"Invalid asset spec `{spec}`")
-
-
 class LocalAssetVersionDoesNotExistError(AssetsManagerError):
     def __init__(self, name, major, minor):
         super().__init__(

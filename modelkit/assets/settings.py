@@ -9,7 +9,6 @@ from structlog import get_logger
 from modelkit.assets.drivers.gcs import GCSDriverSettings
 from modelkit.assets.drivers.local import LocalDriverSettings
 from modelkit.assets.drivers.s3 import S3DriverSettings
-from modelkit.assets.errors import InvalidAssetSpecError
 
 SUPPORTED_MODELKIT_STORAGE_PROVIDERS = {"s3", "gcs", "local"}
 
@@ -141,7 +140,7 @@ class AssetSpec(BaseModel):
     def from_string(s):
         m = re.match(REMOTE_ASSET_RE, s)
         if not m:
-            raise InvalidAssetSpecError(s)
+            raise ValueError
         return AssetSpec(**m.groupdict())
 
     class Config:
