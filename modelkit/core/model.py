@@ -167,7 +167,7 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
                 t
                 for t in self.__orig_bases__
                 if isinstance(t, typing._GenericAlias)
-                and issubclass(t.__origin__, Model)
+                and issubclass(t.__origin__, AbstractModel)
             ]
             if len(generic_aliases):
                 _item_type, _return_type = generic_aliases[0].__args__
