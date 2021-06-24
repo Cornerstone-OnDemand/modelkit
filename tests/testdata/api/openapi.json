@@ -63,13 +63,13 @@
   "paths": {
     "/predict/async_model": {
       "post": {
-        "description": "\n\n```                                                                                \n├── configuration: async_model                                                  \n```",
-        "operationId": "_endpoint_predict_async_model_post",
+        "description": "\n\n```                                                                                \n├── configuration: async_model                                                  \n├── signature: ItemModel -> ItemModel                                           \n```",
+        "operationId": "_aendpoint_predict_async_model_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "title": "Item"
+                "$ref": "#/components/schemas/ItemModel"
               }
             }
           },
@@ -95,7 +95,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": " Endpoint",
+        "summary": " Aendpoint",
         "tags": [
           "tests.test_api"
         ]
@@ -103,13 +103,15 @@
     },
     "/predict/batch/async_model": {
       "post": {
-        "description": "\n\n```                                                                                \n├── configuration: async_model                                                  \n```",
-        "operationId": "_endpoint_predict_batch_async_model_post",
+        "description": "\n\n```                                                                                \n├── configuration: async_model                                                  \n├── signature: ItemModel -> ItemModel                                           \n```",
+        "operationId": "_aendpoint_predict_batch_async_model_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "items": {},
+                "items": {
+                  "$ref": "#/components/schemas/ItemModel"
+                },
                 "title": "Item",
                 "type": "array"
               }
@@ -137,7 +139,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": " Endpoint",
+        "summary": " Aendpoint",
         "tags": [
           "tests.test_api"
         ]
@@ -187,7 +189,7 @@
     },
     "/predict/batch/some_complex_model": {
       "post": {
-        "description": "        With **a lot** of documentation\n\n```                                                                                \n├── configuration: some_complex_model                                           \n├── doc: More complex                                                           \n│                                                                               \n│           With **a lot** of documentation                                     \n├── signature: ItemModel -> ItemModel                                           \n```",
+        "description": "    With **a lot** of documentation\n\n```                                                                                \n├── configuration: some_complex_model                                           \n├── doc: More complex                                                           \n│                                                                               \n│       With **a lot** of documentation                                         \n├── signature: ItemModel -> ItemModel                                           \n```",
         "operationId": "_endpoint_predict_batch_some_complex_model_post",
         "requestBody": {
           "content": {
@@ -231,7 +233,7 @@
     },
     "/predict/batch/some_model": {
       "post": {
-        "description": "        that also has plenty more text\n\n```                                                                                \n├── configuration: some_model                                                   \n├── doc: This is a summary                                                      \n│                                                                               \n│           that also has plenty more text                                      \n├── signature: str -> str                                                       \n```",
+        "description": "    that also has plenty more text\n\n```                                                                                \n├── configuration: some_model                                                   \n├── doc: This is a summary                                                      \n│                                                                               \n│       that also has plenty more text                                          \n├── signature: str -> str                                                       \n```",
         "operationId": "_endpoint_predict_batch_some_model_post",
         "requestBody": {
           "content": {
@@ -355,7 +357,7 @@
     },
     "/predict/some_complex_model": {
       "post": {
-        "description": "        With **a lot** of documentation\n\n```                                                                                \n├── configuration: some_complex_model                                           \n├── doc: More complex                                                           \n│                                                                               \n│           With **a lot** of documentation                                     \n├── signature: ItemModel -> ItemModel                                           \n```",
+        "description": "    With **a lot** of documentation\n\n```                                                                                \n├── configuration: some_complex_model                                           \n├── doc: More complex                                                           \n│                                                                               \n│       With **a lot** of documentation                                         \n├── signature: ItemModel -> ItemModel                                           \n```",
         "operationId": "_endpoint_predict_some_complex_model_post",
         "requestBody": {
           "content": {
@@ -395,7 +397,7 @@
     },
     "/predict/some_model": {
       "post": {
-        "description": "        that also has plenty more text\n\n```                                                                                \n├── configuration: some_model                                                   \n├── doc: This is a summary                                                      \n│                                                                               \n│           that also has plenty more text                                      \n├── signature: str -> str                                                       \n```",
+        "description": "    that also has plenty more text\n\n```                                                                                \n├── configuration: some_model                                                   \n├── doc: This is a summary                                                      \n│                                                                               \n│       that also has plenty more text                                          \n├── signature: str -> str                                                       \n```",
         "operationId": "_endpoint_predict_some_model_post",
         "requestBody": {
           "content": {
