@@ -20,12 +20,6 @@
   <a href="https://github.com/clustree/modelkit/blob/main/LICENSE"><img src="https://img.shields.io/github/license/clustree/modelkit" /></a>
 </p>
 
-<h1 align="center"> modelkit </h1>
-<p align="center">
-  <em>Python framework for production ML systems.</em>
-</p>
-    
----
 
 `modelkit` is a Python framework meant to make your ML models robust, reusable and performant in all situations you need to use them.
 
