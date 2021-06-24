@@ -47,7 +47,7 @@ mng.fetch_asset("some/directory/asset:0.1[content0]") # will point to `ASSETS_DI
 
 ## Version resolution
 
-When an asset is request with the `version` not fully specified, `modelkit` may need to consult the remote storage to find the latest version. As a result, `modelkit`'s asset manager will in this context have a different behavior depending on whether a remote storage provider is parametrized:
+When an asset is requested with the `version` not fully specified, `modelkit` may need to consult the remote storage to find the latest version. As a result, `modelkit`'s asset manager will, in this context, have a different behavior depending on whether a remote storage provider is parametrized:
 
 - **Without a remote store** find the latest version of the asset available in the `ASSETS_DIR`
 - **With a remote store** contact the remote store to find the latest version, see if it is present locally. If it is, use the local version, otherwise download the latest version.
