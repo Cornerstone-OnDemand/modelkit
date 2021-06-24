@@ -32,6 +32,9 @@ class AssetMajorVersionDoesNotExistError(AssetsManagerError):
             "Use `push_new_asset` to push a new major version of an asset."
         )
 
+class InvalidAssetSpecError(AssetsManagerError):
+    def __init__(self, spec):
+        super().__init__(f"Invalid asset spec `{spec}`")
 
 class LocalAssetDoesNotExistError(AssetsManagerError):
     def __init__(self, name, major, minor, local_versions):
