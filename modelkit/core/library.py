@@ -130,13 +130,8 @@ class ModelLibrary:
     @property
     def asset_manager(self):
         if self._asset_manager is None:
-            try:
-                logger.info(
-                    "Instantiating AssetsManager", lazy_loading=self._lazy_loading
-                )
-                self._asset_manager = AssetsManager(**self.assetsmanager_settings)
-            except ValidationError:
-                logger.info("No assets manager available")
+            logger.info("Instantiating AssetsManager", lazy_loading=self._lazy_loading)
+            self._asset_manager = AssetsManager(**self.assetsmanager_settings)
         return self._asset_manager
 
     @property
