@@ -18,7 +18,8 @@ from rich.tree import Tree
 from modelkit import ModelLibrary
 from modelkit.api import create_modelkit_app
 from modelkit.assets.cli import assets_cli
-from modelkit.core.model_configuration import configure, list_assets
+from modelkit.core.errors import ModelsNotFound
+from modelkit.core.model_configuration import list_assets
 from modelkit.utils.serialization import safe_np_dump
 
 
@@ -31,23 +32,25 @@ def modelkit_cli():
 modelkit_cli.add_command(assets_cli)
 
 
-def _configure_from_cli_arguments(models, required_models, all, settings):
-    models_configurations = configure(models=models)
-    if all:
-        required_models = list(models_configurations)
+def _configure_from_cli_arguments(models, required_models, settings):
+    if not (models or os.environ.get("MODELKIT_DEFAULT_PACKAGE")):
+        raise ModelsNotFound(
+            "Please add `your_package` as argument or set the "
+            "`MODELKIT_DEFAULT_PACKAGE=your_package` env variable."
+        )
+
     service = ModelLibrary(
+        models=models,
         required_models=required_models,
-        configuration=models_configurations,
         settings=settings,
     )
     return service
 
 
 @modelkit_cli.command()
-@click.argument("models", type=str, nargs=-1, required=True)
+@click.argument("models", type=str, nargs=-1, required=False)
 @click.option("--required-models", "-r", multiple=True)
-@click.option("--all", is_flag=True)
-def memory(models, required_models, all):
+def memory(models, required_models):
     """
     Show memory consumption of modelkit models.
     """
@@ -57,7 +60,7 @@ def memory(models, required_models, all):
         sleep(1)
 
     service = _configure_from_cli_arguments(
-        models, required_models, all, {"lazy_loading": True}
+        list(models) or None, list(required_models) or None, {"lazy_loading": True}
     )
     grand_total = 0
     stats = {}
@@ -90,17 +93,16 @@ def memory(models, required_models, all):
 
 
 @modelkit_cli.command("list-assets")
-@click.argument("models", type=str, nargs=-1, required=True)
+@click.argument("models", type=str, nargs=-1, required=False)
 @click.option("--required-models", "-r", multiple=True)
-@click.option("--all", is_flag=True)
-def list_assets_cli(models, required_models, all):
+def list_assets_cli(models, required_models):
     """
     List necessary assets.
 
     List the assets necessary to run a given set of models.
     """
     service = _configure_from_cli_arguments(
-        models, required_models, all, {"lazy_loading": True}
+        list(models) or None, list(required_models) or None, {"lazy_loading": True}
     )
 
     console = Console()
@@ -139,10 +141,9 @@ def add_dependencies_to_graph(g, model, configurations):
 
 
 @modelkit_cli.command()
-@click.argument("models", type=str, nargs=-1, required=True)
+@click.argument("models", type=str, nargs=-1, required=False)
 @click.option("--required-models", "-r", multiple=True)
-@click.option("--all", is_flag=True)
-def dependencies_graph(models, required_models, all):
+def dependencies_graph(models, required_models):
     """
     Create a  dependency graph for a library.
 
@@ -150,7 +151,7 @@ def dependencies_graph(models, required_models, all):
     from a list of models.
     """
     service = _configure_from_cli_arguments(
-        models, required_models, all, {"lazy_loading": True}
+        list(models) or None, list(required_models) or None, {"lazy_loading": True}
     )
     if service.configuration:
         dependency_graph = nx.DiGraph(overlap="False")
@@ -160,23 +161,24 @@ def dependencies_graph(models, required_models, all):
 
 
 @modelkit_cli.command()
-@click.argument("models", type=str, nargs=-1, required=True)
+@click.argument("models", type=str, nargs=-1, required=False)
 @click.option("--required-models", "-r", multiple=True)
-@click.option("--all", is_flag=True)
-def describe(models, required_models, all):
+def describe(models, required_models):
     """
     Describe a library.
 
     Show settings, models and assets for a given library.
     """
-    service = _configure_from_cli_arguments(models, required_models, all, {})
+    service = _configure_from_cli_arguments(
+        list(models) or None, list(required_models) or None, {}
+    )
     service.describe()
 
 
 @modelkit_cli.command()
 @click.argument("model")
 @click.argument("example")
-@click.option("--models", type=str, required=True)
+@click.argument("models", type=str, nargs=-1, required=False)
 @click.option("--n", "-n", default=100)
 def time(model, example, models, n):
     """
@@ -185,7 +187,7 @@ def time(model, example, models, n):
     Time n iterations of a model's call on an example.
     """
     service = _configure_from_cli_arguments(
-        models, [model], all, {"lazy_loading": True}
+        list(models) or None, [model], {"lazy_loading": True}
     )
 
     console = Console()
@@ -222,30 +224,30 @@ def time(model, example, models, n):
 
 
 @modelkit_cli.command("serve")
+@click.argument("models", type=str, nargs=-1, required=False)
 @click.option("--required-models", "-r", type=str, multiple=True)
-@click.argument("models", type=str, nargs=-1, required=True)
 @click.option("--host", type=str, default="localhost")
 @click.option("--port", type=int, default=8000)
-def serve(required_models, models, host, port):
+def serve(models, required_models, host, port):
     """
     Run a library as a service.
 
     Run an HTTP server with specified models using FastAPI
     """
     app = create_modelkit_app(
-        models=models, required_models=list(required_models) or None
+        models=list(models) or None, required_models=list(required_models) or None
     )
     uvicorn.run(app, host=host, port=port)
 
 
 @modelkit_cli.command("predict")
 @click.argument("model_name", type=str)
-@click.argument("models", type=str, nargs=-1, required=True)
+@click.argument("models", type=str, nargs=-1, required=False)
 def predict(model_name, models):
     """
     Make predictions for a given model.
     """
-    lib = _configure_from_cli_arguments(models, [model_name], False, {})
+    lib = _configure_from_cli_arguments(list(models) or None, [model_name], {})
     model = lib.get(model_name)
     while True:
         r = click.prompt(f"[{model_name}]>")
@@ -256,14 +258,14 @@ def predict(model_name, models):
 
 @modelkit_cli.command("tf-serving")
 @click.argument("mode", type=click.Choice(["local-docker", "local-process", "remote"]))
-@click.option("--models", type=str, required=True)
+@click.argument("models", type=str, nargs=-1, required=False)
 @click.option("--required-models", "-r", multiple=True)
 @click.option("--verbose", is_flag=True)
-def tf_serving(mode, models, required_models, verbose):
+def tf_serving(mode, package, required_models, verbose):
     from modelkit.utils.tensorflow import deploy_tf_models
 
     service = _configure_from_cli_arguments(
-        models, required_models, all, {"lazy_loading": True}
+        list(package) or None, list(required_models) or None, {"lazy_loading": True}
     )
 
     deploy_tf_models(service, mode, verbose=verbose)
