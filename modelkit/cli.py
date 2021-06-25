@@ -222,7 +222,7 @@ def time(model, example, models, n):
 
 
 @modelkit_cli.command("serve")
-@click.option("--required-models", type=str, multiple=True)
+@click.option("--required-models", "-r", type=str, multiple=True)
 @click.argument("models", type=str, nargs=-1, required=True)
 @click.option("--host", type=str, default="localhost")
 @click.option("--port", type=int, default=8000)
@@ -232,7 +232,9 @@ def serve(required_models, models, host, port):
 
     Run an HTTP server with specified models using FastAPI
     """
-    app = create_modelkit_app(models=models, required_models=list(required_models))
+    app = create_modelkit_app(
+        models=models, required_models=list(required_models) or None
+    )
     uvicorn.run(app, host=host, port=port)
 
 
