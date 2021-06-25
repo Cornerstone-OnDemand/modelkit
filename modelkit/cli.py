@@ -20,7 +20,6 @@ from modelkit.api import create_modelkit_app
 from modelkit.assets.cli import assets_cli
 from modelkit.core.model_configuration import configure, list_assets
 from modelkit.utils.serialization import safe_np_dump
-from modelkit.utils.tensorflow import deploy_tf_models
 
 
 @click.group()
@@ -259,6 +258,8 @@ def predict(model_name, models):
 @click.option("--required-models", "-r", multiple=True)
 @click.option("--verbose", is_flag=True)
 def tf_serving(mode, models, required_models, verbose):
+    from modelkit.utils.tensorflow import deploy_tf_models
+
     service = _configure_from_cli_arguments(
         models, required_models, all, {"lazy_loading": True}
     )
