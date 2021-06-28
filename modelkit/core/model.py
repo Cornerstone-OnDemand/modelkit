@@ -62,6 +62,15 @@ class ModelDependenciesMapping:
     def values(self):
         return self.models.values()
 
+    def keys(self):
+        return self.models.keys()
+
+    def __iter__(self):
+        return self.models.__iter__()
+
+    def __len__(self):
+        return len(self.models)
+
 
 class Asset:
     """
