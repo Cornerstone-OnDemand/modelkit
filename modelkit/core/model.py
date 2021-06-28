@@ -11,6 +11,7 @@ from typing import (
     List,
     Optional,
     Type,
+    TypeVar,
     Union,
     cast,
 )
@@ -34,6 +35,32 @@ from modelkit.utils.pretty import describe, pretty_print_type
 from modelkit.utils.pydantic import construct_recursive
 
 logger = get_logger(__name__)
+
+ModelDependency = TypeVar(
+    "ModelDependency", bound=Union["Model", "AsyncModel", "WrappedAsyncModel"]
+)
+
+
+class ModelDependenciesMapping:
+    def __init__(self, models: Optional[Dict[str, ModelDependency]] = None):
+        self.models = models or {}
+
+    def __getitem__(self, key: str) -> ModelDependency:
+        return self.models[key]
+
+    def get(
+        self, key: str, model_type: Optional[Type[ModelDependency]] = None
+    ) -> ModelDependency:
+        m = self.models[key]
+        if model_type and not isinstance(m, model_type):
+            raise ValueError(f"Model `{m}` is not an instance of {model_type}")
+        return cast(ModelDependency, m)
+
+    def items(self):
+        return self.models.items()
+
+    def values(self):
+        return self.models.values()
 
 
 class Asset:
@@ -75,9 +102,9 @@ class Asset:
         self.batch_size: Optional[int] = batch_size or self.model_settings.get(
             "batch_size"
         )
-        self.model_dependencies: Dict[
-            str, Union[Model, AsyncModel, WrappedAsyncModel]
-        ] = (model_dependencies or {})
+        self.model_dependencies: ModelDependenciesMapping = ModelDependenciesMapping(
+            model_dependencies or {}
+        )
 
         self._loaded: bool = False
         self._load_time: Optional[float] = None
@@ -269,9 +296,9 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
                 f"[deep_sky_blue1]load memory[/deep_sky_blue1]: "
                 f"[orange3]{humanize.naturalsize(self._load_memory_increment)}"
             )
-        if self.model_dependencies:
+        if self.model_dependencies.models:
             dep_t = t.add("[deep_sky_blue1]dependencies")
-            for m in self.model_dependencies:
+            for m in self.model_dependencies.models:
                 dep_t.add("[orange3]" + escape(m))
 
         if self.asset_path:
@@ -392,9 +419,13 @@ class Model(AbstractModel[ItemType, ReturnType]):
             # In a synchronous context, we wrap asynchronous models
             # such that we can evaluate `.predict`
             # Otherwise, they will have to be awaited
+            _model_dependencies = {}
             for model_name, m in self.model_dependencies.items():
                 if isinstance(m, AsyncModel):
-                    self.model_dependencies[model_name] = WrappedAsyncModel(m)
+                    _model_dependencies[model_name] = WrappedAsyncModel(m)
+                else:
+                    _model_dependencies[model_name] = m
+            self.model_dependencies = ModelDependenciesMapping(_model_dependencies)
 
     @not_overriden
     def _predict(self, item: ItemType, **kwargs) -> ReturnType:

@@ -22,6 +22,8 @@ TEST_CASES = [
     ("predict_list.py", False),
     ("library_get_model_ko.py", True),
     ("library_get_model_ok.py", False),
+    ("model_dependencies_ok.py", False),
+    ("model_dependencies_ko_items.py", True),
 ]
 
 
