@@ -10,6 +10,10 @@ import pydantic
 PYDANTIC_ERROR_TRUNCATION = 20
 
 
+class ModelsNotFound(Exception):
+    pass
+
+
 class PredictionError(Exception):
     def __init__(self, exc):
         self.exc = exc

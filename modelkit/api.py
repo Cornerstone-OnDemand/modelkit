@@ -5,6 +5,7 @@ import fastapi
 from rich.console import Console
 from structlog import get_logger
 
+from modelkit.core.errors import ModelsNotFound
 from modelkit.core.library import LibrarySettings, ModelConfiguration, ModelLibrary
 from modelkit.core.model import AbstractModel, AsyncModel
 from modelkit.core.types import LibraryModelsType
@@ -161,7 +162,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
         return _endpoint
 
 
-def create_modelkit_app(models=None, required_models=None):
+def create_modelkit_app(models, required_models=None):
     """
     Creates a modelkit FastAPI app with the specified models and required models.
 
@@ -178,9 +179,14 @@ def create_modelkit_app(models=None, required_models=None):
             'modelkit.api.create_modelkit_app()'
     ```
     """
+    if not (models or os.environ.get("MODELKIT_DEFAULT_PACKAGE")):
+        raise ModelsNotFound(
+            "Please add `your_package` as argument or set the "
+            "`MODELKIT_DEFAULT_PACKAGE=your_package` env variable."
+        )
+
     if os.environ.get("MODELKIT_REQUIRED_MODELS") and not required_models:
         required_models = os.environ.get("MODELKIT_REQUIRED_MODELS").split(":")
-
     app = fastapi.FastAPI()
     router = ModelkitAutoAPIRouter(required_models=required_models, models=models)
     app.include_router(router)

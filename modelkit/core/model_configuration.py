@@ -7,9 +7,12 @@ from types import ModuleType
 from typing import Any, Dict, List, Mapping, Optional, Set, Type, Union
 
 import pydantic
+from structlog import get_logger
 
 from modelkit.core.model import Asset
 from modelkit.core.types import LibraryModelsType
+
+logger = get_logger(__name__)
 
 
 class ModelConfiguration(pydantic.BaseSettings):
@@ -77,7 +80,7 @@ def configure(
     ] = None,
 ) -> Dict[str, ModelConfiguration]:
     if not models:
-        models = os.environ.get("modelkit_MODELS", None)
+        models = os.environ.get("MODELKIT_DEFAULT_PACKAGE")
 
     conf = _configurations_from_objects(models) if models else {}
     if configuration:
