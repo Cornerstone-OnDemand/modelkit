@@ -6,8 +6,6 @@ mypy==0.812
 coverage
 pytest
 pytest-asyncio
-uvicorn
-fastapi
 black
 flake8
 isort
@@ -18,6 +16,9 @@ tenacity
 # cli
 memory-profiler
 networkx
+# api
+uvicorn
+fastapi
 # releases
 bump2version
 # optional

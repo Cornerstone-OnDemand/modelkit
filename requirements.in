@@ -1,20 +1,19 @@
 aiohttp
+asgiref
 boto3
-google-cloud-storage
 cachetools
 click
 filelock
+google-cloud-storage
 humanize
 numpy~=1.19.3
 pydantic
 python-dateutil
 redis
 rich
-sniffio
-asgiref
 six==1.15.0
+sniffio
 structlog
 tenacity
-tqdm
 typing_extensions==3.7.4.3; python_version<"3.8"
-prettytable
+
