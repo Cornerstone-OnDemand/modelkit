@@ -68,6 +68,9 @@ class ModelDependenciesMapping:
     def __iter__(self):
         return self.models.__iter__()
 
+    def __len__(self):
+        return len(self.models)
+
 
 class Asset:
     """

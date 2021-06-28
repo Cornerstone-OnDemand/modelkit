@@ -539,9 +539,11 @@ def test_model_dependencies_bad_get():
             dependencies = [x for x in self.model_dependencies]
             assert dependencies == ["some_model"]
 
-            [x for x in self.model_dependencies.values()]
-            [x for x in self.model_dependencies.items()]
-            [x for x in self.model_dependencies.keys()]
+            assert len([x for x in self.model_dependencies.values()])
+            assert len([x for x in self.model_dependencies.items()])
+            assert len([x for x in self.model_dependencies.keys()])
+
+            assert len(self.model_dependencies) == 1
 
             self.some_attribute = self.model_dependencies.get(
                 "some_model", SomeModel
