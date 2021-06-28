@@ -42,16 +42,14 @@ ModelDependency = TypeVar(
 
 
 class ModelDependenciesMapping:
-    def __init__(
-        self, models: Dict[str, Union["Model", "AsyncModel", "WrappedAsyncModel"]]
-    ) -> None:
-        self.models = models
+    def __init__(self, models: Optional[Dict[str, ModelDependency]] = None):
+        self.models = models or {}
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> ModelDependency:
         return self.models[key]
 
     def get(
-        self, key, model_type: Optional[Type[ModelDependency]] = None
+        self, key: str, model_type: Optional[Type[ModelDependency]] = None
     ) -> ModelDependency:
         m = self.models[key]
         if model_type and not isinstance(m, model_type):
@@ -59,10 +57,10 @@ class ModelDependenciesMapping:
         return cast(ModelDependency, m)
 
     def items(self):
-        yield from self.models.items()
+        return self.models.items()
 
     def values(self):
-        yield from self.models.values()
+        return self.models.values()
 
 
 class Asset:
