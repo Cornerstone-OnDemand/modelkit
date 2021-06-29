@@ -25,7 +25,7 @@ try:
         DEFAULT_SERVING_SIGNATURE_DEF_KEY,
     )
 
-except ModuleNotFoundError:
+except ModuleNotFoundError:  # pragma: no cover
     logger.info("tensorflow is not installed")
 
 try:
@@ -34,7 +34,7 @@ try:
     from tensorflow_serving.apis.get_model_metadata_pb2 import GetModelMetadataRequest
     from tensorflow_serving.apis.predict_pb2 import PredictRequest
 
-except ModuleNotFoundError:
+except ModuleNotFoundError:  # pragma: no cover
     logger.info("Tensorflow serving is not installed")
 
 
