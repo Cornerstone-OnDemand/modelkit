@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 import aiohttp
 import numpy as np
@@ -38,7 +38,41 @@ except ModuleNotFoundError:  # pragma: no cover
     logger.info("Tensorflow serving is not installed")
 
 
-class TensorflowModel(Model[ItemType, ReturnType]):
+class AbstractTensorflowModel:
+    output_shapes: Dict[str, Tuple]
+    output_dtypes: Dict[str, Type]
+    output_tensor_mapping: Dict[str, str]
+
+    def _is_empty(self, item) -> bool:
+        return False
+
+    def _generate_empty_prediction(self) -> Dict[str, Any]:
+        """Function used to fill in values when rebuilding predictions with the mask"""
+        return {
+            name: np.zeros((1,) + self.output_shapes[name], self.output_dtypes[name])
+            for name in self.output_tensor_mapping
+        }
+
+    def _rebuild_predictions_with_mask(
+        self, mask: List[bool], predictions: Dict[str, np.ndarray]
+    ) -> List[Dict[str, Any]]:
+        """Merge the just-computed predictions with empty vectors for empty input items.
+        Making sure everything is well-aligned"
+        """
+        i = 0
+        results = []
+        for mask_value in mask:
+            if mask_value:
+                results.append(self._generate_empty_prediction())
+            else:
+                results.append(
+                    {name: predictions[name][i] for name in self.output_tensor_mapping}
+                )
+                i += 1
+        return results
+
+
+class TensorflowModel(Model[ItemType, ReturnType], AbstractTensorflowModel):
     def __init__(
         self,
         output_tensor_mapping: Optional[Dict[str, str]] = None,
@@ -94,14 +128,17 @@ class TensorflowModel(Model[ItemType, ReturnType]):
 
     def _predict_batch(self, items, **kwargs):
         """A generic _predict_batch that stacks and passes items to TensorFlow"""
+        mask = [self._is_empty(item) for item in items]
+        if all(mask):
+            return self._rebuild_predictions_with_mask(mask, {})
         vects = {
-            key: np.stack([item[key] for item in items], axis=0) for key in items[0]
+            key: np.stack(
+                [item[key] for item, mask in zip(items, mask) if not mask], axis=0
+            )
+            for key in items[0]
         }
-        prediction = self._tensorflow_predict(vects)
-        return [
-            {key: prediction[key][k, ...] for key in self.output_shapes}
-            for k in range(len(items))
-        ]
+        predictions = self._tensorflow_predict(vects)
+        return self._rebuild_predictions_with_mask(mask, predictions)
 
     def _tensorflow_predict(
         self, vects: Dict[str, np.ndarray], grpc_dtype=None
@@ -186,35 +223,12 @@ class TensorflowModel(Model[ItemType, ReturnType]):
             for name in self.output_tensor_mapping
         }
 
-    def _generate_empty_prediction(self) -> Dict[str, Any]:
-        """Function used to fill in values when rebuilding predictions with the mask"""
-        return {
-            name: np.zeros((1,) + self.output_shapes[name], self.output_dtypes[name])
-            for name in self.output_tensor_mapping
-        }
-
-    def _rebuild_predictions_with_mask(
-        self, mask: List[bool], predictions: Dict[str, np.ndarray]
-    ) -> List[Dict[str, Any]]:
-        """Merge the just-computed predictions with empty vectors for empty input items.
-        Making sure everything is well-aligned"
-        """
-        i = 0
-        results = []
-        for mask_value in mask:
-            if mask_value:
-                results.append({name: value[i] for name, value in predictions.items()})
-                i += 1
-            else:
-                results.append(self._generate_empty_prediction())
-        return results
-
     def close(self):
         if self.requests_session:
             return self.requests_session.close()
 
 
-class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType]):
+class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType], AbstractTensorflowModel):
     def __init__(
         self,
         output_tensor_mapping: Optional[Dict[str, str]] = None,
@@ -255,14 +269,17 @@ class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType]):
 
     async def _predict_batch(self, items, **kwargs):
         """A generic _predict_batch that stacks and passes items to TensorFlow"""
+        mask = [self._is_empty(item) for item in items]
+        if all(mask):
+            return self._rebuild_predictions_with_mask(mask, {})
         vects = {
-            key: np.stack([item[key] for item in items], axis=0) for key in items[0]
+            key: np.stack(
+                [item[key] for item, mask in zip(items, mask) if not mask], axis=0
+            )
+            for key in items[0]
         }
-        prediction = await self._tensorflow_predict(vects)
-        return [
-            {key: prediction[key][k, ...] for key in self.output_shapes}
-            for k in range(len(items))
-        ]
+        predictions = await self._tensorflow_predict(vects)
+        return self._rebuild_predictions_with_mask(mask, predictions)
 
     async def _tensorflow_predict(
         self, vects: Dict[str, np.ndarray]
