@@ -6,10 +6,6 @@ from time import perf_counter, sleep
 
 import click
 import humanize
-import networkx as nx
-import uvicorn
-from memory_profiler import memory_usage
-from networkx.drawing.nx_agraph import write_dot
 from rich.console import Console
 from rich.progress import Progress, track
 from rich.table import Table
@@ -54,6 +50,7 @@ def memory(models, required_models):
     """
     Show memory consumption of modelkit models.
     """
+    from memory_profiler import memory_usage
 
     def _load_model(m, service):
         service._load(m)
@@ -144,6 +141,9 @@ def add_dependencies_to_graph(g, model, configurations):
 @click.argument("models", type=str, nargs=-1, required=False)
 @click.option("--required-models", "-r", multiple=True)
 def dependencies_graph(models, required_models):
+    import networkx as nx
+    from networkx.drawing.nx_agraph import write_dot
+
     """
     Create a  dependency graph for a library.
 
@@ -229,6 +229,8 @@ def time(model, example, models, n):
 @click.option("--host", type=str, default="localhost")
 @click.option("--port", type=int, default=8000)
 def serve(models, required_models, host, port):
+    import uvicorn
+
     """
     Run a library as a service.
 
