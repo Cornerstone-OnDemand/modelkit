@@ -371,7 +371,7 @@ def connect_tf_serving(model_name, host, port, mode):
     )
     if mode == "grpc":
         return connect_tf_serving_grpc(model_name, host, port)
-    elif mode in {"rest", "rest"}:
+    elif mode == "rest":
         response = requests.get(f"http://{host}:{port}/v1/models/{model_name}")
         if response.status_code != 200:
             raise TFServingError("Error connecting to TF serving")
