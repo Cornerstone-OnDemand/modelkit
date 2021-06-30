@@ -270,9 +270,9 @@ def _compare_models(model0, model1, items_and_results, tolerance=1e-2):
     try:
         # Compare two models on single_predictions
         for item, result in items_and_results:
-            res_model0 = model0(item)
+            res_model0 = model0.predict(item)
             res_model0_per_item.append(res_model0)
-            res_model1 = model1(item)
+            res_model1 = model1.predict(item)
             assert compare_result(res_model0, result, tolerance)
             assert compare_result(res_model0, res_model1, tolerance)
     except AssertionError as e:
@@ -340,7 +340,7 @@ async def _compare_models_async(model, model_async, items_and_results, tolerance
     try:
         # Compare two models on single_predictions
         for item, result in items_and_results:
-            res_model0 = model(item)
+            res_model0 = model.predict(item)
             res_model0_per_item.append(res_model0)
             res_model1 = await model_async.predict(item)
             assert compare_result(res_model0, result, tolerance)
