@@ -192,7 +192,7 @@ class TensorflowModel(Model[ItemType, ReturnType], AbstractTensorflowModel):
             f"/v1/models/{self.tf_model_name}:predict",
             data=json.dumps({"inputs": vects}, default=safe_np_dump),
         )
-        if response.status_code != 200:
+        if response.status_code != 200:  # pragma: no cover
             raise TFServingError(
                 f"TF Serving error [{response.reason}]: {response.text}"
             )
@@ -293,7 +293,7 @@ class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType], AbstractTensorflowM
             f"/v1/models/{self.tf_model_name}:predict",
             data=json.dumps({"inputs": vects}, default=safe_np_dump),
         ) as response:
-            if response.status != 200:
+            if response.status != 200:  # pragma: no cover
                 raise TFServingError(
                     f"TF Serving error [{response.reason}]: {response.text}"
                 )
@@ -305,11 +305,10 @@ class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType], AbstractTensorflowM
                 name: np.array(outputs, dtype=self.output_dtypes[name])
                 for name in self.output_tensor_mapping
             }
-        results = {
+        return {
             name: np.array(outputs[name], dtype=self.output_dtypes[name])
             for name in self.output_tensor_mapping
         }
-        return results
 
     async def close(self):
         if self.aiohttp_session:
@@ -365,7 +364,7 @@ def connect_tf_serving_grpc(
                 r.metadata_field.append("signature_def")
                 answ = stub.GetModelMetadata(r, 1)
                 version = answ.model_spec.version.value
-                if version != 1:
+                if version != 1:  # pragma: no cover
                     raise TFServingError(f"Bad model version: {version}!=1")
                 return stub
     except grpc.RpcError:
@@ -378,7 +377,7 @@ def connect_tf_serving_rest(model_name, host, port) -> None:
         for attempt in Retrying(**tf_serving_retry_policy("tf-serving-rest")):
             with attempt:
                 response = requests.get(f"http://{host}:{port}/v1/models/{model_name}")
-                if response.status_code != 200:
+                if response.status_code != 200:  # pragma: no cover
                     raise TFServingError("Error connecting to TF serving")
     except requests.exceptions.ConnectionError:
         logger.error("Error connecting to TF serving")
