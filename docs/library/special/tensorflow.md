@@ -124,7 +124,7 @@ Several environment variables control how `modelkit` requests predictions from T
 - `MODELKIT_TF_SERVING_HOST`: Host to connect to to request TF predictions
 - `MODELKIT_TF_SERVING_PORT`: Port to connect to to request TF predictions
 - `MODELKIT_TF_SERVING_MODE`: Can be `grpc` (with `grpc`) or `rest` (with `requests` for `TensorflowModel`, or with `aiohttp` for `AsyncTensorflowModel`)
-- `TF_SERVING_TIMEOUT_S`: timeout to wait for the first TF serving response
+- `MODELKIT_TF_SERVING_ATTEMPTS`: number of attempts to wait for TF serving response
 
 All of these parameters can be set programmatically (and passed to the `ModelLibrary`'s settings):
 

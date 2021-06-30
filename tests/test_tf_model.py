@@ -1,7 +1,9 @@
 import os
 
+import grpc
 import numpy as np
 import pytest
+import requests
 
 from modelkit import ModelLibrary, testing
 from modelkit.core.settings import LibrarySettings
@@ -218,8 +220,8 @@ def test_iso_serving_mode(model_name, test_items, tf_serving, dummy_tf_models):
 
     model_grpc.grpc_stub = None
     _compare_models(model_rest, model_grpc, test_items)
-    assert model_grpc.grpc_stub 
-    
+    assert model_grpc.grpc_stub
+
     lib_serving_rest.close()
     lib_serving_grpc.close()
 
@@ -379,3 +381,41 @@ def test_write_tf_serving_config(base_dir, assetsmanager_settings):
     ref = testing.ReferenceText(os.path.join(TEST_DIR, "testdata"))
     with open(os.path.join(base_dir, "test.config")) as f:
         ref.assert_equal("test.config", f.read())
+
+
+@skip_unless("ENABLE_TF_TEST", "True")
+def test_iso_serving_mode_no_serving(dummy_tf_models, monkeypatch, working_dir):
+    monkeypatch.setenv("MODELKIT_STORAGE_BUCKET", TEST_DIR)
+    monkeypatch.setenv("MODELKIT_STORAGE_PREFIX", "testdata")
+    monkeypatch.setenv("MODELKIT_STORAGE_PROVIDER", "local")
+    monkeypatch.setenv("MODELKIT_ASSETS_DIR", working_dir)
+    monkeypatch.setenv("MODELKIT_TF_SERVING_ATTEMPTS", 1)
+    # Get the prediction service running TF with gRPC serving
+
+    with pytest.raises(grpc.RpcError):
+        ModelLibrary(
+            required_models=["dummy_tf_model"],
+            settings=LibrarySettings(
+                tf_serving={
+                    "enable": True,
+                    "port": 8500,
+                    "mode": "grpc",
+                    "host": "localhost",
+                }
+            ),
+            models=dummy_tf_models,
+        )
+
+    with pytest.raises(requests.exceptions.ConnectionError):
+        ModelLibrary(
+            required_models=["dummy_tf_model"],
+            settings=LibrarySettings(
+                tf_serving={
+                    "enable": True,
+                    "port": 8501,
+                    "mode": "rest",
+                    "host": "localhost",
+                }
+            ),
+            models=dummy_tf_models,
+        )

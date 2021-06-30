@@ -7,7 +7,7 @@ import numpy as np
 import requests
 from structlog import get_logger
 from tenacity import (
-    retry,
+    Retrying,
     retry_if_exception,
     stop_after_attempt,
     wait_random_exponential,
@@ -320,10 +320,10 @@ class TFServingError(Exception):
     pass
 
 
-def log_after_retry(retry_state):
-    logger.info(
+def log_after_retry(name):
+    return lambda retry_state: logger.info(
         "Retrying TF serving connection",
-        fun=retry_state.fn.__name__,
+        name=name,
         attempt_number=retry_state.attempt_number,
         wait_time=retry_state.outcome_timestamp - retry_state.start_time,
     )
@@ -333,34 +333,58 @@ def retriable_error(exception):
     return isinstance(exception, Exception)
 
 
-TF_SERVING_RETRY_POLICY = {
-    "wait": wait_random_exponential(multiplier=1, min=4, max=20),
-    "stop": stop_after_attempt(10),
-    "retry": retry_if_exception(retriable_error),
-    "after": log_after_retry,
-    "reraise": True,
-}
+def tf_serving_retry_policy(name):
+    return {
+        "wait": wait_random_exponential(
+            multiplier=1,
+            min=4,
+            max=20,
+        ),
+        "stop": stop_after_attempt(
+            int(os.environ.get("MODELKIT_TF_SERVING_ATTEMPTS", 10))
+        ),
+        "retry": retry_if_exception(retriable_error),
+        "after": log_after_retry(name),
+        "reraise": True,
+    }
 
 
-@retry(**TF_SERVING_RETRY_POLICY)
 def connect_tf_serving_grpc(
     model_name, host, port
 ) -> prediction_service_pb2_grpc.PredictionServiceStub:
-    channel = grpc.insecure_channel(
-        f"{host}:{port}", [("grpc.lb_policy_name", "round_robin")]
-    )
-    stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
-    r = GetModelMetadataRequest()
-    r.model_spec.name = model_name
-    r.metadata_field.append("signature_def")
-    answ = stub.GetModelMetadata(r, 1)
-    version = answ.model_spec.version.value
-    if version != 1:
-        raise TFServingError(f"Bad model version: {version}!=1")
-    return stub
+
+    try:
+        for attempt in Retrying(**tf_serving_retry_policy("tf-serving-grpc")):
+            with attempt:
+                channel = grpc.insecure_channel(
+                    f"{host}:{port}", [("grpc.lb_policy_name", "round_robin")]
+                )
+                stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
+                r = GetModelMetadataRequest()
+                r.model_spec.name = model_name
+                r.metadata_field.append("signature_def")
+                answ = stub.GetModelMetadata(r, 1)
+                version = answ.model_spec.version.value
+                if version != 1:
+                    raise TFServingError(f"Bad model version: {version}!=1")
+                return stub
+    except grpc.RpcError:
+        logger.error("Error connecting to TF serving")
+        raise
 
 
-@retry(**TF_SERVING_RETRY_POLICY)
+def connect_tf_serving_rest(model_name, host, port) -> None:
+    try:
+        for attempt in Retrying(**tf_serving_retry_policy("tf-serving-rest")):
+            with attempt:
+                response = requests.get(f"http://{host}:{port}/v1/models/{model_name}")
+                if response.status_code != 200:
+                    raise TFServingError("Error connecting to TF serving")
+    except requests.exceptions.ConnectionError:
+        logger.error("Error connecting to TF serving")
+        raise
+
+
 def connect_tf_serving(model_name, host, port, mode):
     logger.info(
         "Connecting to tensorflow serving",
@@ -372,6 +396,4 @@ def connect_tf_serving(model_name, host, port, mode):
     if mode == "grpc":
         return connect_tf_serving_grpc(model_name, host, port)
     elif mode == "rest":
-        response = requests.get(f"http://{host}:{port}/v1/models/{model_name}")
-        if response.status_code != 200:
-            raise TFServingError("Error connecting to TF serving")
+        return connect_tf_serving_rest(model_name, host, port)
