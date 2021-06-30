@@ -15,6 +15,7 @@ from modelkit import ModelLibrary
 from modelkit.api import create_modelkit_app
 from modelkit.assets.cli import assets_cli
 from modelkit.core.errors import ModelsNotFound
+from modelkit.core.library import download_assets
 from modelkit.core.model_configuration import list_assets
 from modelkit.utils.serialization import safe_np_dump
 
@@ -171,9 +172,7 @@ def describe(models, required_models):
 
     Show settings, models and assets for a given library.
     """
-    service = _configure_from_cli_arguments(
-        models, required_models, {}
-    )
+    service = _configure_from_cli_arguments(models, required_models, {})
     service.describe()
 
 
@@ -188,9 +187,7 @@ def time(model, example, models, n):
 
     Time n iterations of a model's call on an example.
     """
-    service = _configure_from_cli_arguments(
-        models, [model], {"lazy_loading": True}
-    )
+    service = _configure_from_cli_arguments(models, [model], {"lazy_loading": True})
 
     console = Console()
 
@@ -238,9 +235,7 @@ def serve(models, required_models, host, port):
 
     Run an HTTP server with specified models using FastAPI
     """
-    app = create_modelkit_app(
-        models=models, required_models=required_models
-    )
+    app = create_modelkit_app(models=models, required_models=required_models)
     uvicorn.run(app, host=host, port=port)
 
 
@@ -273,3 +268,15 @@ def tf_serving(mode, models, required_models, verbose):
     )
 
     deploy_tf_models(service, mode, verbose=verbose)
+
+
+@modelkit_cli.command("download-assets")
+@click.argument("models", type=str, nargs=-1, required=False)
+@click.option("--required-models", "-r", multiple=True)
+def download(models, required_models):
+    """
+    Download all assets necessary to run a given set of models
+    """
+    download_assets(
+        models=list(models) or None, required_models=list(required_models) or None
+    )
