@@ -67,7 +67,7 @@ def memory(models, required_models):
     if service.required_models:
         with Progress(transient=True) as progress:
             task = progress.add_task("Profiling memory...", total=len(required_models))
-            for m in required_models:
+            for m in service.required_models:
                 deps = service.configuration[m].model_dependencies
                 deps = deps.values() if isinstance(deps, dict) else deps
                 for dependency in list(deps) + [m]:
