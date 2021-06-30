@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 from time import perf_counter, sleep
-
+import multiprocessing
 import click
 import humanize
 from rich.console import Console
@@ -253,6 +253,49 @@ def predict(model_name, models):
         if r:
             res = model(json.loads(r))
             click.secho(json.dumps(res, indent=2, default=safe_np_dump))
+
+
+@modelkit_cli.command("batch")
+@click.argument("model_name", type=str)
+@click.argument("input", type=str)
+@click.argument("output", type=str)
+@click.option("--models", type=str, multiple=True)
+@click.option("--processes", type=int, default=4)
+def batch_predict(model_name, input, output, models, processes):
+    """
+    Make predictions for a given model.
+    """
+    lib = _configure_from_cli_arguments(models, [model_name], {})
+    model = lib.get(model_name)
+
+    manager = multiprocessing.Manager()
+    q = manager.Queue()
+    q_in = manager.Queue()
+
+    def worker(q_in, q):
+        while True:
+            item = q_in.pop()
+            res = model.predict(item)
+            q.put(res)
+
+    def writer(q):
+        with open(output, 'w') as f:
+            while True:
+                m = q.get()
+                f.write(json.dumps(m) + '\n')
+                f.flush()
+
+    def reader(q_in):
+        with open(input) as f:
+            for l in f:
+                item = json.loads(json.loads(l.strip()))
+                q_in.put(item)
+
+    with multiprocessing.Pool(processes) as p:
+        r = p.apply_async(writer, (q,))
+        p.apply_async(worker, (q_in, q))
+        p.apply_async(reader, (q_in,))
+        r.wait()
 
 
 @modelkit_cli.command("tf-serving")
