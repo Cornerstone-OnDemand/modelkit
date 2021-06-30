@@ -218,7 +218,8 @@ def test_iso_serving_mode(model_name, test_items, tf_serving, dummy_tf_models):
 
     model_grpc.grpc_stub = None
     _compare_models(model_rest, model_grpc, test_items)
-
+    assert model_grpc.grpc_stub 
+    
     lib_serving_rest.close()
     lib_serving_grpc.close()
 
