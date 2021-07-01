@@ -1,9 +1,11 @@
+import itertools
 import json
 import logging
+import multiprocessing
 import os
 import sys
 from time import perf_counter, sleep
-import multiprocessing
+
 import click
 import humanize
 from rich.console import Console
@@ -255,47 +257,68 @@ def predict(model_name, models):
             click.secho(json.dumps(res, indent=2, default=safe_np_dump))
 
 
+def worker(model, q_in, q):
+    n = 0
+    while True:
+        m = q_in.get()
+        if m is None:
+            break
+        item = json.loads(m.strip())
+        res = model.predict(item)
+        q.put(res)
+        n += 1
+    q.put(None)
+    return n
+
+
+def writer(output, q):
+    with open(output, "w") as f:
+        while True:
+            m = q.get()
+            if m is None:
+                break
+            f.write(json.dumps(m) + "\n")
+            f.flush()
+
+
+def reader(input, queues):
+    queues_cycle = itertools.cycle(queues)
+    q_in = next(queues_cycle)
+    with open(input) as f:
+        for l in f:
+            q_in.put(l)
+            q_in = next(queues_cycle)
+    for q in queues:
+        q.put(None)
+
+
 @modelkit_cli.command("batch")
 @click.argument("model_name", type=str)
 @click.argument("input", type=str)
 @click.argument("output", type=str)
 @click.option("--models", type=str, multiple=True)
-@click.option("--processes", type=int, default=4)
+@click.option("--processes", type=int, default=None)
 def batch_predict(model_name, input, output, models, processes):
     """
     Make predictions for a given model.
     """
+    processes = processes or os.cpu_count()
+    print(f"Using {processes} processes")
     lib = _configure_from_cli_arguments(models, [model_name], {})
     model = lib.get(model_name)
 
     manager = multiprocessing.Manager()
     q = manager.Queue()
-    q_in = manager.Queue()
-
-    def worker(q_in, q):
-        while True:
-            item = q_in.pop()
-            res = model.predict(item)
-            q.put(res)
-
-    def writer(q):
-        with open(output, 'w') as f:
-            while True:
-                m = q.get()
-                f.write(json.dumps(m) + '\n')
-                f.flush()
-
-    def reader(q_in):
-        with open(input) as f:
-            for l in f:
-                item = json.loads(json.loads(l.strip()))
-                q_in.put(item)
+    n_workers = processes - 2
+    queues = [manager.Queue() for _ in range(n_workers)]
 
     with multiprocessing.Pool(processes) as p:
-        r = p.apply_async(writer, (q,))
-        p.apply_async(worker, (q_in, q))
-        p.apply_async(reader, (q_in,))
-        r.wait()
+        workers = [p.apply_async(worker, (model, q_in, q)) for q_in in queues]
+        p.apply_async(reader, (input, queues))
+        r = p.apply_async(writer, (output, q))
+        r.get()
+        for k, w in enumerate(workers):
+            print(f"Worker {k} computed {w.get()} elements")
 
 
 @modelkit_cli.command("tf-serving")
