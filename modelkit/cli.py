@@ -265,7 +265,7 @@ def worker(model, q_in, q):
             break
         item = json.loads(m.strip())
         res = model.predict(item)
-        q.put(res)
+        q.put(json.dumps(res) + "\n")
         n += 1
     q.put(None)
     return n
@@ -277,7 +277,7 @@ def writer(output, q):
             m = q.get()
             if m is None:
                 break
-            f.write(json.dumps(m) + "\n")
+            f.write(m)
             f.flush()
 
 
