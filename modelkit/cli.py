@@ -310,6 +310,25 @@ def writer(output, q, n_workers):
     return next_index
 
 
+def writer_unordered(output, q, n_workers):
+    workers_done = 0
+    n_items = 0
+    with open(output, "w") as f:
+        while True:
+            m = q.get()
+            if m is None:
+                workers_done += 1
+                if workers_done == n_workers:
+                    break
+                continue
+            _, res = m
+            f.write(res)
+            f.flush()
+            n_items += 1
+
+    return n_items
+
+
 def reader(input, queues):
     queues_cycle = itertools.cycle(queues)
     q_in = next(queues_cycle)
@@ -327,7 +346,8 @@ def reader(input, queues):
 @click.argument("output", type=str)
 @click.option("--models", type=str, multiple=True)
 @click.option("--processes", type=int, default=None)
-def batch_predict(model_name, input, output, models, processes):
+@click.option("--unordered", is_flag=True)
+def batch_predict(model_name, input, output, models, processes, unordered):
     """
     Make predictions for a given model.
     """
@@ -343,7 +363,10 @@ def batch_predict(model_name, input, output, models, processes):
     with multiprocessing.Pool(processes) as p:
         workers = [p.apply_async(worker, (lib, model_name, q_in, q)) for q_in in queues]
         p.apply_async(reader, (input, queues))
-        r = p.apply_async(writer, (output, q, n_workers))
+        if unordered:
+            r = p.apply_async(writer_unordered, (output, q, n_workers))
+        else:
+            r = p.apply_async(writer, (output, q, n_workers))
         wrote_items = r.get()
         for k, w in enumerate(workers):
             print(f"Worker {k} computed {w.get()} elements")
