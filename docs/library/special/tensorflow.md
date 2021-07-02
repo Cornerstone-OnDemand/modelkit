@@ -14,27 +14,7 @@ All tensorflow based models should derive from the `TensorflowModel` class. This
 At initialization time, a `TensorflowModel` has to be provided with definitions of the tensors predicted by the TF model:
 
 - `output_tensor_mapping` a dict of arbitrary `key`s to tensor names describing the outputs.
-- `output_tensor_shapes` and `output_tensor_dtypes` a dict of shapes and dtypes of these tensors.
-
-Typically, inside a `_predict_batch`, one would do something like:
-
-```python
-def _predict_batch(self, items):
-    data = await self._tensorflow_predict(
-            {
-                key: np.stack([item[key] for item in items], axis=0)
-                for key in items[0]
-            }
-        )
-    # ...
-    return [
-            {
-                key: data[key][k]
-                for key in self.output_tensor_mapping
-            }
-            for k in range(len(items))
-        ]
-```
+- `output_tensor_shapes` and `output_dtypes` a dict of shapes and dtypes of these tensors.
 
 !!! important
     Be careful that `_tensorflow_predict` returns a dict of `np.ndarray` of shape `(len(items),?)` when `_predict_batch` expects a list of `len(items)` dicts of `np.ndarray`.
@@ -49,30 +29,30 @@ These can be further manipulated by reimplementing the `TensorflowModel._post_pr
 
 ### Empty predictions
 
-Oftentimes we manipulate the item before feeding it to TF, e.g. doing text cleaning or vectorization. This sometimes results in making the prediction trivial.
+Oftentimes we manipulate the item before feeding it to TF, e.g. doing text cleaning or vectorization. This sometimes results in making the prediction trivial, in which case we need not bother calling TF with anything.
 
-In this case we use the following pattern, wherein we leverage the method `TensorflowModel._rebuild_predictions_with_mask`:
+`modelkit` provides a built-in mechanism do deal with these "empty" examples, and the default implementation of `predict_batch` uses it.
+
+To make use of it, override the `_is_empty` method:
 
 ```python
-def _predict_batch(
-    self, items: List[Dict[str, str]], **kwargs
-) -> List[Tuple[np.ndarray, List[str]]]:
-    treated_items = self.treat(items)
-
-    # Some of them can be None / empty, let's filter them out before prediction
-    mask = [x is not None and np.count_nonzero(x) > 0 for x in treated_items]
-    results = []
-    if any(mask):
-        items_to_predict = np.concatenate(list(compress(treated_items, mask)))
-        results = await self._tensorflow_predict(
-            {"input_tensor": items_to_predict}
-        )
-    # Merge the just-computed predictions with empty vectors for empty items
-    # Making sure everything is well-aligned
-    return self._rebuild_predictions_with_mask(mask, results)
+def _is_empty(self, item) -> bool:
+    return item == ""
 ```
 
-Notably, `TensorflowModel._rebuild_predictions_with_mask` uses `TensorflowModel._generate_empty_prediction` which returns the prediction expected for empty items
+This will fill in missing values with zeroed arrays when empty strings are found, without calling TF.
+
+To fill in values with another array, also override the `_generate_empty_prediction` method
+
+```python
+def _generate_empty_prediction(self) -> Dict[str, Any]:
+    """Function used to fill in values when rebuilding predictions with the mask"""
+    return {
+        name: np.zeros((1,) + self.output_shapes[name], self.output_dtypes[name])
+        for name in self.output_tensor_mapping
+    }
+
+```
 
 ## TF Serving
 
