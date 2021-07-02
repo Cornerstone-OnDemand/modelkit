@@ -259,14 +259,20 @@ def predict(model_name, models):
 
 def worker(model, q_in, q):
     n = 0
-    while True:
-        m = q_in.get()
-        if m is None:
-            break
-        item = json.loads(m.strip())
-        res = model.predict(item)
-        q.put(json.dumps(res) + "\n")
-        n += 1
+    done = False
+    while not done:
+        items = []
+        while True:
+            m = q_in.get()
+            if m is None:
+                done = True
+                break
+            items.append(json.loads(m.strip()))
+            if model.batch_size is None or len(items) >= model.batch_size:
+                break
+        for res in model.predict_gen(items):
+            q.put(json.dumps(res) + "\n")
+            n += 1
     q.put(None)
     return n
 
