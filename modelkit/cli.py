@@ -20,7 +20,6 @@ from modelkit.assets.cli import assets_cli
 from modelkit.core.errors import ModelsNotFound
 from modelkit.core.library import download_assets
 from modelkit.core.model_configuration import list_assets
-from modelkit.utils.logging import ContextualizedLogging
 from modelkit.utils.serialization import safe_np_dump
 
 
@@ -349,7 +348,7 @@ def reader(input, queues):
 @click.option("--unordered", is_flag=True)
 def batch_predict(model_name, input, output, models, processes, unordered):
     """
-    Make predictions for a given model.
+    Barch predictions for a given model.
     """
     processes = processes or os.cpu_count()
     print(f"Using {processes} processes")
