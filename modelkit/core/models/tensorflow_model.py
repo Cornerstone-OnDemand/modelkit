@@ -1,3 +1,4 @@
+import abc
 import json
 import os
 from typing import Any, Dict, List, Optional, Tuple, Type
@@ -38,7 +39,7 @@ except ModuleNotFoundError:  # pragma: no cover
     logger.info("Tensorflow serving is not installed")
 
 
-class AbstractTensorflowModel:
+class TensorflowModelMixin(abc.ABC):
     output_shapes: Dict[str, Tuple]
     output_dtypes: Dict[str, Type]
     output_tensor_mapping: Dict[str, str]
@@ -72,7 +73,7 @@ class AbstractTensorflowModel:
         return results
 
 
-class TensorflowModel(Model[ItemType, ReturnType], AbstractTensorflowModel):
+class TensorflowModel(Model[ItemType, ReturnType], TensorflowModelMixin):
     def __init__(
         self,
         output_tensor_mapping: Optional[Dict[str, str]] = None,
@@ -228,7 +229,7 @@ class TensorflowModel(Model[ItemType, ReturnType], AbstractTensorflowModel):
             return self.requests_session.close()
 
 
-class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType], AbstractTensorflowModel):
+class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType], TensorflowModelMixin):
     def __init__(
         self,
         output_tensor_mapping: Optional[Dict[str, str]] = None,
