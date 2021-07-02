@@ -1,7 +1,7 @@
+import bisect
 import itertools
 import json
 import logging
-from modelkit.utils.logging import ContextualizedLogging
 import multiprocessing
 import os
 import sys
@@ -20,6 +20,7 @@ from modelkit.assets.cli import assets_cli
 from modelkit.core.errors import ModelsNotFound
 from modelkit.core.library import download_assets
 from modelkit.core.model_configuration import list_assets
+from modelkit.utils.logging import ContextualizedLogging
 from modelkit.utils.serialization import safe_np_dump
 
 
@@ -264,37 +265,57 @@ def worker(lib, model_name, q_in, q):
     done = False
     while not done:
         items = []
+        indices = []
         while True:
             m = q_in.get()
             if m is None:
                 done = True
                 break
-            items.append(json.loads(m.strip()))
+            k, l = m
+            items.append(json.loads(l.strip()))
+            indices.append(k)
             if model.batch_size is None or len(items) >= model.batch_size:
                 break
-        for res in model.predict_gen(items):
-            q.put(json.dumps(res) + "\n")
+        for k, res in zip(indices, model.predict_gen(items)):
+            q.put((k, json.dumps(res) + "\n"))
             n += 1
     q.put(None)
     return n
 
 
-def writer(output, q):
+def writer(output, q, n_workers):
+    next_index = 0
+    items_to_write = []
+    workers_done = 0
+    done = False
     with open(output, "w") as f:
-        while True:
-            m = q.get()
-            if m is None:
-                break
-            f.write(m)
-            f.flush()
+        while not done:
+            while True:
+                m = q.get()
+                if m is None:
+                    workers_done += 1
+                    if workers_done == n_workers:
+                        done = True
+                        break
+                    continue
+                k, res = m
+                bisect.insort(items_to_write, (k, res))
+                if k == next_index:
+                    break
+            while len(items_to_write) and items_to_write[0][0] == next_index:
+                _, res = items_to_write.pop(0)
+                f.write(res)
+                f.flush()
+                next_index += 1
+    return next_index
 
 
 def reader(input, queues):
     queues_cycle = itertools.cycle(queues)
     q_in = next(queues_cycle)
     with open(input) as f:
-        for l in f:
-            q_in.put(l)
+        for k, l in enumerate(f):
+            q_in.put((k, l))
             q_in = next(queues_cycle)
     for q in queues:
         q.put(None)
@@ -322,10 +343,11 @@ def batch_predict(model_name, input, output, models, processes):
     with multiprocessing.Pool(processes) as p:
         workers = [p.apply_async(worker, (lib, model_name, q_in, q)) for q_in in queues]
         p.apply_async(reader, (input, queues))
-        r = p.apply_async(writer, (output, q))
-        r.get()
+        r = p.apply_async(writer, (output, q, n_workers))
+        wrote_items = r.get()
         for k, w in enumerate(workers):
             print(f"Worker {k} computed {w.get()} elements")
+        print(f"Total: {wrote_items} elements")
 
 
 @modelkit_cli.command("tf-serving")
