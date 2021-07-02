@@ -15,6 +15,14 @@ This CLI will show all necessary assets to run models
 ```sh
 modelkit list-assets [PACKAGE] [--required-models ...]
 ```
+### Assets download
+
+This CLI will download all necessary assets to run models to the current `MODELKIT_ASSETS_DIR`
+```sh
+modelkit list-assets [PACKAGE] [--required-models ...]
+```
+
+Once this is done, you can run the models without enabling a storage provider.
 ### Dependencies graph
 
 This CLI will create a .DOT file with a graph of all models,

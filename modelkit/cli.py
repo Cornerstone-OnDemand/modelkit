@@ -15,6 +15,7 @@ from modelkit import ModelLibrary
 from modelkit.api import create_modelkit_app
 from modelkit.assets.cli import assets_cli
 from modelkit.core.errors import ModelsNotFound
+from modelkit.core.library import download_assets
 from modelkit.core.model_configuration import list_assets
 from modelkit.utils.serialization import safe_np_dump
 
@@ -29,6 +30,8 @@ modelkit_cli.add_command(assets_cli)
 
 
 def _configure_from_cli_arguments(models, required_models, settings):
+    models = list(models) or None
+    required_models = list(required_models) or None
     if not (models or os.environ.get("MODELKIT_DEFAULT_PACKAGE")):
         raise ModelsNotFound(
             "Please add `your_package` as argument or set the "
@@ -57,7 +60,7 @@ def memory(models, required_models):
         sleep(1)
 
     service = _configure_from_cli_arguments(
-        list(models) or None, list(required_models) or None, {"lazy_loading": True}
+        models, required_models, {"lazy_loading": True}
     )
     grand_total = 0
     stats = {}
@@ -65,7 +68,7 @@ def memory(models, required_models):
     if service.required_models:
         with Progress(transient=True) as progress:
             task = progress.add_task("Profiling memory...", total=len(required_models))
-            for m in required_models:
+            for m in service.required_models:
                 deps = service.configuration[m].model_dependencies
                 deps = deps.values() if isinstance(deps, dict) else deps
                 for dependency in list(deps) + [m]:
@@ -99,7 +102,7 @@ def list_assets_cli(models, required_models):
     List the assets necessary to run a given set of models.
     """
     service = _configure_from_cli_arguments(
-        list(models) or None, list(required_models) or None, {"lazy_loading": True}
+        models, required_models, {"lazy_loading": True}
     )
 
     console = Console()
@@ -151,7 +154,7 @@ def dependencies_graph(models, required_models):
     from a list of models.
     """
     service = _configure_from_cli_arguments(
-        list(models) or None, list(required_models) or None, {"lazy_loading": True}
+        models, required_models, {"lazy_loading": True}
     )
     if service.configuration:
         dependency_graph = nx.DiGraph(overlap="False")
@@ -169,9 +172,7 @@ def describe(models, required_models):
 
     Show settings, models and assets for a given library.
     """
-    service = _configure_from_cli_arguments(
-        list(models) or None, list(required_models) or None, {}
-    )
+    service = _configure_from_cli_arguments(models, required_models, {})
     service.describe()
 
 
@@ -186,9 +187,7 @@ def time(model, example, models, n):
 
     Time n iterations of a model's call on an example.
     """
-    service = _configure_from_cli_arguments(
-        list(models) or None, [model], {"lazy_loading": True}
-    )
+    service = _configure_from_cli_arguments(models, [model], {"lazy_loading": True})
 
     console = Console()
 
@@ -236,9 +235,7 @@ def serve(models, required_models, host, port):
 
     Run an HTTP server with specified models using FastAPI
     """
-    app = create_modelkit_app(
-        models=list(models) or None, required_models=list(required_models) or None
-    )
+    app = create_modelkit_app(models=models, required_models=required_models)
     uvicorn.run(app, host=host, port=port)
 
 
@@ -249,7 +246,7 @@ def predict(model_name, models):
     """
     Make predictions for a given model.
     """
-    lib = _configure_from_cli_arguments(list(models) or None, [model_name], {})
+    lib = _configure_from_cli_arguments(models, [model_name], {})
     model = lib.get(model_name)
     while True:
         r = click.prompt(f"[{model_name}]>")
@@ -263,11 +260,23 @@ def predict(model_name, models):
 @click.argument("models", type=str, nargs=-1, required=False)
 @click.option("--required-models", "-r", multiple=True)
 @click.option("--verbose", is_flag=True)
-def tf_serving(mode, package, required_models, verbose):
+def tf_serving(mode, models, required_models, verbose):
     from modelkit.utils.tensorflow import deploy_tf_models
 
     service = _configure_from_cli_arguments(
-        list(package) or None, list(required_models) or None, {"lazy_loading": True}
+        models, required_models, {"lazy_loading": True}
     )
 
     deploy_tf_models(service, mode, verbose=verbose)
+
+
+@modelkit_cli.command("download-assets")
+@click.argument("models", type=str, nargs=-1, required=False)
+@click.option("--required-models", "-r", multiple=True)
+def download(models, required_models):
+    """
+    Download all assets necessary to run a given set of models
+    """
+    download_assets(
+        models=list(models) or None, required_models=list(required_models) or None
+    )
