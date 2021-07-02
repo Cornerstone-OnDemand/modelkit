@@ -1,13 +1,14 @@
+import abc
 import json
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 import aiohttp
 import numpy as np
 import requests
 from structlog import get_logger
 from tenacity import (
-    retry,
+    Retrying,
     retry_if_exception,
     stop_after_attempt,
     wait_random_exponential,
@@ -25,7 +26,7 @@ try:
         DEFAULT_SERVING_SIGNATURE_DEF_KEY,
     )
 
-except ModuleNotFoundError:
+except ModuleNotFoundError:  # pragma: no cover
     logger.info("tensorflow is not installed")
 
 try:
@@ -34,11 +35,45 @@ try:
     from tensorflow_serving.apis.get_model_metadata_pb2 import GetModelMetadataRequest
     from tensorflow_serving.apis.predict_pb2 import PredictRequest
 
-except ModuleNotFoundError:
+except ModuleNotFoundError:  # pragma: no cover
     logger.info("Tensorflow serving is not installed")
 
 
-class TensorflowModel(Model[ItemType, ReturnType]):
+class TensorflowModelMixin(abc.ABC):
+    output_shapes: Dict[str, Tuple]
+    output_dtypes: Dict[str, Type]
+    output_tensor_mapping: Dict[str, str]
+
+    def _is_empty(self, item) -> bool:
+        return False
+
+    def _generate_empty_prediction(self) -> Dict[str, Any]:
+        """Function used to fill in values when rebuilding predictions with the mask"""
+        return {
+            name: np.zeros((1,) + self.output_shapes[name], self.output_dtypes[name])
+            for name in self.output_tensor_mapping
+        }
+
+    def _rebuild_predictions_with_mask(
+        self, mask: List[bool], predictions: Dict[str, np.ndarray]
+    ) -> List[Dict[str, Any]]:
+        """Merge the just-computed predictions with empty vectors for empty input items.
+        Making sure everything is well-aligned"
+        """
+        i = 0
+        results = []
+        for mask_value in mask:
+            if mask_value:
+                results.append(self._generate_empty_prediction())
+            else:
+                results.append(
+                    {name: predictions[name][i] for name in self.output_tensor_mapping}
+                )
+                i += 1
+        return results
+
+
+class TensorflowModel(Model[ItemType, ReturnType], TensorflowModelMixin):
     def __init__(
         self,
         output_tensor_mapping: Optional[Dict[str, str]] = None,
@@ -94,14 +129,17 @@ class TensorflowModel(Model[ItemType, ReturnType]):
 
     def _predict_batch(self, items, **kwargs):
         """A generic _predict_batch that stacks and passes items to TensorFlow"""
+        mask = [self._is_empty(item) for item in items]
+        if all(mask):
+            return self._rebuild_predictions_with_mask(mask, {})
         vects = {
-            key: np.stack([item[key] for item in items], axis=0) for key in items[0]
+            key: np.stack(
+                [item[key] for item, mask in zip(items, mask) if not mask], axis=0
+            )
+            for key in items[0]
         }
-        prediction = self._tensorflow_predict(vects)
-        return [
-            {key: prediction[key][k, ...] for key in self.output_shapes}
-            for k in range(len(items))
-        ]
+        predictions = self._tensorflow_predict(vects)
+        return self._rebuild_predictions_with_mask(mask, predictions)
 
     def _tensorflow_predict(
         self, vects: Dict[str, np.ndarray], grpc_dtype=None
@@ -155,7 +193,7 @@ class TensorflowModel(Model[ItemType, ReturnType]):
             f"/v1/models/{self.tf_model_name}:predict",
             data=json.dumps({"inputs": vects}, default=safe_np_dump),
         )
-        if response.status_code != 200:
+        if response.status_code != 200:  # pragma: no cover
             raise TFServingError(
                 f"TF Serving error [{response.reason}]: {response.text}"
             )
@@ -186,35 +224,12 @@ class TensorflowModel(Model[ItemType, ReturnType]):
             for name in self.output_tensor_mapping
         }
 
-    def _generate_empty_prediction(self) -> Dict[str, Any]:
-        """Function used to fill in values when rebuilding predictions with the mask"""
-        return {
-            name: np.zeros((1,) + self.output_shapes[name], self.output_dtypes[name])
-            for name in self.output_tensor_mapping
-        }
-
-    def _rebuild_predictions_with_mask(
-        self, mask: List[bool], predictions: Dict[str, np.ndarray]
-    ) -> List[Dict[str, Any]]:
-        """Merge the just-computed predictions with empty vectors for empty input items.
-        Making sure everything is well-aligned"
-        """
-        i = 0
-        results = []
-        for mask_value in mask:
-            if mask_value:
-                results.append({name: value[i] for name, value in predictions.items()})
-                i += 1
-            else:
-                results.append(self._generate_empty_prediction())
-        return results
-
     def close(self):
         if self.requests_session:
             return self.requests_session.close()
 
 
-class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType]):
+class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType], TensorflowModelMixin):
     def __init__(
         self,
         output_tensor_mapping: Optional[Dict[str, str]] = None,
@@ -255,14 +270,17 @@ class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType]):
 
     async def _predict_batch(self, items, **kwargs):
         """A generic _predict_batch that stacks and passes items to TensorFlow"""
+        mask = [self._is_empty(item) for item in items]
+        if all(mask):
+            return self._rebuild_predictions_with_mask(mask, {})
         vects = {
-            key: np.stack([item[key] for item in items], axis=0) for key in items[0]
+            key: np.stack(
+                [item[key] for item, mask in zip(items, mask) if not mask], axis=0
+            )
+            for key in items[0]
         }
-        prediction = await self._tensorflow_predict(vects)
-        return [
-            {key: prediction[key][k, ...] for key in self.output_shapes}
-            for k in range(len(items))
-        ]
+        predictions = await self._tensorflow_predict(vects)
+        return self._rebuild_predictions_with_mask(mask, predictions)
 
     async def _tensorflow_predict(
         self, vects: Dict[str, np.ndarray]
@@ -276,7 +294,7 @@ class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType]):
             f"/v1/models/{self.tf_model_name}:predict",
             data=json.dumps({"inputs": vects}, default=safe_np_dump),
         ) as response:
-            if response.status != 200:
+            if response.status != 200:  # pragma: no cover
                 raise TFServingError(
                     f"TF Serving error [{response.reason}]: {response.text}"
                 )
@@ -288,11 +306,10 @@ class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType]):
                 name: np.array(outputs, dtype=self.output_dtypes[name])
                 for name in self.output_tensor_mapping
             }
-        results = {
+        return {
             name: np.array(outputs[name], dtype=self.output_dtypes[name])
             for name in self.output_tensor_mapping
         }
-        return results
 
     async def close(self):
         if self.aiohttp_session:
@@ -303,10 +320,10 @@ class TFServingError(Exception):
     pass
 
 
-def log_after_retry(retry_state):
-    logger.info(
+def log_after_retry(name):
+    return lambda retry_state: logger.info(
         "Retrying TF serving connection",
-        fun=retry_state.fn.__name__,
+        name=name,
         attempt_number=retry_state.attempt_number,
         wait_time=retry_state.outcome_timestamp - retry_state.start_time,
     )
@@ -316,34 +333,58 @@ def retriable_error(exception):
     return isinstance(exception, Exception)
 
 
-TF_SERVING_RETRY_POLICY = {
-    "wait": wait_random_exponential(multiplier=1, min=4, max=20),
-    "stop": stop_after_attempt(10),
-    "retry": retry_if_exception(retriable_error),
-    "after": log_after_retry,
-    "reraise": True,
-}
+def tf_serving_retry_policy(name):
+    return {
+        "wait": wait_random_exponential(
+            multiplier=1,
+            min=4,
+            max=20,
+        ),
+        "stop": stop_after_attempt(
+            int(os.environ.get("MODELKIT_TF_SERVING_ATTEMPTS", 10))
+        ),
+        "retry": retry_if_exception(retriable_error),
+        "after": log_after_retry(name),
+        "reraise": True,
+    }
 
 
-@retry(**TF_SERVING_RETRY_POLICY)
 def connect_tf_serving_grpc(
     model_name, host, port
 ) -> prediction_service_pb2_grpc.PredictionServiceStub:
-    channel = grpc.insecure_channel(
-        f"{host}:{port}", [("grpc.lb_policy_name", "round_robin")]
-    )
-    stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
-    r = GetModelMetadataRequest()
-    r.model_spec.name = model_name
-    r.metadata_field.append("signature_def")
-    answ = stub.GetModelMetadata(r, 1)
-    version = answ.model_spec.version.value
-    if version != 1:
-        raise TFServingError(f"Bad model version: {version}!=1")
-    return stub
+
+    try:
+        for attempt in Retrying(**tf_serving_retry_policy("tf-serving-grpc")):
+            with attempt:
+                channel = grpc.insecure_channel(
+                    f"{host}:{port}", [("grpc.lb_policy_name", "round_robin")]
+                )
+                stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
+                r = GetModelMetadataRequest()
+                r.model_spec.name = model_name
+                r.metadata_field.append("signature_def")
+                answ = stub.GetModelMetadata(r, 1)
+                version = answ.model_spec.version.value
+                if version != 1:  # pragma: no cover
+                    raise TFServingError(f"Bad model version: {version}!=1")
+                return stub
+    except grpc.RpcError:
+        logger.error("Error connecting to TF serving")
+        raise
 
 
-@retry(**TF_SERVING_RETRY_POLICY)
+def connect_tf_serving_rest(model_name, host, port) -> None:
+    try:
+        for attempt in Retrying(**tf_serving_retry_policy("tf-serving-rest")):
+            with attempt:
+                response = requests.get(f"http://{host}:{port}/v1/models/{model_name}")
+                if response.status_code != 200:  # pragma: no cover
+                    raise TFServingError("Error connecting to TF serving")
+    except requests.exceptions.ConnectionError:
+        logger.error("Error connecting to TF serving")
+        raise
+
+
 def connect_tf_serving(model_name, host, port, mode):
     logger.info(
         "Connecting to tensorflow serving",
@@ -354,7 +395,5 @@ def connect_tf_serving(model_name, host, port, mode):
     )
     if mode == "grpc":
         return connect_tf_serving_grpc(model_name, host, port)
-    elif mode in {"rest", "rest"}:
-        response = requests.get(f"http://{host}:{port}/v1/models/{model_name}")
-        if response.status_code != 200:
-            raise TFServingError("Error connecting to TF serving")
+    elif mode == "rest":
+        return connect_tf_serving_rest(model_name, host, port)
