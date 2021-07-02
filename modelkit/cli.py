@@ -356,17 +356,20 @@ def batch_predict(model_name, input, output, models, processes, unordered):
     lib = _configure_from_cli_arguments(models, [model_name], {"lazy_loading": True})
 
     manager = multiprocessing.Manager()
-    q = manager.Queue()
+    results_queue = manager.Queue()
     n_workers = processes - 2
-    queues = [manager.Queue() for _ in range(n_workers)]
+    items_queues = [manager.Queue() for _ in range(n_workers)]
 
     with multiprocessing.Pool(processes) as p:
-        workers = [p.apply_async(worker, (lib, model_name, q_in, q)) for q_in in queues]
-        p.apply_async(reader, (input, queues))
+        workers = [
+            p.apply_async(worker, (lib, model_name, q_in, results_queue))
+            for q_in in items_queues
+        ]
+        p.apply_async(reader, (input, items_queues))
         if unordered:
-            r = p.apply_async(writer_unordered, (output, q, n_workers))
+            r = p.apply_async(writer_unordered, (output, results_queue, n_workers))
         else:
-            r = p.apply_async(writer, (output, q, n_workers))
+            r = p.apply_async(writer, (output, results_queue, n_workers))
         wrote_items = r.get()
         for k, w in enumerate(workers):
             print(f"Worker {k} computed {w.get()} elements")
