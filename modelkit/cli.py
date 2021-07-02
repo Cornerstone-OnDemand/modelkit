@@ -304,7 +304,6 @@ def writer(output, q, n_workers):
             while len(items_to_write) and items_to_write[0][0] == next_index:
                 _, res = items_to_write.pop(0)
                 f.write(json.dumps(res) + "\n")
-                f.flush()
                 next_index += 1
     return next_index
 
@@ -322,7 +321,6 @@ def writer_unordered(output, q, n_workers):
                 continue
             _, res = m
             f.write(json.dumps(res) + "\n")
-            f.flush()
             n_items += 1
 
     return n_items
