@@ -162,7 +162,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
         return _endpoint
 
 
-def create_modelkit_app(models, required_models=None):
+def create_modelkit_app(models=None, required_models=None):
     """
     Creates a modelkit FastAPI app with the specified models and required models.
 
