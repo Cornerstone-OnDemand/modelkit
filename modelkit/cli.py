@@ -1,6 +1,7 @@
 import itertools
 import json
 import logging
+from modelkit.utils.logging import ContextualizedLogging
 import multiprocessing
 import os
 import sys
@@ -257,7 +258,8 @@ def predict(model_name, models):
             click.secho(json.dumps(res, indent=2, default=safe_np_dump))
 
 
-def worker(model, q_in, q):
+def worker(lib, model_name, q_in, q):
+    model = lib.get(model_name)
     n = 0
     done = False
     while not done:
@@ -310,8 +312,7 @@ def batch_predict(model_name, input, output, models, processes):
     """
     processes = processes or os.cpu_count()
     print(f"Using {processes} processes")
-    lib = _configure_from_cli_arguments(models, [model_name], {})
-    model = lib.get(model_name)
+    lib = _configure_from_cli_arguments(models, [model_name], {"lazy_loading": True})
 
     manager = multiprocessing.Manager()
     q = manager.Queue()
@@ -319,7 +320,7 @@ def batch_predict(model_name, input, output, models, processes):
     queues = [manager.Queue() for _ in range(n_workers)]
 
     with multiprocessing.Pool(processes) as p:
-        workers = [p.apply_async(worker, (model, q_in, q)) for q_in in queues]
+        workers = [p.apply_async(worker, (lib, model_name, q_in, q)) for q_in in queues]
         p.apply_async(reader, (input, queues))
         r = p.apply_async(writer, (output, q))
         r.get()
