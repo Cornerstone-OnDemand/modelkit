@@ -270,13 +270,13 @@ def worker(lib, model_name, q_in, q):
             if m is None:
                 done = True
                 break
-            k, l = m
-            items.append(json.loads(l.strip()))
+            k, item = m
+            items.append(item)
             indices.append(k)
             if model.batch_size is None or len(items) >= model.batch_size:
                 break
         for k, res in zip(indices, model.predict_gen(items)):
-            q.put((k, json.dumps(res) + "\n"))
+            q.put((k, res))
             n += 1
     q.put(None)
     return n
@@ -303,7 +303,7 @@ def writer(output, q, n_workers):
                     break
             while len(items_to_write) and items_to_write[0][0] == next_index:
                 _, res = items_to_write.pop(0)
-                f.write(res)
+                f.write(json.dumps(res) + "\n")
                 f.flush()
                 next_index += 1
     return next_index
@@ -321,7 +321,7 @@ def writer_unordered(output, q, n_workers):
                     break
                 continue
             _, res = m
-            f.write(res)
+            f.write(json.dumps(res) + "\n")
             f.flush()
             n_items += 1
 
@@ -333,7 +333,7 @@ def reader(input, queues):
     q_in = next(queues_cycle)
     with open(input) as f:
         for k, l in enumerate(f):
-            q_in.put((k, l))
+            q_in.put((k, json.loads(l.strip())))
             q_in = next(queues_cycle)
     for q in queues:
         q.put(None)
