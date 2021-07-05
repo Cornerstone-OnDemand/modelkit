@@ -33,6 +33,22 @@ modelkit dependencies-graph [PACKAGE] [--required-models ...]
 This requires [graphviz](https://graphviz.org/) for the graph layout. 
 
 
+## Predictions
+
+### batch
+
+This CLI will treat a given JSONL file, with one item per line and write the output of a 
+model as another JSONL file, using multiple processes for speed
+
+```sh
+modelkit batch MODEL_NAME DATA_IN DATA_OUT [--models PACKAGE] [--processes N_PROCESSES] [--unordered]
+```
+
+Where:
+- `--models` to tell it where to find the model
+- `--processes` allows you to define the number of processes (defaults to all CPUs)
+- `--unordered` does not preserve the order of outputs (as with `imap_unordered`), which may be faster
+
 ## Benchmarking
 
 ### Memory benchmark

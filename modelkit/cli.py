@@ -1,5 +1,8 @@
+import bisect
+import itertools
 import json
 import logging
+import multiprocessing
 import os
 import sys
 from time import perf_counter, sleep
@@ -253,6 +256,121 @@ def predict(model_name, models):
         if r:
             res = model(json.loads(r))
             click.secho(json.dumps(res, indent=2, default=safe_np_dump))
+
+
+def worker(lib, model_name, q_in, q):
+    model = lib.get(model_name)
+    n = 0
+    done = False
+    while not done:
+        items = []
+        indices = []
+        while True:
+            m = q_in.get()
+            if m is None:
+                done = True
+                break
+            k, item = m
+            items.append(item)
+            indices.append(k)
+            if model.batch_size is None or len(items) >= model.batch_size:
+                break
+        for k, res in zip(indices, model.predict_gen(items)):
+            q.put((k, res))
+            n += 1
+    q.put(None)
+    return n
+
+
+def writer(output, q, n_workers):
+    next_index = 0
+    items_to_write = []
+    workers_done = 0
+    done = False
+    with open(output, "w") as f:
+        while not done:
+            while True:
+                m = q.get()
+                if m is None:
+                    workers_done += 1
+                    if workers_done == n_workers:
+                        done = True
+                        break
+                    continue
+                k, res = m
+                bisect.insort(items_to_write, (k, res))
+                if k == next_index:
+                    break
+            while len(items_to_write) and items_to_write[0][0] == next_index:
+                _, res = items_to_write.pop(0)
+                f.write(json.dumps(res) + "\n")
+                next_index += 1
+    return next_index
+
+
+def writer_unordered(output, q, n_workers):
+    workers_done = 0
+    n_items = 0
+    with open(output, "w") as f:
+        while True:
+            m = q.get()
+            if m is None:
+                workers_done += 1
+                if workers_done == n_workers:
+                    break
+                continue
+            _, res = m
+            f.write(json.dumps(res) + "\n")
+            n_items += 1
+
+    return n_items
+
+
+def reader(input, queues):
+    queues_cycle = itertools.cycle(queues)
+    q_in = next(queues_cycle)
+    with open(input) as f:
+        for k, l in enumerate(f):
+            q_in.put((k, json.loads(l.strip())))
+            q_in = next(queues_cycle)
+    for q in queues:
+        q.put(None)
+
+
+@modelkit_cli.command("batch")
+@click.argument("model_name", type=str)
+@click.argument("input", type=str)
+@click.argument("output", type=str)
+@click.option("--models", type=str, multiple=True)
+@click.option("--processes", type=int, default=None)
+@click.option("--unordered", is_flag=True)
+def batch_predict(model_name, input, output, models, processes, unordered):
+    """
+    Barch predictions for a given model.
+    """
+    processes = processes or os.cpu_count()
+    print(f"Using {processes} processes")
+    lib = _configure_from_cli_arguments(models, [model_name], {"lazy_loading": True})
+
+    manager = multiprocessing.Manager()
+    results_queue = manager.Queue()
+    n_workers = processes - 2
+    items_queues = [manager.Queue() for _ in range(n_workers)]
+
+    with multiprocessing.Pool(processes) as p:
+        workers = [
+            p.apply_async(worker, (lib, model_name, q_in, results_queue))
+            for q_in in items_queues
+        ]
+        p.apply_async(reader, (input, items_queues))
+        if unordered:
+            r = p.apply_async(writer_unordered, (output, results_queue, n_workers))
+        else:
+            r = p.apply_async(writer, (output, results_queue, n_workers))
+        wrote_items = r.get()
+        for k, w in enumerate(workers):
+            print(f"Worker {k} computed {w.get()} elements")
+        print(f"Total: {wrote_items} elements")
 
 
 @modelkit_cli.command("tf-serving")
