@@ -81,12 +81,8 @@ def _check_asset_file_number(asset_path):
             "You should consider archiving and compressing it.",
             fg="red",
         )
-        response = click.prompt("Proceed anyways? [y/N]")
-        if response == "y":
-            return
-        else:
-            click.secho("Aborting.")
-            sys.exit()
+        if click.confirm("Proceed anyways ?", abort=True):
+            pass
 
 
 @assets_cli.command("new")
