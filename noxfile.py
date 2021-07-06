@@ -1,7 +1,7 @@
 import nox
 
 
-@nox.session(python=["3.7"])
+@nox.session(python=["3.7", "3.8", "3.9"])
 def test(session):
     # Install deps and the package itself.
     session.install("-r", "requirements-dev.txt")
@@ -9,7 +9,7 @@ def test(session):
     session.run("pytest", "--junitxml=junit.xml")
 
 
-@nox.session(python=["3.7"])
+@nox.session(python=["3.7", "3.8", "3.9"])
 def coverage(session):
     # Install deps and the package itself.
     session.install("-r", "requirements-optional.txt")
