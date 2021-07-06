@@ -4,16 +4,11 @@ from typing import Optional, Union
 
 import pydantic
 from pydantic import BaseModel, BaseSettings, root_validator, validator
-from structlog import get_logger
 
 from modelkit.assets.drivers.gcs import GCSDriverSettings
 from modelkit.assets.drivers.local import LocalDriverSettings
 from modelkit.assets.drivers.s3 import S3DriverSettings
 from modelkit.assets.errors import InvalidAssetSpecError
-
-SUPPORTED_MODELKIT_STORAGE_PROVIDERS = {"s3", "gcs", "local"}
-
-logger = get_logger(__name__)
 
 
 class DriverSettings(BaseSettings):
@@ -26,18 +21,14 @@ class DriverSettings(BaseSettings):
         if "settings" in fields:
             return fields
         storage_provider = fields.pop("storage_provider", None)
-        if storage_provider not in SUPPORTED_MODELKIT_STORAGE_PROVIDERS:
-            logger.error(
-                f"Unknown storage provider `{storage_provider}`, "
-                "no remote storage will be available"
-            )
-            raise ValueError
         if storage_provider == "gcs":
             settings = GCSDriverSettings(**fields)
-        if storage_provider == "s3":
+        elif storage_provider == "s3":
             settings = S3DriverSettings(**fields)
-        if storage_provider == "local":
+        elif storage_provider == "local":
             settings = LocalDriverSettings(**fields)
+        else:
+            raise ValueError(f"Unknown storage provider {storage_provider}")
         return {"storage_provider": storage_provider, "settings": settings}
 
 
