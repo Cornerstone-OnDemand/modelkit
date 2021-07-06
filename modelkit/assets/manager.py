@@ -7,7 +7,7 @@ import filelock
 from structlog import get_logger
 
 from modelkit.assets import errors
-from modelkit.assets.remote import RemoteAssetsStore
+from modelkit.assets.remote import StorageProvider
 from modelkit.assets.settings import AssetsManagerSettings, AssetSpec
 from modelkit.assets.versioning import (
     VERSION_RE,
@@ -43,15 +43,13 @@ class AssetsManager:
         self.assets_dir = settings.assets_dir
         self.timeout = settings.timeout
 
-        self.remote_assets_store = None
+        self.storage_provider = None
         if settings.remote_store:
             try:
-                self.remote_assets_store = RemoteAssetsStore(
-                    **settings.remote_store.dict()
-                )
+                self.storage_provider = StorageProvider(**settings.remote_store.dict())
                 logger.debug(
                     "AssetsManager created with remote storage provider",
-                    driver=self.remote_assets_store.driver,
+                    driver=self.storage_provider.driver,
                 )
             except BaseException:
                 # A remote store was parametrized, but it could not be instantiated
@@ -76,10 +74,10 @@ class AssetsManager:
             local_versions_list = self.get_local_versions_info(local_name)
             logger.debug("Local versions list", local_versions_list=local_versions_list)
             remote_versions_list = []
-            if self.remote_assets_store and (
+            if self.storage_provider and (
                 not spec.major_version or not spec.minor_version
             ):
-                remote_versions_list = self.remote_assets_store.get_versions_info(
+                remote_versions_list = self.storage_provider.get_versions_info(
                     spec.name
                 )
                 logger.debug(
@@ -176,12 +174,12 @@ class AssetsManager:
                         "path": local_path,
                     }
                 else:
-                    if self.remote_assets_store:
+                    if self.storage_provider:
                         logger.info(
                             "Fetching distant asset",
                             local_versions=local_versions_list,
                         )
-                        asset_download_info = self.remote_assets_store.download(
+                        asset_download_info = self.storage_provider.download(
                             spec.name, version, self.assets_dir
                         )
                         asset_dict = {
@@ -220,8 +218,8 @@ class AssetsManager:
     ):
         if isinstance(spec, str):
             spec = cast(AssetSpec, AssetSpec.from_string(spec))
-        if force_download is None and self.remote_assets_store:
-            force_download = self.remote_assets_store.force_download
+        if force_download is None and self.storage_provider:
+            force_download = self.storage_provider.force_download
 
         logger.info(
             "Fetching asset",

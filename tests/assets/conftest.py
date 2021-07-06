@@ -16,16 +16,16 @@ from tenacity import (
 )
 
 from modelkit.assets.manager import AssetsManager
-from modelkit.assets.remote import RemoteAssetsStore
+from modelkit.assets.remote import StorageProvider
 
 test_path = os.path.dirname(os.path.realpath(__file__))
 
 
 def _delete_all_objects(mng):
-    for object_name in mng.remote_assets_store.driver.iterate_objects(
-        mng.remote_assets_store.prefix
+    for object_name in mng.storage_provider.driver.iterate_objects(
+        mng.storage_provider.prefix
     ):
-        mng.remote_assets_store.driver.delete_object(object_name)
+        mng.storage_provider.driver.delete_object(object_name)
 
 
 @pytest.fixture(scope="function")
@@ -90,7 +90,7 @@ def gcs_assetsmanager(request, working_dir):
     mng = AssetsManager(
         assets_dir=working_dir,
     )
-    remote_store = RemoteAssetsStore(
+    remote_store = StorageProvider(
         storage_prefix="test-prefix",
         driver={
             "storage_provider": "gcs",
@@ -98,7 +98,7 @@ def gcs_assetsmanager(request, working_dir):
         },
     )
     remote_store.driver.client.create_bucket("test-bucket")
-    mng.remote_assets_store = remote_store
+    mng.storage_provider = remote_store
 
     yield mng
 
@@ -125,7 +125,7 @@ def _start_s3_manager(working_dir):
             "storage_prefix": f"test-assets-{uuid.uuid1().hex}",
         },
     )
-    mng.remote_assets_store.driver.client.create_bucket(Bucket="test-assets")
+    mng.storage_provider.driver.client.create_bucket(Bucket="test-assets")
     return mng
 
 

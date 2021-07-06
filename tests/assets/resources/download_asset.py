@@ -7,7 +7,7 @@ import click
 root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 sys.path.append(root_dir)
 
-from modelkit.assets.remote import RemoteAssetsStore  # NOQA  # isort:skip
+from modelkit.assets.remote import StorageProvider  # NOQA  # isort:skip
 from modelkit.assets.manager import AssetsManager  # NOQA  # isort:skip
 
 

@@ -30,14 +30,14 @@ def _perform_driver_test(driver):
 
 
 def test_local_driver(local_assetsmanager):
-    _perform_driver_test(local_assetsmanager.remote_assets_store.driver)
+    _perform_driver_test(local_assetsmanager.storage_provider.driver)
 
 
 @skip_unless("ENABLE_GCS_TEST", "True")
 def test_gcs_driver(gcs_assetsmanager):
-    _perform_driver_test(gcs_assetsmanager.remote_assets_store.driver)
+    _perform_driver_test(gcs_assetsmanager.storage_provider.driver)
 
 
 @skip_unless("ENABLE_S3_TEST", "True")
 def test_s3_driver(s3_assetsmanager):
-    _perform_driver_test(s3_assetsmanager.remote_assets_store.driver)
+    _perform_driver_test(s3_assetsmanager.storage_provider.driver)

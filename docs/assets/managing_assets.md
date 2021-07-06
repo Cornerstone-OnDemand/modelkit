@@ -73,9 +73,9 @@ modelkit assets list
 First, instantiate an `AssetsManager` pointing to the desired `bucket`, possibly changing the `storage_prefix`, storage method, etc.:
 
 ```python
-from modelkit.assets.remote import RemoteAssetsStore
+from modelkit.assets.remote import StorageProvider
 
-assets_store = RemoteAssetsStore()
+assets_store = StorageProvider()
 ```
 
 ### Create a new asset

@@ -4,7 +4,7 @@ import sys
 import threading
 import traceback
 
-from modelkit.assets.remote import RemoteAssetsStore
+from modelkit.assets.remote import StorageProvider
 from tests import TEST_DIR
 
 
@@ -74,7 +74,7 @@ def test_lock_assetsmanager(capsys, working_dir):
     os.makedirs(os.path.join(driver_path, "bucket"))
 
     # push an asset
-    mng = RemoteAssetsStore(
+    mng = StorageProvider(
         driver={
             "storage_provider": "local",
             "bucket": driver_path,

@@ -10,7 +10,7 @@ from modelkit.assets.drivers.s3 import S3DriverSettings
 from modelkit.assets.settings import (
     AssetsManagerSettings,
     DriverSettings,
-    RemoteAssetsStoreSettings,
+    StorageProviderSettings,
 )
 from modelkit.core.settings import LibrarySettings
 
@@ -120,13 +120,13 @@ def test_assetsmanager_settings(monkeypatch, settings_dict, valid):
         ),
     ],
 )
-def test_remote_assets_store_settings(monkeypatch, settings_dict, valid):
+def test_storage_provider_settings(monkeypatch, settings_dict, valid):
     if valid:
-        assetsmanager_settings = RemoteAssetsStoreSettings(**settings_dict)
-        assert isinstance(assetsmanager_settings, RemoteAssetsStoreSettings)
+        assetsmanager_settings = StorageProviderSettings(**settings_dict)
+        assert isinstance(assetsmanager_settings, StorageProviderSettings)
     else:
         with pytest.raises(ValidationError):
-            RemoteAssetsStoreSettings(**settings_dict)
+            StorageProviderSettings(**settings_dict)
 
 
 def test_assetsmanager_minimal(monkeypatch, working_dir):

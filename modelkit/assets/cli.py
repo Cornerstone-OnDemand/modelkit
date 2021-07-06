@@ -12,7 +12,7 @@ from rich.tree import Tree
 
 from modelkit.assets.errors import ObjectDoesNotExistError
 from modelkit.assets.manager import AssetsManager
-from modelkit.assets.remote import RemoteAssetsStore
+from modelkit.assets.remote import StorageProvider
 from modelkit.assets.settings import AssetSpec, DriverSettings
 from modelkit.assets.versioning import (
     filter_versions,
@@ -44,7 +44,7 @@ def _download_object_or_prefix(manager, asset_path, destination_dir):
     parsed_path = parse_gcs(asset_path)
     asset_path = os.path.join(destination_dir, "myasset")
     try:
-        manager.remote_assets_store.driver.download_object(
+        manager.storage_provider.driver.download_object(
             object_name=parsed_path["object_name"],
             destination_path=asset_path,
         )
@@ -52,7 +52,7 @@ def _download_object_or_prefix(manager, asset_path, destination_dir):
         # maybe prefix containing objects
         paths = [
             path
-            for path in manager.remote_assets_store.driver.iterate_objects(
+            for path in manager.storage_provider.driver.iterate_objects(
                 prefix=parsed_path["object_name"]
             )
         ]
@@ -62,7 +62,7 @@ def _download_object_or_prefix(manager, asset_path, destination_dir):
         os.mkdir(asset_path)
         for path in paths:
             object_name = path.split("/")[-1]
-            manager.remote_assets_store.driver.download_object(
+            manager.storage_provider.driver.download_object(
                 object_name=parsed_path["object_name"] + "/" + object_name,
                 destination_path=os.path.join(asset_path, object_name),
             )
@@ -109,7 +109,7 @@ def new(asset_path, asset_spec, bucket, storage_prefix, dry_run):
     NB: [asset_name] can contain `/` too.
     """
     _check_asset_file_number(asset_path)
-    manager = RemoteAssetsStore(
+    manager = StorageProvider(
         storage_prefix=storage_prefix,
         driver=DriverSettings(bucket=bucket),
     )
@@ -184,7 +184,7 @@ def update(asset_path, asset_spec, bucket, storage_prefix, bump_major, dry_run):
     will add a version 0.2
     """
     _check_asset_file_number(asset_path)
-    manager = RemoteAssetsStore(
+    manager = StorageProvider(
         storage_prefix=storage_prefix,
         driver=DriverSettings(bucket=bucket),
     )
@@ -247,7 +247,7 @@ def update(asset_path, asset_spec, bucket, storage_prefix, bump_major, dry_run):
 @click.option("--storage-prefix", envvar="MODELKIT_STORAGE_PREFIX")
 def list(bucket, storage_prefix):
     """lists all available assets and their versions."""
-    manager = RemoteAssetsStore(
+    manager = StorageProvider(
         storage_prefix=storage_prefix,
         driver=DriverSettings(bucket=bucket),
     )

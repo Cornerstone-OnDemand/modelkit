@@ -41,7 +41,7 @@ class DriverSettings(BaseSettings):
         return {"storage_provider": storage_provider, "settings": settings}
 
 
-class RemoteAssetsStoreSettings(BaseSettings):
+class StorageProviderSettings(BaseSettings):
     driver: DriverSettings
     timeout_s: float = pydantic.Field(5 * 60, env="MODELKIT_STORAGE_TIMEOUT_S")
     storage_prefix: str = pydantic.Field(
@@ -71,7 +71,7 @@ NAME_RE = r"[a-z0-9]([a-z0-9\-\_\.]*[a-z0-9])?"
 
 
 class AssetsManagerSettings(BaseSettings):
-    remote_store: Optional[RemoteAssetsStoreSettings]
+    remote_store: Optional[StorageProviderSettings]
     assets_dir: pydantic.DirectoryPath = pydantic.Field(
         default_factory=lambda: os.getcwd(), env="MODELKIT_ASSETS_DIR"
     )
@@ -82,7 +82,7 @@ class AssetsManagerSettings(BaseSettings):
     def dispatch_settings(cls, fields):
         if "remote_store" not in fields:
             try:
-                fields["remote_store"] = RemoteAssetsStoreSettings()
+                fields["remote_store"] = StorageProviderSettings()
             except ValidationError:
                 pass
 

@@ -11,7 +11,7 @@ from structlog import get_logger
 
 from modelkit.assets import errors
 from modelkit.assets.drivers import settings_to_driver
-from modelkit.assets.settings import RemoteAssetsStoreSettings
+from modelkit.assets.settings import StorageProviderSettings
 from modelkit.assets.versioning import (
     MajorVersionDoesNotExistError,
     increment_version,
@@ -32,9 +32,9 @@ def get_size(dir_path):
     )
 
 
-class RemoteAssetsStore:
+class StorageProvider:
     def __init__(self, **settings):
-        settings = RemoteAssetsStoreSettings(**settings)
+        settings = StorageProviderSettings(**settings)
 
         self.driver = settings_to_driver(settings.driver)
         if self.driver:
