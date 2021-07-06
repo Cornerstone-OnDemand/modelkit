@@ -5,13 +5,10 @@ import pytest
 from pydantic import ValidationError
 
 from modelkit.assets.drivers.gcs import GCSDriverSettings
-from modelkit.assets.drivers.local import LocalDriverSettings
+from modelkit.assets.drivers.local import LocalDriverSettings, LocalStorageDriver
 from modelkit.assets.drivers.s3 import S3DriverSettings
-from modelkit.assets.settings import (
-    AssetsManagerSettings,
-    DriverSettings,
-    StorageProviderSettings,
-)
+from modelkit.assets.manager import AssetsManager
+from modelkit.assets.settings import DriverSettings, StorageProviderSettings
 from modelkit.core.settings import LibrarySettings
 
 test_path = os.path.dirname(os.path.realpath(__file__))
@@ -42,59 +39,24 @@ def test_driver_settings(settings_dict, valid, expected_type):
     [
         (
             {
-                "remote_store": {
-                    "driver": {
-                        "storage_provider": "local",
-                        "bucket": test_path,
-                    },
-                    "storage_prefix": "assets-prefix",
-                },
                 "assets_dir": test_path,
             },
             True,
         ),
         (
             {
-                "remote_store": {"driver": {"storage_provider": "gcs"}},
                 "assets_dir": "/some/path",
             },
             False,
         ),
-        (
-            {
-                "remote_store": {
-                    "driver": {
-                        "storage_provider": "gcs",
-                        "bucket": "something-tests",
-                    }
-                },
-                "assets_dir": test_path,
-            },
-            True,
-        ),
-        (
-            {"remote_store": {"driver": {"storage_provider": "gcs"}}},
-            False,
-        ),
-        (
-            {
-                "remote_store": {
-                    "driver": {"storage_provider": "gcs"},
-                    "other_field": "tests",
-                }
-            },
-            False,
-        ),
-        ({"remote_store": {"driver": {"storage_provider": "local"}}}, False),
     ],
 )
-def test_assetsmanager_settings(monkeypatch, settings_dict, valid):
+def test_assetsmanager_init(settings_dict, valid):
     if valid:
-        assetsmanager_settings = AssetsManagerSettings(**settings_dict)
-        assert isinstance(assetsmanager_settings, AssetsManagerSettings)
+        AssetsManager(**settings_dict)
     else:
-        with pytest.raises(ValidationError):
-            AssetsManagerSettings(**settings_dict)
+        with pytest.raises(FileNotFoundError):
+            AssetsManager(**settings_dict)
 
 
 @pytest.mark.parametrize(
@@ -129,45 +91,18 @@ def test_storage_provider_settings(monkeypatch, settings_dict, valid):
             StorageProviderSettings(**settings_dict)
 
 
-def test_assetsmanager_minimal(monkeypatch, working_dir):
-    monkeypatch.setenv("MODELKIT_ASSETS_DIR", working_dir)
-    monkeypatch.setenv("MODELKIT_STORAGE_BUCKET", "some-bucket")
-    monkeypatch.setenv("MODELKIT_STORAGE_PROVIDER", "gcs")
-    settings = AssetsManagerSettings()
-    assert settings.remote_store.driver.storage_provider == "gcs"
-    assert settings.remote_store.driver.settings == GCSDriverSettings()
-    assert settings.remote_store.driver.settings.bucket == "some-bucket"
-    assert settings.remote_store.storage_prefix == "modelkit-assets"
-    assert settings.assets_dir == Path(working_dir)
-
-
 def test_assetsmanager_minimal_provider(monkeypatch, working_dir):
     monkeypatch.setenv("MODELKIT_ASSETS_DIR", working_dir)
     monkeypatch.setenv("MODELKIT_STORAGE_PROVIDER", "local")
 
-    settings = AssetsManagerSettings()
-    assert not settings.remote_store
+    manager = AssetsManager()
+    assert not manager.storage_provider
 
     monkeypatch.setenv("MODELKIT_STORAGE_BUCKET", working_dir)
-    settings = AssetsManagerSettings()
-    assert settings.remote_store.driver.storage_provider == "local"
-    assert settings.remote_store.driver.settings == LocalDriverSettings()
-    assert settings.remote_store.driver.settings.bucket == Path(working_dir)
-    assert settings.assets_dir == Path(working_dir)
-
-
-def test_assetsmanager_minimal_prefix(monkeypatch, working_dir):
-    monkeypatch.setenv("MODELKIT_ASSETS_DIR", working_dir)
-    monkeypatch.setenv("MODELKIT_STORAGE_BUCKET", "some-bucket")
-    monkeypatch.setenv("MODELKIT_STORAGE_PREFIX", "a-prefix")
-    monkeypatch.setenv("MODELKIT_STORAGE_PROVIDER", "gcs")
-
-    settings = AssetsManagerSettings()
-    assert settings.remote_store.driver.storage_provider == "gcs"
-    assert settings.remote_store.driver.settings == GCSDriverSettings()
-    assert settings.remote_store.driver.settings.bucket == "some-bucket"
-    assert settings.remote_store.storage_prefix == "a-prefix"
-    assert settings.assets_dir == Path(working_dir)
+    manager = AssetsManager()
+    assert manager.assets_dir == working_dir
+    assert isinstance(manager.storage_provider.driver, LocalStorageDriver)
+    assert manager.storage_provider.driver.bucket == working_dir
 
 
 def test_assetsmanager_no_validation(monkeypatch, working_dir):
@@ -180,9 +115,9 @@ def test_assetsmanager_no_validation(monkeypatch, working_dir):
 
 
 def test_assetsmanager_default():
-    settings = AssetsManagerSettings()
-    assert settings.assets_dir == Path(os.getcwd())
-    assert settings.remote_store is None
+    manager = AssetsManager()
+    assert manager.assets_dir == os.getcwd()
+    assert manager.storage_provider is None
 
 
 def test_assetsmanager_storage_provider_bug(monkeypatch):
@@ -191,6 +126,3 @@ def test_assetsmanager_storage_provider_bug(monkeypatch):
     monkeypatch.setenv("MODELKIT_STORAGE_BUCKET", "some-bucket")
     settings = DriverSettings()
     assert settings.storage_provider == "s3"
-
-    settings = AssetsManagerSettings()
-    assert settings.remote_store.driver.storage_provider == "s3"

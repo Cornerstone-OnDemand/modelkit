@@ -70,30 +70,6 @@ class StorageProviderSettings(BaseSettings):
 NAME_RE = r"[a-z0-9]([a-z0-9\-\_\.]*[a-z0-9])?"
 
 
-class AssetsManagerSettings(BaseSettings):
-    remote_store: Optional[StorageProviderSettings]
-    assets_dir: pydantic.DirectoryPath = pydantic.Field(
-        default_factory=lambda: os.getcwd(), env="MODELKIT_ASSETS_DIR"
-    )
-    timeout: int = pydantic.Field(10, env="MODELKIT_ASSETS_TIMEOUT_S")
-
-    @root_validator(pre=True)
-    @classmethod
-    def dispatch_settings(cls, fields):
-        if "remote_store" not in fields:
-            try:
-                fields["remote_store"] = StorageProviderSettings()
-            except ValidationError:
-                pass
-
-        return fields
-
-    class Config:
-        env_prefix = ""
-        case_sensitive = True
-        extra = "forbid"
-
-
 VERSION_SPEC_RE = r"(?P<major_version>[0-9]+)(\.(?P<minor_version>[0-9]+))?"
 
 ASSET_NAME_RE = r"(([A-Z]:\\)|/)?[a-zA-Z0-9]([a-zA-Z0-9\-\_\.\/\\]*[a-zA-Z0-9])?"

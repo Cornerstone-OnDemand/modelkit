@@ -8,7 +8,7 @@ from structlog import get_logger
 
 from modelkit.assets import errors
 from modelkit.assets.remote import StorageProvider
-from modelkit.assets.settings import AssetsManagerSettings, AssetSpec
+from modelkit.assets.settings import AssetSpec
 from modelkit.assets.versioning import (
     VERSION_RE,
     filter_versions,
@@ -37,28 +37,32 @@ def _has_succeeded(local_path):
 
 
 class AssetsManager:
-    def __init__(self, **settings):
-        if isinstance(settings, dict):
-            settings = AssetsManagerSettings(**settings)
-        self.assets_dir = settings.assets_dir
-        self.timeout = settings.timeout
+    def __init__(
+        self,
+        assets_dir: str = None,
+        timeout: int = None,
+        storage_provider: StorageProvider = None,
+    ):
+        self.assets_dir = assets_dir or os.environ.get(
+            "MODELKIT_ASSETS_DIR", os.getcwd()
+        )
+        if not os.path.exists(self.assets_dir):
+            raise FileNotFoundError(
+                f"Assets directory {self.assets_dir} does not exist"
+            )
 
-        self.storage_provider = None
-        if settings.remote_store:
+        self.timeout: int = timeout or os.environ.get("MODELKIT_ASSETS_TIMEOUT_S", 10)
+
+        self.storage_provider = storage_provider
+        if not self.storage_provider:
             try:
-                self.storage_provider = StorageProvider(**settings.remote_store.dict())
+                self.storage_provider = StorageProvider()
                 logger.debug(
                     "AssetsManager created with remote storage provider",
                     driver=self.storage_provider.driver,
                 )
             except BaseException:
-                # A remote store was parametrized, but it could not be instantiated
-                logger.error(
-                    "Failed to instantiate the requested remote storage provider"
-                )
-                raise
-        else:
-            logger.debug("AssetsManager created without a remote storage provider")
+                logger.error("No remote storage provider")
 
     def get_local_versions_info(self, name):
         if os.path.isdir(name):

@@ -35,7 +35,6 @@ def get_size(dir_path):
 class StorageProvider:
     def __init__(self, **settings):
         settings = StorageProviderSettings(**settings)
-
         self.driver = settings_to_driver(settings.driver)
         if self.driver:
             self.bucket = self.driver.bucket
