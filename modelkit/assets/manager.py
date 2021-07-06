@@ -44,11 +44,14 @@ class AssetsManager:
         self.timeout = settings.timeout
 
         self.remote_assets_store = None
-        self.remote_assets_store = RemoteAssetsStore(**settings.remote_store.dict())
-        logger.debug(
-            "AssetsManager created with remote storage provider",
-            driver=self.remote_assets_store.driver,
-        )
+        if settings.remote_store:
+            self.remote_assets_store = RemoteAssetsStore(**settings.remote_store.dict())
+            logger.debug(
+                "AssetsManager created with remote storage provider",
+                driver=self.remote_assets_store.driver,
+            )
+        else:
+            logger.debug("AssetsManager created without a remote storage provider")
 
     def get_local_versions_info(self, name):
         if os.path.isdir(name):
