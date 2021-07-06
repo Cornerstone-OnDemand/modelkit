@@ -11,6 +11,7 @@ from rich.table import Table
 from rich.tree import Tree
 
 from modelkit.assets.errors import ObjectDoesNotExistError
+from modelkit.assets.manager import AssetsManager
 from modelkit.assets.remote import RemoteAssetsStore
 from modelkit.assets.settings import AssetSpec, DriverSettings
 from modelkit.assets.versioning import (
@@ -275,3 +276,16 @@ def list(bucket, storage_prefix):
 
     console.print(table)
     console.print(f"Found {n} assets ({n_versions} different versions)")
+
+
+@assets_cli.command("fetch")
+@click.argument("asset")
+@click.option("--download", is_flag=True)
+def fetch_asset(asset, download):
+    """Fetch an asset and download if necessary"""
+    manager = AssetsManager()
+
+    info = manager.fetch_asset(asset, return_info=True, force_download=download)
+
+    console = Console()
+    console.print(info)
