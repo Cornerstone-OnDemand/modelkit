@@ -238,7 +238,9 @@ def serve(models, required_models, host, port):
 
     Run an HTTP server with specified models using FastAPI
     """
-    app = create_modelkit_app(models=models, required_models=required_models)
+    app = create_modelkit_app(
+        models=list(models) or None, required_models=list(required_models) or None
+    )
     uvicorn.run(app, host=host, port=port)
 
 
