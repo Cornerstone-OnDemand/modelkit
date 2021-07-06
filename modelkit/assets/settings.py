@@ -27,8 +27,6 @@ class DriverSettings(BaseSettings):
             settings = S3DriverSettings(**fields)
         elif storage_provider == "local":
             settings = LocalDriverSettings(**fields)
-        else:
-            raise ValueError(f"Unknown storage provider {storage_provider}")
         return {"storage_provider": storage_provider, "settings": settings}
 
 
