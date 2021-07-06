@@ -44,23 +44,11 @@ class AssetsManager:
         self.timeout = settings.timeout
 
         self.remote_assets_store = None
-        if settings.remote_store:
-            try:
-                self.remote_assets_store = RemoteAssetsStore(
-                    **settings.remote_store.dict()
-                )
-                logger.debug(
-                    "AssetsManager created with remote storage provider",
-                    driver=self.remote_assets_store.driver,
-                )
-            except BaseException:
-                # A remote store was parametrized, but it could not be instantiated
-                logger.error(
-                    "Failed to instantiate the requested remote storage provider"
-                )
-                raise
-        else:
-            logger.debug("AssetsManager created without a remote storage provider")
+        self.remote_assets_store = RemoteAssetsStore(**settings.remote_store.dict())
+        logger.debug(
+            "AssetsManager created with remote storage provider",
+            driver=self.remote_assets_store.driver,
+        )
 
     def get_local_versions_info(self, name):
         if os.path.isdir(name):
