@@ -59,7 +59,7 @@ def cache_settings():
 
 class LibrarySettings(pydantic.BaseSettings):
     lazy_loading: bool = pydantic.Field(False, env="MODELKIT_LAZY_LOADING")
-    override_storage_prefix: Optional[str] = pydantic.Field(
+    override_prefix: Optional[str] = pydantic.Field(
         None, env="MODELKIT_STORAGE_PREFIX_OVERRIDE"
     )
     enable_validation: bool = pydantic.Field(True, env="MODELKIT_ENABLE_VALIDATION")

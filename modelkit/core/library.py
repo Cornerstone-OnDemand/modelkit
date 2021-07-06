@@ -135,18 +135,19 @@ class ModelLibrary:
 
     @property
     def override_assets_manager(self):
-        if not self.settings.override_storage_prefix:
+        if not self.settings.override_prefix:
             return None
 
         if self._override_assets_manager is None:
             logger.info(
                 "Instantiating Override AssetsManager", lazy_loading=self._lazy_loading
             )
-            override_settings = copy.deepcopy(self.assetsmanager_settings)
-            override_settings["remote_store"][
-                "storage_prefix"
-            ] = self.settings.override_storage_prefix
-            self._override_assets_manager = AssetsManager(**override_settings)
+            self._override_assets_manager = AssetsManager(
+                **copy.deepcopy(self.assetsmanager_settings)
+            )
+            self._override_assets_manager.storage_provider.prefix = (
+                self.settings.override_prefix
+            )
 
         return self._override_assets_manager
 

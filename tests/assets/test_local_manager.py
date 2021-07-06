@@ -5,6 +5,7 @@ import pytest
 
 from modelkit.assets import errors
 from modelkit.assets.manager import AssetsManager
+from modelkit.assets.remote import StorageProvider
 from tests import TEST_DIR
 
 
@@ -107,13 +108,11 @@ def test_local_manager_with_fetch(working_dir):
 
     manager = AssetsManager(
         assets_dir=working_dir,
-        remote_store={
-            "driver": {
-                "storage_provider": "local",
-                "bucket": os.path.join(TEST_DIR, "testdata", "test-bucket"),
-            },
-            "storage_prefix": "assets-prefix",
-        },
+        storage_provider=StorageProvider(
+            provider="local",
+            bucket=os.path.join(TEST_DIR, "testdata", "test-bucket"),
+            prefix="assets-prefix",
+        ),
     )
 
     res = manager.fetch_asset("category/asset:0.0", return_info=True)

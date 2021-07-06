@@ -2,27 +2,21 @@ import glob
 import os
 import shutil
 
-import pydantic
-from pydantic import BaseSettings
 from structlog import get_logger
 
 from modelkit.assets import errors
+from modelkit.assets.drivers.abc import StorageDriver
 
 logger = get_logger(__name__)
 
 
-class LocalDriverSettings(BaseSettings):
-    bucket: pydantic.DirectoryPath = pydantic.Field(..., env="MODELKIT_STORAGE_BUCKET")
-
-    class Config:
-        extra = "forbid"
-
-
-class LocalStorageDriver:
-    def __init__(self, settings: LocalDriverSettings = None):
-        if not settings:
-            settings = LocalDriverSettings()
-        self.bucket = settings.bucket
+class LocalStorageDriver(StorageDriver):
+    def __init__(self, bucket: str = None):
+        self.bucket = bucket or os.environ.get("MODELKIT_STORAGE_BUCKET")
+        if not self.bucket:
+            raise ValueError("Bucket needs to be set for local storage driver")
+        if not os.path.isdir(self.bucket):
+            raise FileNotFoundError
 
     def iterate_objects(self, prefix=None):
         if not os.path.isdir(self.bucket):

@@ -70,7 +70,7 @@ modelkit assets list
 
 ## Maintaining assets programmatically
 
-First, instantiate an `AssetsManager` pointing to the desired `bucket`, possibly changing the `storage_prefix`, storage method, etc.:
+First, instantiate an `AssetsManager` pointing to the desired `bucket`, possibly changing the `prefix`, storage method, etc.:
 
 ```python
 from modelkit.assets.remote import StorageProvider

@@ -7,7 +7,7 @@ import filelock
 from structlog import get_logger
 
 from modelkit.assets import errors
-from modelkit.assets.remote import StorageProvider
+from modelkit.assets.remote import NoConfiguredProviderError, StorageProvider
 from modelkit.assets.settings import AssetSpec
 from modelkit.assets.versioning import (
     VERSION_RE,
@@ -37,21 +37,27 @@ def _has_succeeded(local_path):
 
 
 class AssetsManager:
+    assets_dir: str
+    timeout: int
+    storage_provider: Optional[StorageProvider]
+
     def __init__(
         self,
         assets_dir: str = None,
         timeout: int = None,
         storage_provider: StorageProvider = None,
     ):
-        self.assets_dir = assets_dir or os.environ.get(
-            "MODELKIT_ASSETS_DIR", os.getcwd()
+        self.assets_dir = (
+            assets_dir or os.environ.get("MODELKIT_ASSETS_DIR") or os.getcwd()
         )
-        if not os.path.exists(self.assets_dir):
+        if not os.path.isdir(self.assets_dir):
             raise FileNotFoundError(
                 f"Assets directory {self.assets_dir} does not exist"
             )
 
-        self.timeout: int = timeout or os.environ.get("MODELKIT_ASSETS_TIMEOUT_S", 10)
+        self.timeout: int = int(
+            timeout or os.environ.get("MODELKIT_ASSETS_TIMEOUT_S", 10)
+        )
 
         self.storage_provider = storage_provider
         if not self.storage_provider:
@@ -61,8 +67,8 @@ class AssetsManager:
                     "AssetsManager created with remote storage provider",
                     driver=self.storage_provider.driver,
                 )
-            except BaseException:
-                logger.error("No remote storage provider")
+            except NoConfiguredProviderError:
+                logger.info("No remote storage provider configured")
 
     def get_local_versions_info(self, name):
         if os.path.isdir(name):
@@ -218,7 +224,7 @@ class AssetsManager:
         self,
         spec: Union[AssetSpec, str],
         return_info=False,
-        force_download: Optional[bool] = None,
+        force_download: bool = None,
     ):
         if isinstance(spec, str):
             spec = cast(AssetSpec, AssetSpec.from_string(spec))

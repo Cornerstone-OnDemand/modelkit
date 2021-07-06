@@ -6,6 +6,7 @@ import pytest
 
 import modelkit.assets.cli
 from modelkit.assets.manager import AssetsManager, _success_file_path
+from modelkit.assets.remote import StorageProvider
 from tests.conftest import skip_unless
 
 test_path = os.path.dirname(os.path.realpath(__file__))
@@ -96,7 +97,7 @@ def test_s3_assetsmanager(s3_assetsmanager):
 def test_download_object_or_prefix_cli(gcs_assetsmanager):
     original_asset_path = os.path.join(test_path, "testdata", "some_data.json")
     gcs_asset_dir = (
-        f"gs://{gcs_assetsmanager.storage_provider.bucket}/"
+        f"gs://{gcs_assetsmanager.storage_provider.driver.bucket}/"
         f"{gcs_assetsmanager.storage_provider.prefix}"
         "/category-test/some-data.ext"
     )
@@ -131,7 +132,7 @@ def test_download_object_or_prefix_cli(gcs_assetsmanager):
             modelkit.assets.cli._download_object_or_prefix(
                 gcs_assetsmanager,
                 asset_path=(
-                    f"gs://{gcs_assetsmanager.storage_provider.bucket}/"
+                    f"gs://{gcs_assetsmanager.storage_provider.driver.bucket}/"
                     f"{gcs_assetsmanager.storage_provider.prefix}/"
                     "category-test"
                 ),
@@ -146,12 +147,7 @@ def test_assetsmanager_force_download(monkeypatch, base_dir, working_dir):
 
     mng = AssetsManager(
         assets_dir=working_dir,
-        remote_store={
-            "driver": {
-                "storage_provider": "local",
-                "bucket": bucket_path,
-            }
-        },
+        storage_provider=StorageProvider(provider="local", bucket=bucket_path),
     )
     data_path = os.path.join(test_path, "testdata", "some_data.json")
     mng.storage_provider.push(data_path, "category-test/some-data.ext", "1.0")
@@ -164,13 +160,11 @@ def test_assetsmanager_force_download(monkeypatch, base_dir, working_dir):
 
     mng_force = AssetsManager(
         assets_dir=working_dir,
-        remote_store={
-            "driver": {
-                "storage_provider": "local",
-                "bucket": bucket_path,
-            },
-            "storage_force_download": True,
-        },
+        storage_provider=StorageProvider(
+            provider="local",
+            bucket=bucket_path,
+            force_download=True,
+        ),
     )
     asset_info_force = mng_force.fetch_asset(
         "category-test/some-data.ext:1.0", return_info=True
@@ -180,12 +174,7 @@ def test_assetsmanager_force_download(monkeypatch, base_dir, working_dir):
     monkeypatch.setenv("MODELKIT_STORAGE_FORCE_DOWNLOAD", "True")
     mng_force = AssetsManager(
         assets_dir=working_dir,
-        remote_store={
-            "driver": {
-                "storage_provider": "local",
-                "bucket": bucket_path,
-            }
-        },
+        storage_provider=StorageProvider(provider="local", bucket=bucket_path),
     )
     asset_info_force_env = mng_force.fetch_asset(
         "category-test/some-data.ext:1.0", return_info=True
@@ -200,12 +189,10 @@ def test_assetsmanager_retry_on_fail(base_dir, working_dir):
 
     mng = AssetsManager(
         assets_dir=working_dir,
-        remote_store={
-            "driver": {
-                "storage_provider": "local",
-                "bucket": bucket_path,
-            }
-        },
+        storage_provider=StorageProvider(
+            provider="local",
+            bucket=bucket_path,
+        ),
     )
     # Try with a file asset
     data_path = os.path.join(test_path, "testdata", "some_data.json")

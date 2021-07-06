@@ -4,6 +4,7 @@ import tempfile
 
 import pytest
 
+from modelkit.assets.remote import StorageProvider
 from tests import TEST_DIR
 
 
@@ -24,13 +25,11 @@ def working_dir(base_dir):
 @pytest.fixture
 def assetsmanager_settings(working_dir):
     yield {
-        "remote_store": {
-            "driver": {
-                "storage_provider": "local",
-                "bucket": os.path.join(TEST_DIR, "testdata", "test-bucket"),
-            },
-            "storage_prefix": "assets-prefix",
-        },
+        "storage_provider": StorageProvider(
+            prefix="assets-prefix",
+            provider="local",
+            bucket=os.path.join(TEST_DIR, "testdata", "test-bucket"),
+        ),
         "assets_dir": working_dir,
     }
 

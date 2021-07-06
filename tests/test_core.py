@@ -444,13 +444,13 @@ def test_override_prefix(assetsmanager_settings):
         assetsmanager_settings=assetsmanager_settings,
     )
 
-    prediction = model_library.get("my_model")({})
+    prediction = model_library.get("my_model").predict({})
     assert prediction.endswith(os.path.join("category", "asset", "1.0"))
 
-    prediction = model_library.get("my_override_model")({})
+    prediction = model_library.get("my_override_model").predict({})
     assert prediction.endswith(os.path.join("category", "override-asset", "0.0"))
 
-    model_library = ModelLibrary(
+    model_library_override = ModelLibrary(
         required_models=["my_model", "my_override_model"],
         configuration={
             "my_model": ModelConfiguration(
@@ -460,14 +460,14 @@ def test_override_prefix(assetsmanager_settings):
                 model_type=TestModel, asset="category/override-asset"
             ),
         },
-        settings={"override_storage_prefix": "override-assets-prefix"},
+        settings={"override_prefix": "override-assets-prefix", "lazy_loading": True},
         assetsmanager_settings=assetsmanager_settings,
     )
 
-    prediction = model_library.get("my_model")({})
+    prediction = model_library_override.get("my_model").predict({})
     assert prediction.endswith(os.path.join("category", "asset", "1.0"))
 
-    prediction = model_library.get("my_override_model")({})
+    prediction = model_library_override.get("my_override_model").predict({})
     assert prediction.endswith(os.path.join("category", "override-asset", "1.0"))
 
 

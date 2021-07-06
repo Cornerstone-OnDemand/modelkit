@@ -1,7 +1,5 @@
 import os
-from typing import Optional
 
-import pydantic
 from google.api_core.exceptions import NotFound
 from google.cloud import storage
 from google.cloud.storage import Client
@@ -9,33 +7,31 @@ from structlog import get_logger
 from tenacity import retry
 
 from modelkit.assets import errors
+from modelkit.assets.drivers.abc import StorageDriver
 from modelkit.assets.drivers.retry import RETRY_POLICY
 
 logger = get_logger(__name__)
 
 
-class GCSDriverSettings(pydantic.BaseSettings):
-    bucket: str = pydantic.Field(..., env="MODELKIT_STORAGE_BUCKET")
-    service_account_path: Optional[str] = None
-    client: Optional[storage.Client]
+class GCSStorageDriver(StorageDriver):
+    bucket: storage
+    client: Client
 
-    class Config:
-        extra = "forbid"
+    def __init__(
+        self,
+        bucket: str = None,
+        service_account_path: str = None,
+        client: Client = None,
+    ):
+        self.bucket = bucket or os.environ.get("MODELKIT_STORAGE_BUCKET", None)
+        if not self.bucket:
+            raise ValueError("Bucket needs to be set for GCS storage driver")
 
-
-class GCSStorageDriver:
-    def __init__(self, settings: GCSDriverSettings = None):
-        if not settings:
-            settings = GCSDriverSettings()
-        self.bucket = settings.bucket
-
-        if settings.client:
-            self.client = settings.client
+        if client:
+            self.client = client
         else:
-            if settings.service_account_path:
-                self.client = Client.from_service_account_json(
-                    settings.service_account_path
-                )
+            if service_account_path:
+                self.client = Client.from_service_account_json(service_account_path)
             else:
                 self.client = Client()
 

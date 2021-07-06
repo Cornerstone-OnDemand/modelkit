@@ -1,94 +1,119 @@
 import os
-from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
 
-from modelkit.assets.drivers.gcs import GCSDriverSettings
-from modelkit.assets.drivers.local import LocalDriverSettings, LocalStorageDriver
-from modelkit.assets.drivers.s3 import S3DriverSettings
+from modelkit.assets.drivers.local import LocalStorageDriver
 from modelkit.assets.manager import AssetsManager
-from modelkit.assets.settings import DriverSettings, StorageProviderSettings
+from modelkit.assets.remote import UnknownDriverError
 from modelkit.core.settings import LibrarySettings
 
 test_path = os.path.dirname(os.path.realpath(__file__))
 
 
 @pytest.mark.parametrize(
-    "settings_dict, valid, expected_type",
-    [
-        ({"storage_provider": "notsupported"}, False, None),
-        ({"storage_provider": "local"}, False, None),
-        ({"storage_provider": "local", "some_other_param": "blabli"}, False, None),
-        ({"storage_provider": "local", "bucket": test_path}, True, LocalDriverSettings),
-        ({"storage_provider": "gcs", "bucket": test_path}, True, GCSDriverSettings),
-        ({"storage_provider": "s3", "bucket": test_path}, True, S3DriverSettings),
-    ],
-)
-def test_driver_settings(settings_dict, valid, expected_type):
-    if valid:
-        driver_settings = DriverSettings(**settings_dict)
-        assert isinstance(driver_settings.settings, expected_type)
-    else:
-        with pytest.raises(ValidationError):
-            DriverSettings(**settings_dict)
-
-
-@pytest.mark.parametrize(
-    "settings_dict, valid",
+    "settings_dict, env_vars, valid, exception",
     [
         (
             {
                 "assets_dir": test_path,
             },
+            {},
             True,
+            None,
         ),
+        (
+            {"assets_dir": test_path, "timeout": 20},
+            {},
+            True,
+            None,
+        ),
+        (
+            {},
+            {
+                "MODELKIT_ASSETS_DIR": test_path,
+                "MODELKIT_ASSETS_TIMEOUT_S": "100",
+            },
+            True,
+            None,
+        ),
+        (
+            {"timeout": 20},
+            {
+                "MODELKIT_ASSETS_DIR": test_path,
+            },
+            True,
+            None,
+        ),
+        (
+            {"assets_dir": 20},
+            {},
+            False,
+            FileNotFoundError,
+        ),
+        ({"assets_dir": test_path, "timeout": "abc"}, {}, False, ValueError),
         (
             {
                 "assets_dir": "/some/path",
             },
+            {},
             False,
+            FileNotFoundError,
+        ),
+        (
+            {
+                "assets_dir": test_path,
+            },
+            {"MODELKIT_STORAGE_PROVIDER": "s3"},
+            False,
+            ValueError,
+        ),
+        (
+            {
+                "assets_dir": test_path,
+            },
+            {"MODELKIT_STORAGE_PROVIDER": "gcs"},
+            False,
+            ValueError,
+        ),
+        (
+            {
+                "assets_dir": test_path,
+            },
+            {"MODELKIT_STORAGE_PROVIDER": "local"},
+            False,
+            ValueError,
+        ),
+        (
+            {
+                "assets_dir": test_path,
+            },
+            {
+                "MODELKIT_STORAGE_PROVIDER": "local",
+                "MODELKIT_STORAGE_BUCKET": "/some/path",
+            },
+            False,
+            FileNotFoundError,
+        ),
+        (
+            {
+                "assets_dir": test_path,
+            },
+            {
+                "MODELKIT_STORAGE_PROVIDER": "blabla",
+            },
+            False,
+            UnknownDriverError,
         ),
     ],
 )
-def test_assetsmanager_init(settings_dict, valid):
+def test_assetsmanager_init(monkeypatch, settings_dict, env_vars, valid, exception):
+    for key, value in env_vars.items():
+        monkeypatch.setenv(key, value)
     if valid:
         AssetsManager(**settings_dict)
     else:
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(exception):
             AssetsManager(**settings_dict)
-
-
-@pytest.mark.parametrize(
-    "settings_dict, valid",
-    [
-        (
-            {
-                "storage_prefix": "assets-v3",
-                "driver": {"storage_provider": "local", "bucket": test_path},
-            },
-            True,
-        ),
-        (
-            {
-                "storage_prefix": "assets-v3",
-                "driver": {
-                    "storage_provider": "local",
-                    "settings": {"bucket": test_path},
-                },
-                "timeout_s": 300.0,
-            },
-            True,
-        ),
-    ],
-)
-def test_storage_provider_settings(monkeypatch, settings_dict, valid):
-    if valid:
-        assetsmanager_settings = StorageProviderSettings(**settings_dict)
-        assert isinstance(assetsmanager_settings, StorageProviderSettings)
-    else:
-        with pytest.raises(ValidationError):
-            StorageProviderSettings(**settings_dict)
 
 
 def test_assetsmanager_minimal_provider(monkeypatch, working_dir):
@@ -118,11 +143,3 @@ def test_assetsmanager_default():
     manager = AssetsManager()
     assert manager.assets_dir == os.getcwd()
     assert manager.storage_provider is None
-
-
-def test_assetsmanager_storage_provider_bug(monkeypatch):
-    monkeypatch.setenv("STORAGE_PROVIDER", "gcs")
-    monkeypatch.setenv("MODELKIT_STORAGE_PROVIDER", "s3")
-    monkeypatch.setenv("MODELKIT_STORAGE_BUCKET", "some-bucket")
-    settings = DriverSettings()
-    assert settings.storage_provider == "s3"

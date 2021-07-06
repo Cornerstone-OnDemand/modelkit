@@ -21,13 +21,11 @@ def download_asset(assets_dir, driver_path, asset_name):
     """
     am = AssetsManager(
         assets_dir=assets_dir,
-        remote_store={
-            "driver": {
-                "storage_provider": "local",
-                "bucket": driver_path,
-            },
-            "storage_prefix": "prefix",
-        },
+        storage_provider=StorageProvider(
+            provider="local",
+            bucket=driver_path,
+            prefix="prefix",
+        ),
     )
     asset_dict = am.fetch_asset(asset_name, return_info=True)
     if asset_dict["from_cache"]:
