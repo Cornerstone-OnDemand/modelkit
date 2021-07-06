@@ -3,7 +3,7 @@ import re
 from typing import Optional, Union
 
 import pydantic
-from pydantic import BaseModel, BaseSettings, ValidationError, root_validator, validator
+from pydantic import BaseModel, BaseSettings, root_validator, validator
 from structlog import get_logger
 
 from modelkit.assets.drivers.gcs import GCSDriverSettings
@@ -55,10 +55,7 @@ class RemoteAssetsStoreSettings(BaseSettings):
     @classmethod
     def dispatch_settings(cls, fields):
         if "driver" not in fields:
-            try:
-                fields["driver"] = DriverSettings()
-            except ValidationError:
-                pass
+            fields["driver"] = DriverSettings()
 
         return fields
 
@@ -81,10 +78,7 @@ class AssetsManagerSettings(BaseSettings):
     @classmethod
     def dispatch_settings(cls, fields):
         if "remote_store" not in fields:
-            try:
-                fields["remote_store"] = RemoteAssetsStoreSettings()
-            except ValidationError:
-                pass
+            fields["remote_store"] = RemoteAssetsStoreSettings()
 
         return fields
 
