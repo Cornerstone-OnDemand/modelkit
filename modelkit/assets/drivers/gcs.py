@@ -29,11 +29,10 @@ class GCSStorageDriver(StorageDriver):
 
         if client:
             self.client = client
+        elif service_account_path:  # pragma: no cover
+            self.client = Client.from_service_account_json(service_account_path)
         else:
-            if service_account_path:
-                self.client = Client.from_service_account_json(service_account_path)
-            else:
-                self.client = Client()
+            self.client = Client()
 
     @retry(**RETRY_POLICY)
     def iterate_objects(self, prefix=None):

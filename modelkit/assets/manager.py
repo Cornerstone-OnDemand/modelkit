@@ -56,7 +56,7 @@ class AssetsManager:
             )
 
         self.timeout: int = int(
-            timeout or os.environ.get("MODELKIT_ASSETS_TIMEOUT_S", 10)
+            timeout or os.environ.get("MODELKIT_ASSETS_TIMEOUT_S") or 10
         )
 
         self.storage_provider = storage_provider

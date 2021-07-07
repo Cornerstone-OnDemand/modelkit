@@ -28,9 +28,10 @@ class S3StorageDriver(StorageDriver):
         s3_endpoint: str = None,
     ):
 
-        self.bucket = bucket or os.environ.get("MODELKIT_STORAGE_BUCKET", None)
+        bucket = bucket or os.environ.get("MODELKIT_STORAGE_BUCKET", None)
         if bucket is None:
             raise ValueError("Bucket needs to be set for S3 storage driver")
+        self.bucket = bucket
         self.endpoint_url = s3_endpoint or os.environ.get("S3_ENDPOINT", None)
         self.client = boto3.client(
             "s3",

@@ -19,8 +19,6 @@ class LocalStorageDriver(StorageDriver):
             raise FileNotFoundError
 
     def iterate_objects(self, prefix=None):
-        if not os.path.isdir(self.bucket):
-            raise errors.ContainerDoesNotExistError(self, self.bucket)
         for filename in glob.iglob(
             os.path.join(self.bucket, os.path.join("**", "*")), recursive=True
         ):
