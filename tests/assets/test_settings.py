@@ -1,6 +1,7 @@
 import os
 
 import pytest
+from google.auth.exceptions import DefaultCredentialsError
 
 from modelkit.assets.manager import AssetsManager
 from modelkit.assets.remote import UnknownDriverError
@@ -57,7 +58,7 @@ test_path = os.path.dirname(os.path.realpath(__file__))
             {"assets_dir": 20},
             {},
             False,
-            FileNotFoundError,
+            (FileNotFoundError, TypeError),
             False,
         ),
         (  # fails because "abc" is not an int
@@ -103,7 +104,7 @@ test_path = os.path.dirname(os.path.realpath(__file__))
                 "MODELKIT_STORAGE_BUCKET": "some_bucket",
             },
             False,
-            OSError,
+            (OSError, DefaultCredentialsError),
             False,
         ),
         (  # fails because bucket is missing
