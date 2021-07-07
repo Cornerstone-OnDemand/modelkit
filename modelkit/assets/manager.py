@@ -246,7 +246,7 @@ class AssetsManager:
             asset_info = self._fetch_asset(spec, _force_download=force_download)
         logger.debug("Fetched asset", spec=spec, asset_info=asset_info)
         path = asset_info["path"]
-        if not os.path.exists(path):
+        if not os.path.exists(path):  # pragma: no cover
             logger.error(
                 "An unknown error occured when fetching asset."
                 "The path does not exist.",
