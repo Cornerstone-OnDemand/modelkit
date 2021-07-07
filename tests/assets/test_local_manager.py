@@ -16,14 +16,27 @@ def test_local_manager_no_versions(working_dir):
     with open(os.path.join(working_dir, "something", "else", "deep.txt"), "w") as f:
         f.write("OK")
 
+    # valid relative path to assets dir
     manager = AssetsManager(assets_dir=working_dir)
     res = manager.fetch_asset("something/else/deep.txt", return_info=True)
     assert res["path"] == os.path.join(working_dir, "something", "else", "deep.txt")
 
+    # valid relative path to CWD
     manager = AssetsManager()
     res = manager.fetch_asset("README.md", return_info=True)
     assert res["path"] == os.path.join(os.getcwd(), "README.md")
 
+    # valid relative path to CWD with assets dir
+    manager = AssetsManager(assets_dir=working_dir)
+    res = manager.fetch_asset("README.md", return_info=True)
+    assert res["path"] == os.path.join(os.getcwd(), "README.md")
+
+    # valid absolute path
+    manager = AssetsManager(assets_dir=working_dir)
+    res = manager.fetch_asset(os.path.join(os.getcwd(), "README.md"), return_info=True)
+    assert res["path"] == os.path.join(os.getcwd(), "README.md")
+
+    # valid relative path dir
     manager = AssetsManager(assets_dir=working_dir)
     res = manager.fetch_asset("something", return_info=True)
     assert res["path"] == os.path.join(working_dir, "something")
@@ -38,6 +51,9 @@ def test_local_manager_no_versions(working_dir):
 
     with pytest.raises(errors.LocalAssetDoesNotExistError):
         res = manager.fetch_asset("something.txt:0", return_info=True)
+
+    with pytest.raises(errors.AssetDoesNotExistError):
+        res = manager.fetch_asset("doesnotexist.txt", return_info=True)
 
 
 def test_local_manager_with_versions(working_dir):
