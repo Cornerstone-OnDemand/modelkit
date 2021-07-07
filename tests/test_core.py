@@ -614,7 +614,7 @@ def test_model_multiple_asset_load(working_dir, monkeypatch):
         return {"path": os.path.join(working_dir, "something.txt")}
 
     lib = ModelLibrary(models=[SomeModel, SomeModel2], settings={"lazy_loading": True})
-    monkeypatch.setattr(lib.asset_manager, "fetch_asset", fake_fetch_asset)
+    monkeypatch.setattr(lib.assets_manager, "fetch_asset", fake_fetch_asset)
     lib.preload()
 
     assert fetched == 1

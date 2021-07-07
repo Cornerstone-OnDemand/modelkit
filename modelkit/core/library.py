@@ -90,7 +90,7 @@ class ModelLibrary:
         )
         self.models: Dict[str, Asset] = {}
         self.assets_info: Dict[str, AssetInfo] = {}
-        self._asset_manager: Optional[AssetsManager] = None
+        self._assets_manager: Optional[AssetsManager] = None
 
         required_models = (
             required_models
@@ -127,11 +127,11 @@ class ModelLibrary:
             self.preload()
 
     @property
-    def asset_manager(self):
-        if self._asset_manager is None:
+    def assets_manager(self):
+        if self._assets_manager is None:
             logger.info("Instantiating AssetsManager", lazy_loading=self._lazy_loading)
-            self._asset_manager = AssetsManager(**self.assetsmanager_settings)
-        return self._asset_manager
+            self._assets_manager = AssetsManager(**self.assetsmanager_settings)
+        return self._assets_manager
 
     @property
     def override_assets_manager(self):
@@ -350,12 +350,12 @@ class ModelLibrary:
 
         if configuration.asset not in self.assets_info:
             self.assets_info[configuration.asset] = AssetInfo(
-                **self.asset_manager.fetch_asset(asset_spec, return_info=True)
+                **self.assets_manager.fetch_asset(asset_spec, return_info=True)
             )
 
     def preload(self):
-        # make sure the asset_manager is instantiated
-        self.asset_manager
+        # make sure the assets_manager is instantiated
+        self.assets_manager
         for model_name in self.required_models:
             self._load(model_name)
 
