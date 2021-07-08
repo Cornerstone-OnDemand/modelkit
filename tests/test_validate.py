@@ -3,7 +3,11 @@ from typing import Any, Dict, List
 import pydantic
 import pytest
 
-from modelkit.core.errors import ItemValidationException, ReturnValueValidationException
+from modelkit.core.errors import (
+    ItemValidationException,
+    ModelkitDataValidationException,
+    ReturnValueValidationException,
+)
 from modelkit.core.model import AsyncModel, Model
 from modelkit.core.settings import LibrarySettings
 from modelkit.utils.pydantic import construct_recursive
@@ -243,3 +247,22 @@ def test_construct_recursive():
     item_construct_recursive = construct_recursive(Item, **item_data)
     assert item_construct_recursive.y.z.a == "ok"
     assert item_construct_recursive.z[0].content == "content"
+
+
+def test_pydantic_error_truncation():
+    class ListModel(pydantic.BaseModel):
+        values: List[int]
+
+    # This will trigger the error truncation
+    with pytest.raises(ModelkitDataValidationException):
+        try:
+            ListModel(values=["ok"] * 100)
+        except pydantic.error_wrappers.ValidationError as exc:
+            raise ModelkitDataValidationException("test error", pydantic_exc=exc)
+
+    # This will not
+    with pytest.raises(ModelkitDataValidationException):
+        try:
+            ListModel(values=["ok"])
+        except pydantic.error_wrappers.ValidationError as exc:
+            raise ModelkitDataValidationException("test error", pydantic_exc=exc)
