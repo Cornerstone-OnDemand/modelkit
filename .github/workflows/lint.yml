@@ -15,5 +15,7 @@ jobs:
           python-version: 3.9
       - name: Install dependencies
         run: python3.9 -m pip install -r requirements-dev.txt
+      - name: Install mypy types
+        run: mypy --install-types --non-interactive -p modelkit
       - name: Run lint
         run: scripts/lint.sh

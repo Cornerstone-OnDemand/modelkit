@@ -142,9 +142,9 @@ TEST_STRING_SPECS = [
     ),
     ("blabli/blebla[foo]", {"name": "blabli/blebla", "sub_part": "foo"}),
     (
-        "C:\A\L0cAL\Windows\\file.ext",
+        r"C:\A\L0cAL\Windows\file.ext",
         {
-            "name": "C:\A\L0cAL\Windows\\file.ext",
+            "name": r"C:\A\L0cAL\Windows\file.ext",
             "sub_part": None,
             "major_version": None,
             "minor_version": None,

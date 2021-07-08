@@ -5,6 +5,7 @@ import nox
 def test(session):
     # Install deps and the package itself.
     session.install("-r", "requirements-dev.txt")
+    session.run("mypy", "--install-types", "--non-interactive", "-p", "modelkit")
 
     session.run("pytest", "--junitxml=junit.xml")
 
@@ -13,6 +14,7 @@ def test(session):
 def coverage(session):
     # Install deps and the package itself.
     session.install("-r", "requirements-optional.txt")
+    session.run("mypy", "--install-types", "--non-interactive", "-p", "modelkit")
 
     session.run("coverage", "run", "-m", "pytest", "--junitxml=junit.xml")
     session.run("coverage", "report", "-m")

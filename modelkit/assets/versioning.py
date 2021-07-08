@@ -64,8 +64,8 @@ def filter_versions(versions_list, major):
 
 def latest_version(versions_list, major=None):
     if major:
-        l = list(filter_versions(versions_list, major))
-        if not l:
+        filtered_version_list = list(filter_versions(versions_list, major))
+        if not filtered_version_list:
             raise MajorVersionDoesNotExistError(major)
-        return sort_versions(l)[0]
+        return sort_versions(filtered_version_list)[0]
     return sort_versions(versions_list)[0]

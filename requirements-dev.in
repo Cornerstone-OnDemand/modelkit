@@ -2,7 +2,7 @@
 -r requirements.in
 
 # tests
-mypy==0.812
+mypy
 coverage
 pytest
 pytest-asyncio
