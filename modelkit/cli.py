@@ -10,6 +10,7 @@ from time import perf_counter, sleep
 import click
 import humanize
 from rich.console import Console
+from rich.markup import escape
 from rich.progress import Progress, track
 from rich.table import Table
 from rich.tree import Tree
@@ -117,7 +118,7 @@ def list_assets_cli(models, required_models):
             model_tree = Tree(f"[bold]{m}[/bold] ({len(assets_specs)} assets)")
             if assets_specs:
                 for asset_spec_string in assets_specs:
-                    model_tree.add(asset_spec_string.replace("[", "\["), style="dim")
+                    model_tree.add(escape(asset_spec_string), style="dim")
             console.print(model_tree)
 
 
