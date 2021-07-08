@@ -50,15 +50,19 @@ def test_local_driver_overwrite(working_dir):
     driver.upload_object(
         os.path.join(TEST_DIR, "assets", "testdata", "some_data.json"), "a/b/c"
     )
+    assert os.path.isfile(os.path.join(working_dir, "a", "b", "c"))
     # will remove the a/b/c file
     driver.upload_object(
         os.path.join(TEST_DIR, "assets", "testdata", "some_data.json"), "a/b/c"
     )
+    assert os.path.isfile(os.path.join(working_dir, "a", "b", "c"))
     # will remove the a/b directory
     driver.upload_object(
         os.path.join(TEST_DIR, "assets", "testdata", "some_data.json"), "a/b"
     )
+    assert os.path.isfile(os.path.join(working_dir, "a", "b"))
     # will remove the a/b file
     driver.upload_object(
         os.path.join(TEST_DIR, "assets", "testdata", "some_data.json"), "a/b/c"
     )
+    assert os.path.isfile(os.path.join(working_dir, "a", "b", "c"))
