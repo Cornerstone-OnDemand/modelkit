@@ -437,9 +437,8 @@ class Model(AbstractModel[ItemType, ReturnType]):
             self.model_dependencies = ModelDependenciesMapping(_model_dependencies)
 
     @not_overriden
-    def _predict(self, item: ItemType, **kwargs) -> ReturnType:
-        result = self._predict_batch([item], **kwargs)
-        return result[0]
+    def _predict(self, item: ItemType, **kwargs) -> ReturnType:  # pragma: no cover
+        ...
 
     @not_overriden
     def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
@@ -614,9 +613,10 @@ class Model(AbstractModel[ItemType, ReturnType]):
 
 class AsyncModel(AbstractModel[ItemType, ReturnType]):
     @not_overriden
-    async def _predict(self, item: ItemType, **kwargs) -> ReturnType:
-        result = await self._predict_batch([item], **kwargs)
-        return result[0]
+    async def _predict(
+        self, item: ItemType, **kwargs
+    ) -> ReturnType:  # pragma: no cover
+        ...
 
     @not_overriden
     async def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:

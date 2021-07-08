@@ -20,6 +20,41 @@ from modelkit.core.model_configuration import (
 from modelkit.core.settings import LibrarySettings
 
 
+def test_predict():
+    class SomeModel(Model):
+        def _predict(self, item):
+            return item
+
+    m = SomeModel()
+    assert m.predict({}) == {}
+
+    class SomeModelBatch(Model):
+        def _predict_batch(self, items):
+            return items
+
+    m = SomeModelBatch()
+    assert m.predict({}) == {}
+
+
+@pytest.mark.asyncio
+async def test_predict_async():
+    class SomeModel(AsyncModel):
+        async def _predict(self, item):
+            return item
+
+    m = SomeModel()
+    r = await m.predict({})
+    assert r == {}
+
+    class SomeModelBatch(AsyncModel):
+        async def _predict(self, item):
+            return item
+
+    m = SomeModelBatch()
+    r = await m.predict({})
+    assert r == {}
+
+
 def test_override_asset():
     class TestModel(Model):
         def _load(self):
