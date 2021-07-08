@@ -346,9 +346,6 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
                 )
         return item
 
-    def predict(self, item: ItemType, **kwargs):
-        raise NotImplementedError()
-
     def test(self):
         console = Console()
         for i, (model_key, item, expected, keyword_args) in enumerate(
