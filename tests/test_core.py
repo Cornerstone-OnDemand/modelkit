@@ -444,13 +444,13 @@ def test_override_prefix(assetsmanager_settings):
         assetsmanager_settings=assetsmanager_settings,
     )
 
-    prediction = model_library.get("my_model")({})
+    prediction = model_library.get("my_model").predict({})
     assert prediction.endswith(os.path.join("category", "asset", "1.0"))
 
-    prediction = model_library.get("my_override_model")({})
+    prediction = model_library.get("my_override_model").predict({})
     assert prediction.endswith(os.path.join("category", "override-asset", "0.0"))
 
-    model_library = ModelLibrary(
+    model_library_override = ModelLibrary(
         required_models=["my_model", "my_override_model"],
         configuration={
             "my_model": ModelConfiguration(
@@ -460,14 +460,14 @@ def test_override_prefix(assetsmanager_settings):
                 model_type=TestModel, asset="category/override-asset"
             ),
         },
-        settings={"override_storage_prefix": "override-assets-prefix"},
+        settings={"override_prefix": "override-assets-prefix", "lazy_loading": True},
         assetsmanager_settings=assetsmanager_settings,
     )
 
-    prediction = model_library.get("my_model")({})
+    prediction = model_library_override.get("my_model").predict({})
     assert prediction.endswith(os.path.join("category", "asset", "1.0"))
 
-    prediction = model_library.get("my_override_model")({})
+    prediction = model_library_override.get("my_override_model").predict({})
     assert prediction.endswith(os.path.join("category", "override-asset", "1.0"))
 
 
@@ -614,7 +614,7 @@ def test_model_multiple_asset_load(working_dir, monkeypatch):
         return {"path": os.path.join(working_dir, "something.txt")}
 
     lib = ModelLibrary(models=[SomeModel, SomeModel2], settings={"lazy_loading": True})
-    monkeypatch.setattr(lib.asset_manager, "fetch_asset", fake_fetch_asset)
+    monkeypatch.setattr(lib.assets_manager, "fetch_asset", fake_fetch_asset)
     lib.preload()
 
     assert fetched == 1

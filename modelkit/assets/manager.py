@@ -7,8 +7,8 @@ import filelock
 from structlog import get_logger
 
 from modelkit.assets import errors
-from modelkit.assets.remote import RemoteAssetsStore
-from modelkit.assets.settings import AssetsManagerSettings, AssetSpec
+from modelkit.assets.remote import NoConfiguredProviderError, StorageProvider
+from modelkit.assets.settings import AssetSpec
 from modelkit.assets.versioning import (
     VERSION_RE,
     filter_versions,
@@ -37,30 +37,38 @@ def _has_succeeded(local_path):
 
 
 class AssetsManager:
-    def __init__(self, **settings):
-        if isinstance(settings, dict):
-            settings = AssetsManagerSettings(**settings)
-        self.assets_dir = settings.assets_dir
-        self.timeout = settings.timeout
+    assets_dir: str
+    timeout: int
+    storage_provider: Optional[StorageProvider]
 
-        self.remote_assets_store = None
-        if settings.remote_store:
+    def __init__(
+        self,
+        assets_dir: Optional[str] = None,
+        timeout: Optional[int] = None,
+        storage_provider: Optional[StorageProvider] = None,
+    ):
+        self.assets_dir = (
+            assets_dir or os.environ.get("MODELKIT_ASSETS_DIR") or os.getcwd()
+        )
+        if not os.path.isdir(self.assets_dir):
+            raise FileNotFoundError(
+                f"Assets directory {self.assets_dir} does not exist"
+            )
+
+        self.timeout: int = int(
+            timeout or os.environ.get("MODELKIT_ASSETS_TIMEOUT_S") or 10
+        )
+
+        self.storage_provider = storage_provider
+        if not self.storage_provider:
             try:
-                self.remote_assets_store = RemoteAssetsStore(
-                    **settings.remote_store.dict()
-                )
+                self.storage_provider = StorageProvider()
                 logger.debug(
                     "AssetsManager created with remote storage provider",
-                    driver=self.remote_assets_store.driver,
+                    driver=self.storage_provider.driver,
                 )
-            except BaseException:
-                # A remote store was parametrized, but it could not be instantiated
-                logger.error(
-                    "Failed to instantiate the requested remote storage provider"
-                )
-                raise
-        else:
-            logger.debug("AssetsManager created without a remote storage provider")
+            except NoConfiguredProviderError:
+                logger.info("No remote storage provider configured")
 
     def get_local_versions_info(self, name):
         if os.path.isdir(name):
@@ -76,10 +84,10 @@ class AssetsManager:
             local_versions_list = self.get_local_versions_info(local_name)
             logger.debug("Local versions list", local_versions_list=local_versions_list)
             remote_versions_list = []
-            if self.remote_assets_store and (
+            if self.storage_provider and (
                 not spec.major_version or not spec.minor_version
             ):
-                remote_versions_list = self.remote_assets_store.get_versions_info(
+                remote_versions_list = self.storage_provider.get_versions_info(
                     spec.name
                 )
                 logger.debug(
@@ -176,12 +184,12 @@ class AssetsManager:
                         "path": local_path,
                     }
                 else:
-                    if self.remote_assets_store:
+                    if self.storage_provider:
                         logger.info(
                             "Fetching distant asset",
                             local_versions=local_versions_list,
                         )
-                        asset_download_info = self.remote_assets_store.download(
+                        asset_download_info = self.storage_provider.download(
                             spec.name, version, self.assets_dir
                         )
                         asset_dict = {
@@ -216,12 +224,12 @@ class AssetsManager:
         self,
         spec: Union[AssetSpec, str],
         return_info=False,
-        force_download: Optional[bool] = None,
+        force_download: bool = None,
     ):
         if isinstance(spec, str):
             spec = cast(AssetSpec, AssetSpec.from_string(spec))
-        if force_download is None and self.remote_assets_store:
-            force_download = self.remote_assets_store.force_download
+        if force_download is None and self.storage_provider:
+            force_download = self.storage_provider.force_download
 
         logger.info(
             "Fetching asset",
@@ -238,7 +246,7 @@ class AssetsManager:
             asset_info = self._fetch_asset(spec, _force_download=force_download)
         logger.debug("Fetched asset", spec=spec, asset_info=asset_info)
         path = asset_info["path"]
-        if not os.path.exists(path):
+        if not os.path.exists(path):  # pragma: no cover
             logger.error(
                 "An unknown error occured when fetching asset."
                 "The path does not exist.",

@@ -1,6 +1,8 @@
 import os
 import tempfile
 
+from modelkit.assets.drivers.local import LocalStorageDriver
+from tests import TEST_DIR
 from tests.conftest import skip_unless
 
 
@@ -30,14 +32,37 @@ def _perform_driver_test(driver):
 
 
 def test_local_driver(local_assetsmanager):
-    _perform_driver_test(local_assetsmanager.remote_assets_store.driver)
+    _perform_driver_test(local_assetsmanager.storage_provider.driver)
 
 
 @skip_unless("ENABLE_GCS_TEST", "True")
 def test_gcs_driver(gcs_assetsmanager):
-    _perform_driver_test(gcs_assetsmanager.remote_assets_store.driver)
+    _perform_driver_test(gcs_assetsmanager.storage_provider.driver)
 
 
 @skip_unless("ENABLE_S3_TEST", "True")
 def test_s3_driver(s3_assetsmanager):
-    _perform_driver_test(s3_assetsmanager.remote_assets_store.driver)
+    _perform_driver_test(s3_assetsmanager.storage_provider.driver)
+
+
+def test_local_driver_overwrite(working_dir):
+    driver = LocalStorageDriver(working_dir)
+    driver.upload_object(
+        os.path.join(TEST_DIR, "assets", "testdata", "some_data.json"), "a/b/c"
+    )
+    assert os.path.isfile(os.path.join(working_dir, "a", "b", "c"))
+    # will remove the a/b/c file
+    driver.upload_object(
+        os.path.join(TEST_DIR, "assets", "testdata", "some_data.json"), "a/b/c"
+    )
+    assert os.path.isfile(os.path.join(working_dir, "a", "b", "c"))
+    # will remove the a/b directory
+    driver.upload_object(
+        os.path.join(TEST_DIR, "assets", "testdata", "some_data.json"), "a/b"
+    )
+    assert os.path.isfile(os.path.join(working_dir, "a", "b"))
+    # will remove the a/b file
+    driver.upload_object(
+        os.path.join(TEST_DIR, "assets", "testdata", "some_data.json"), "a/b/c"
+    )
+    assert os.path.isfile(os.path.join(working_dir, "a", "b", "c"))

@@ -4,14 +4,17 @@ import json
 import os
 import tempfile
 import time
+from typing import Optional
 
 import humanize
 from dateutil import parser, tz
 from structlog import get_logger
 
 from modelkit.assets import errors
-from modelkit.assets.drivers import settings_to_driver
-from modelkit.assets.settings import RemoteAssetsStoreSettings
+from modelkit.assets.drivers.abc import StorageDriver
+from modelkit.assets.drivers.gcs import GCSStorageDriver
+from modelkit.assets.drivers.local import LocalStorageDriver
+from modelkit.assets.drivers.s3 import S3StorageDriver
 from modelkit.assets.versioning import (
     MajorVersionDoesNotExistError,
     increment_version,
@@ -32,16 +35,50 @@ def get_size(dir_path):
     )
 
 
-class RemoteAssetsStore:
-    def __init__(self, **settings):
-        settings = RemoteAssetsStoreSettings(**settings)
+class UnknownDriverError(Exception):
+    pass
 
-        self.driver = settings_to_driver(settings.driver)
-        if self.driver:
-            self.bucket = self.driver.bucket
-            self.timeout = settings.timeout_s
-            self.prefix = settings.storage_prefix
-            self.force_download = settings.storage_force_download
+
+class NoConfiguredProviderError(Exception):
+    pass
+
+
+class StorageProvider:
+    driver: StorageDriver
+    force_download: bool
+    prefix: str
+    timeout: int
+
+    def __init__(
+        self,
+        timeout_s: Optional[int] = None,
+        prefix: Optional[str] = None,
+        force_download: Optional[bool] = None,
+        provider: Optional[str] = None,
+        **driver_settings,
+    ):
+        self.timeout = timeout_s or int(
+            os.environ.get("MODELKIT_STORAGE_TIMEOUT_S", 300)
+        )
+        self.prefix = (
+            prefix or os.environ.get("MODELKIT_STORAGE_PREFIX") or "modelkit-assets"
+        )
+        self.force_download = force_download or bool(
+            os.environ.get("MODELKIT_STORAGE_FORCE_DOWNLOAD")
+        )
+
+        provider = provider or os.environ.get("MODELKIT_STORAGE_PROVIDER")
+        if not provider:
+            raise NoConfiguredProviderError()
+
+        if provider == "gcs":
+            self.driver = GCSStorageDriver(**driver_settings)
+        elif provider == "s3":
+            self.driver = S3StorageDriver(**driver_settings)
+        elif provider == "local":
+            self.driver = LocalStorageDriver(**driver_settings)
+        else:
+            raise UnknownDriverError()
 
     def get_object_name(self, name, version):
         return "/".join((self.prefix, name, version))
@@ -97,7 +134,6 @@ class RemoteAssetsStore:
                 json.dump({"versions": ["0.0"]}, f)
             logger.debug(
                 "Pushing versions file",
-                bucket=self.bucket,
                 name=name,
             )
             if not dry_run:
@@ -137,7 +173,6 @@ class RemoteAssetsStore:
                 json.dump({"versions": versions}, f)
             logger.debug(
                 "Pushing updated versions file",
-                bucket=self.bucket,
                 name=name,
                 versions=versions,
             )
@@ -149,7 +184,6 @@ class RemoteAssetsStore:
         Push asset
         """
         with ContextualizedLogging(
-            bucket=self.bucket,
             name=name,
             version=version,
             asset_path=asset_path,
@@ -217,7 +251,6 @@ class RemoteAssetsStore:
                 logger.debug(
                     "Pushing meta file",
                     meta=meta,
-                    bucket=self.bucket,
                     meta_object_name=object_name + ".meta",
                 )
                 if not dry_run:

@@ -5,6 +5,7 @@ import pytest
 
 from modelkit.assets import errors
 from modelkit.assets.manager import AssetsManager
+from modelkit.assets.remote import StorageProvider
 from tests import TEST_DIR
 
 
@@ -15,14 +16,27 @@ def test_local_manager_no_versions(working_dir):
     with open(os.path.join(working_dir, "something", "else", "deep.txt"), "w") as f:
         f.write("OK")
 
+    # valid relative path to assets dir
     manager = AssetsManager(assets_dir=working_dir)
     res = manager.fetch_asset("something/else/deep.txt", return_info=True)
     assert res["path"] == os.path.join(working_dir, "something", "else", "deep.txt")
 
+    # valid relative path to CWD
     manager = AssetsManager()
     res = manager.fetch_asset("README.md", return_info=True)
     assert res["path"] == os.path.join(os.getcwd(), "README.md")
 
+    # valid relative path to CWD with assets dir
+    manager = AssetsManager(assets_dir=working_dir)
+    res = manager.fetch_asset("README.md", return_info=True)
+    assert res["path"] == os.path.join(os.getcwd(), "README.md")
+
+    # valid absolute path
+    manager = AssetsManager(assets_dir=working_dir)
+    res = manager.fetch_asset(os.path.join(os.getcwd(), "README.md"), return_info=True)
+    assert res["path"] == os.path.join(os.getcwd(), "README.md")
+
+    # valid relative path dir
     manager = AssetsManager(assets_dir=working_dir)
     res = manager.fetch_asset("something", return_info=True)
     assert res["path"] == os.path.join(working_dir, "something")
@@ -37,6 +51,9 @@ def test_local_manager_no_versions(working_dir):
 
     with pytest.raises(errors.LocalAssetDoesNotExistError):
         res = manager.fetch_asset("something.txt:0", return_info=True)
+
+    with pytest.raises(errors.AssetDoesNotExistError):
+        res = manager.fetch_asset("doesnotexist.txt", return_info=True)
 
 
 def test_local_manager_with_versions(working_dir):
@@ -107,13 +124,11 @@ def test_local_manager_with_fetch(working_dir):
 
     manager = AssetsManager(
         assets_dir=working_dir,
-        remote_store={
-            "driver": {
-                "storage_provider": "local",
-                "bucket": os.path.join(TEST_DIR, "testdata", "test-bucket"),
-            },
-            "storage_prefix": "assets-prefix",
-        },
+        storage_provider=StorageProvider(
+            provider="local",
+            bucket=os.path.join(TEST_DIR, "testdata", "test-bucket"),
+            prefix="assets-prefix",
+        ),
     )
 
     res = manager.fetch_asset("category/asset:0.0", return_info=True)

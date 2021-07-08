@@ -6,6 +6,7 @@ import pytest
 
 import modelkit.assets.cli
 from modelkit.assets.manager import AssetsManager, _success_file_path
+from modelkit.assets.remote import StorageProvider
 from tests.conftest import skip_unless
 
 test_path = os.path.dirname(os.path.realpath(__file__))
@@ -14,9 +15,9 @@ test_path = os.path.dirname(os.path.realpath(__file__))
 def _perform_mng_test(mng):
     # test pushing a file asset
     data_path = os.path.join(test_path, "testdata", "some_data.json")
-    mng.remote_assets_store.push(data_path, "category-test/some-data.ext", "1.0")
+    mng.storage_provider.push(data_path, "category-test/some-data.ext", "1.0")
     # check metadata
-    meta = mng.remote_assets_store.get_asset_meta("category-test/some-data.ext", "1.0")
+    meta = mng.storage_provider.get_asset_meta("category-test/some-data.ext", "1.0")
     assert not meta["is_directory"]
     # fetch asset
     d = mng.fetch_asset("category-test/some-data.ext:1.0", return_info=True)
@@ -32,10 +33,10 @@ def _perform_mng_test(mng):
 
     # test pushing a directory asset
     data_path = os.path.join(test_path, "testdata", "some_data_folder")
-    mng.remote_assets_store.push(data_path, "category-test/some-data-2", "1.0")
+    mng.storage_provider.push(data_path, "category-test/some-data-2", "1.0")
 
     # check metadata
-    meta = mng.remote_assets_store.get_asset_meta("category-test/some-data-2", "1.0")
+    meta = mng.storage_provider.get_asset_meta("category-test/some-data-2", "1.0")
     assert meta["is_directory"]
 
     # fetch asset
@@ -67,7 +68,7 @@ def _perform_mng_test(mng):
 
     # attempt to overwrite the asset
     with pytest.raises(Exception):
-        mng.remote_assets_store.push(
+        mng.storage_provider.push(
             os.path.join(data_path, "some_data_in_folder.json"),
             "category-test/some-data.ext",
             "1.0",
@@ -96,13 +97,13 @@ def test_s3_assetsmanager(s3_assetsmanager):
 def test_download_object_or_prefix_cli(gcs_assetsmanager):
     original_asset_path = os.path.join(test_path, "testdata", "some_data.json")
     gcs_asset_dir = (
-        f"gs://{gcs_assetsmanager.remote_assets_store.bucket}/"
-        f"{gcs_assetsmanager.remote_assets_store.prefix}"
+        f"gs://{gcs_assetsmanager.storage_provider.driver.bucket}/"
+        f"{gcs_assetsmanager.storage_provider.prefix}"
         "/category-test/some-data.ext"
     )
     gcs_asset_path = gcs_asset_dir + "/1.0"
 
-    gcs_assetsmanager.remote_assets_store.push(
+    gcs_assetsmanager.storage_provider.push(
         original_asset_path, "category-test/some-data.ext", "1.0"
     )
 
@@ -131,8 +132,8 @@ def test_download_object_or_prefix_cli(gcs_assetsmanager):
             modelkit.assets.cli._download_object_or_prefix(
                 gcs_assetsmanager,
                 asset_path=(
-                    f"gs://{gcs_assetsmanager.remote_assets_store.bucket}/"
-                    f"{gcs_assetsmanager.remote_assets_store.prefix}/"
+                    f"gs://{gcs_assetsmanager.storage_provider.driver.bucket}/"
+                    f"{gcs_assetsmanager.storage_provider.prefix}/"
                     "category-test"
                 ),
                 destination_dir=tmp_dir,
@@ -146,15 +147,10 @@ def test_assetsmanager_force_download(monkeypatch, base_dir, working_dir):
 
     mng = AssetsManager(
         assets_dir=working_dir,
-        remote_store={
-            "driver": {
-                "storage_provider": "local",
-                "bucket": bucket_path,
-            }
-        },
+        storage_provider=StorageProvider(provider="local", bucket=bucket_path),
     )
     data_path = os.path.join(test_path, "testdata", "some_data.json")
-    mng.remote_assets_store.push(data_path, "category-test/some-data.ext", "1.0")
+    mng.storage_provider.push(data_path, "category-test/some-data.ext", "1.0")
 
     asset_info = mng.fetch_asset("category-test/some-data.ext:1.0", return_info=True)
     assert not asset_info["from_cache"]
@@ -164,13 +160,11 @@ def test_assetsmanager_force_download(monkeypatch, base_dir, working_dir):
 
     mng_force = AssetsManager(
         assets_dir=working_dir,
-        remote_store={
-            "driver": {
-                "storage_provider": "local",
-                "bucket": bucket_path,
-            },
-            "storage_force_download": True,
-        },
+        storage_provider=StorageProvider(
+            provider="local",
+            bucket=bucket_path,
+            force_download=True,
+        ),
     )
     asset_info_force = mng_force.fetch_asset(
         "category-test/some-data.ext:1.0", return_info=True
@@ -180,12 +174,7 @@ def test_assetsmanager_force_download(monkeypatch, base_dir, working_dir):
     monkeypatch.setenv("MODELKIT_STORAGE_FORCE_DOWNLOAD", "True")
     mng_force = AssetsManager(
         assets_dir=working_dir,
-        remote_store={
-            "driver": {
-                "storage_provider": "local",
-                "bucket": bucket_path,
-            }
-        },
+        storage_provider=StorageProvider(provider="local", bucket=bucket_path),
     )
     asset_info_force_env = mng_force.fetch_asset(
         "category-test/some-data.ext:1.0", return_info=True
@@ -200,16 +189,14 @@ def test_assetsmanager_retry_on_fail(base_dir, working_dir):
 
     mng = AssetsManager(
         assets_dir=working_dir,
-        remote_store={
-            "driver": {
-                "storage_provider": "local",
-                "bucket": bucket_path,
-            }
-        },
+        storage_provider=StorageProvider(
+            provider="local",
+            bucket=bucket_path,
+        ),
     )
     # Try with a file asset
     data_path = os.path.join(test_path, "testdata", "some_data.json")
-    mng.remote_assets_store.push(data_path, "category-test/some-data.ext", "1.0")
+    mng.storage_provider.push(data_path, "category-test/some-data.ext", "1.0")
 
     asset_info = mng.fetch_asset("category-test/some-data.ext:1.0", return_info=True)
     assert not asset_info["from_cache"]
@@ -222,7 +209,7 @@ def test_assetsmanager_retry_on_fail(base_dir, working_dir):
 
     # Try with a directory asset
     data_path = os.path.join(test_path, "testdata")
-    mng.remote_assets_store.push(data_path, "category-test/some-data-dir", "1.0")
+    mng.storage_provider.push(data_path, "category-test/some-data-dir", "1.0")
 
     asset_info = mng.fetch_asset("category-test/some-data-dir:1.0", return_info=True)
     assert not asset_info["from_cache"]

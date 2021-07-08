@@ -12,8 +12,8 @@ from rich.tree import Tree
 
 from modelkit.assets.errors import ObjectDoesNotExistError
 from modelkit.assets.manager import AssetsManager
-from modelkit.assets.remote import RemoteAssetsStore
-from modelkit.assets.settings import AssetSpec, DriverSettings
+from modelkit.assets.remote import StorageProvider
+from modelkit.assets.settings import AssetSpec
 from modelkit.assets.versioning import (
     filter_versions,
     increment_version,
@@ -44,7 +44,7 @@ def _download_object_or_prefix(manager, asset_path, destination_dir):
     parsed_path = parse_gcs(asset_path)
     asset_path = os.path.join(destination_dir, "myasset")
     try:
-        manager.remote_assets_store.driver.download_object(
+        manager.storage_provider.driver.download_object(
             object_name=parsed_path["object_name"],
             destination_path=asset_path,
         )
@@ -52,7 +52,7 @@ def _download_object_or_prefix(manager, asset_path, destination_dir):
         # maybe prefix containing objects
         paths = [
             path
-            for path in manager.remote_assets_store.driver.iterate_objects(
+            for path in manager.storage_provider.driver.iterate_objects(
                 prefix=parsed_path["object_name"]
             )
         ]
@@ -62,7 +62,7 @@ def _download_object_or_prefix(manager, asset_path, destination_dir):
         os.mkdir(asset_path)
         for path in paths:
             object_name = path.split("/")[-1]
-            manager.remote_assets_store.driver.download_object(
+            manager.storage_provider.driver.download_object(
                 object_name=parsed_path["object_name"] + "/" + object_name,
                 destination_path=os.path.join(asset_path, object_name),
             )
@@ -89,10 +89,9 @@ def _check_asset_file_number(asset_path):
 @assets_cli.command("new")
 @click.argument("asset_path")
 @click.argument("asset_spec")
-@click.option("--bucket", envvar="MODELKIT_STORAGE_BUCKET")
 @click.option("--storage-prefix", envvar="MODELKIT_STORAGE_PREFIX")
 @click.option("--dry-run", is_flag=True)
-def new(asset_path, asset_spec, bucket, storage_prefix, dry_run):
+def new(asset_path, asset_spec, prefix, dry_run):
     """
     Create a new asset.
 
@@ -109,14 +108,12 @@ def new(asset_path, asset_spec, bucket, storage_prefix, dry_run):
     NB: [asset_name] can contain `/` too.
     """
     _check_asset_file_number(asset_path)
-    manager = RemoteAssetsStore(
-        storage_prefix=storage_prefix,
-        driver=DriverSettings(bucket=bucket),
+    manager = StorageProvider(
+        prefix=prefix,
     )
     print("Current assets manager:")
     print(f" - storage provider = `{manager.driver}`")
-    print(f" - bucket = `{bucket}`")
-    print(f" - prefix = `{storage_prefix}`")
+    print(f" - prefix = `{prefix}`")
 
     print(f"Current asset: `{asset_spec}`")
     spec = AssetSpec.from_string(asset_spec)
@@ -142,10 +139,9 @@ def new(asset_path, asset_spec, bucket, storage_prefix, dry_run):
 @click.option(
     "--bump-major", is_flag=True, help="Push a new major version (1.0, 2.0, etc.)"
 )
-@click.option("--bucket", envvar="MODELKIT_STORAGE_BUCKET")
 @click.option("--storage-prefix", envvar="MODELKIT_STORAGE_PREFIX")
 @click.option("--dry-run", is_flag=True)
-def update(asset_path, asset_spec, bucket, storage_prefix, bump_major, dry_run):
+def update(asset_path, asset_spec, prefix, bump_major, dry_run):
     """
     Update an existing asset.
 
@@ -184,15 +180,13 @@ def update(asset_path, asset_spec, bucket, storage_prefix, bump_major, dry_run):
     will add a version 0.2
     """
     _check_asset_file_number(asset_path)
-    manager = RemoteAssetsStore(
-        storage_prefix=storage_prefix,
-        driver=DriverSettings(bucket=bucket),
+    manager = StorageProvider(
+        prefix=prefix,
     )
 
     print("Current assets manager:")
     print(f" - storage provider = `{manager.driver}`")
-    print(f" - bucket = `{bucket}`")
-    print(f" - prefix = `{storage_prefix}`")
+    print(f" - prefix = `{prefix}`")
 
     print(f"Current asset: `{asset_spec}`")
     spec = AssetSpec.from_string(asset_spec)
@@ -243,20 +237,17 @@ def update(asset_path, asset_spec, bucket, storage_prefix, bump_major, dry_run):
 
 
 @assets_cli.command("list")
-@click.option("--bucket", envvar="MODELKIT_STORAGE_BUCKET")
 @click.option("--storage-prefix", envvar="MODELKIT_STORAGE_PREFIX")
-def list(bucket, storage_prefix):
+def list(prefix):
     """lists all available assets and their versions."""
-    manager = RemoteAssetsStore(
-        storage_prefix=storage_prefix,
-        driver=DriverSettings(bucket=bucket),
+    manager = StorageProvider(
+        prefix=prefix,
     )
 
     console = Console()
     tree = Tree("[bold]Assets store[/bold]")
     tree.add(f"[dim]storage provider[/dim] {manager.driver.__class__.__name__}")
-    tree.add(f"[dim]bucket[/dim] {bucket}")
-    tree.add(f"[dim]prefix[/dim] {storage_prefix}")
+    tree.add(f"[dim]prefix[/dim] {prefix}")
     console.print(tree)
 
     table = Table(show_header=True, header_style="bold")

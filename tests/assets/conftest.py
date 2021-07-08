@@ -16,16 +16,16 @@ from tenacity import (
 )
 
 from modelkit.assets.manager import AssetsManager
-from modelkit.assets.remote import RemoteAssetsStore
+from modelkit.assets.remote import StorageProvider
 
 test_path = os.path.dirname(os.path.realpath(__file__))
 
 
 def _delete_all_objects(mng):
-    for object_name in mng.remote_assets_store.driver.iterate_objects(
-        mng.remote_assets_store.prefix
+    for object_name in mng.storage_provider.driver.iterate_objects(
+        mng.storage_provider.prefix
     ):
-        mng.remote_assets_store.driver.delete_object(object_name)
+        mng.storage_provider.driver.delete_object(object_name)
 
 
 @pytest.fixture(scope="function")
@@ -35,12 +35,10 @@ def local_assetsmanager(base_dir, working_dir):
 
     mng = AssetsManager(
         assets_dir=working_dir,
-        remote_store={
-            "driver": {
-                "storage_provider": "local",
-                "bucket": bucket_path,
-            }
-        },
+        storage_provider=StorageProvider(
+            provider="local",
+            bucket=bucket_path,
+        ),
     )
     yield mng
     _delete_all_objects(mng)
@@ -87,19 +85,14 @@ def gcs_assetsmanager(request, working_dir):
 
     request.addfinalizer(finalize)
 
-    mng = AssetsManager(
-        assets_dir=working_dir,
+    storage_provider = StorageProvider(
+        prefix="test-prefix",
+        provider="gcs",
+        bucket="test-bucket",
+        client=_get_mock_gcs_client(),
     )
-    remote_store = RemoteAssetsStore(
-        storage_prefix="test-prefix",
-        driver={
-            "storage_provider": "gcs",
-            "settings": {"bucket": "test-bucket", "client": _get_mock_gcs_client()},
-        },
-    )
-    remote_store.driver.client.create_bucket("test-bucket")
-    mng.remote_assets_store = remote_store
-
+    storage_provider.driver.client.create_bucket("test-bucket")
+    mng = AssetsManager(assets_dir=working_dir, storage_provider=storage_provider)
     yield mng
 
 
@@ -112,20 +105,18 @@ def gcs_assetsmanager(request, working_dir):
 def _start_s3_manager(working_dir):
     mng = AssetsManager(
         assets_dir=working_dir,
-        remote_store={
-            "driver": {
-                "storage_provider": "s3",
-                "aws_default_region": "us-east-1",
-                "bucket": "test-assets",
-                "aws_access_key_id": "minioadmin",
-                "aws_secret_access_key": "minioadmin",
-                "aws_session_token": None,
-                "s3_endpoint": "http://127.0.0.1:9000",
-            },
-            "storage_prefix": f"test-assets-{uuid.uuid1().hex}",
-        },
+        storage_provider=StorageProvider(
+            prefix=f"test-assets-{uuid.uuid1().hex}",
+            provider="s3",
+            aws_default_region="us-east-1",
+            bucket="test-assets",
+            aws_access_key_id="minioadmin",
+            aws_secret_access_key="minioadmin",
+            aws_session_token=None,
+            s3_endpoint="http://127.0.0.1:9000",
+        ),
     )
-    mng.remote_assets_store.driver.client.create_bucket(Bucket="test-assets")
+    mng.storage_provider.driver.client.create_bucket(Bucket="test-assets")
     return mng
 
 

@@ -1,45 +1,46 @@
 import os
+from typing import Any, Optional
 
 import boto3
 import botocore
-import pydantic
-from pydantic import BaseSettings
 from structlog import get_logger
 from tenacity import retry
 
 from modelkit.assets import errors
+from modelkit.assets.drivers.abc import StorageDriver
 from modelkit.assets.drivers.retry import RETRY_POLICY
 
 logger = get_logger(__name__)
 
 
-class S3DriverSettings(BaseSettings):
-    bucket: str = pydantic.Field(..., env="MODELKIT_STORAGE_BUCKET")
-    aws_access_key_id: str = pydantic.Field(None, env="AWS_ACCESS_KEY_ID")
-    aws_secret_access_key: str = pydantic.Field(None, env="AWS_SECRET_ACCESS_KEY")
-    aws_default_region: str = pydantic.Field(None, env="AWS_DEFAULT_REGION")
-    aws_session_token: str = pydantic.Field(None, env="AWS_SESSION_TOKEN")
-    s3_endpoint: str = pydantic.Field(None, env="S3_ENDPOINT")
+class S3StorageDriver(StorageDriver):
+    bucket: str
+    endpoint_url: Optional[str]
+    client: Any
 
-    class Config:
-        extra = "forbid"
+    def __init__(
+        self,
+        bucket: Optional[str] = None,
+        aws_access_key_id: Optional[str] = None,
+        aws_secret_access_key: Optional[str] = None,
+        aws_default_region: Optional[str] = None,
+        aws_session_token: Optional[str] = None,
+        s3_endpoint: Optional[str] = None,
+    ):
 
-
-class S3StorageDriver:
-    def __init__(self, settings: S3DriverSettings = None):
-        if not settings:
-            settings = S3DriverSettings()
-        self.bucket = settings.bucket
-        self.endpoint_url = settings.s3_endpoint
+        self.bucket = bucket or os.environ.get("MODELKIT_STORAGE_BUCKET") or ""
+        if not self.bucket:
+            raise ValueError("Bucket needs to be set for S3 storage driver")
+        self.endpoint_url = s3_endpoint or os.environ.get("S3_ENDPOINT")
         self.client = boto3.client(
             "s3",
-            endpoint_url=settings.s3_endpoint,
-            aws_access_key_id=settings.aws_access_key_id,
-            aws_secret_access_key=settings.aws_secret_access_key,
-            aws_session_token=settings.aws_session_token,
-            region_name=settings.aws_default_region,
+            endpoint_url=self.endpoint_url,
+            aws_access_key_id=aws_access_key_id or os.environ.get("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=aws_secret_access_key
+            or os.environ.get("AWS_SECRET_ACCESS_KEY"),
+            aws_session_token=aws_session_token or os.environ.get("AWS_SESSION_TOKEN"),
+            region_name=aws_default_region or os.environ.get("AWS_DEFAULT_REGION"),
         )
-        self.bucket = settings.bucket
 
     @retry(**RETRY_POLICY)
     def iterate_objects(self, prefix=None):
