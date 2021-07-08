@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 
 
 class GCSStorageDriver(StorageDriver):
-    bucket: storage
+    bucket: str
     client: Client
 
     def __init__(
@@ -24,7 +24,7 @@ class GCSStorageDriver(StorageDriver):
         service_account_path: Optional[str] = None,
         client: Optional[Client] = None,
     ):
-        self.bucket = bucket or os.environ.get("MODELKIT_STORAGE_BUCKET", None)
+        self.bucket = bucket or os.environ.get("MODELKIT_STORAGE_BUCKET") or ""
         if not self.bucket:
             raise ValueError("Bucket needs to be set for GCS storage driver")
 
