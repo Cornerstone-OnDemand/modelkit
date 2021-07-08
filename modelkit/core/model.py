@@ -226,7 +226,7 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
                         data=(self._return_type, ...),
                         __base__=InternalDataModel,
                     )
-        except Exception as exc:
+        except Exception as exc:  # pragma: no cover
             raise errors.ValidationInitializationException(
                 f"{self.__class__.__name__}[{self.configuration_key}]", pydantic_exc=exc
             )
