@@ -28,22 +28,18 @@ class S3StorageDriver(StorageDriver):
         s3_endpoint: Optional[str] = None,
     ):
 
-        bucket = bucket or os.environ.get("MODELKIT_STORAGE_BUCKET", None)
-        if bucket is None:
+        self.bucket = bucket or os.environ.get("MODELKIT_STORAGE_BUCKET") or ""
+        if not self.bucket:
             raise ValueError("Bucket needs to be set for S3 storage driver")
-        self.bucket = bucket
-        self.endpoint_url = s3_endpoint or os.environ.get("S3_ENDPOINT", None)
+        self.endpoint_url = s3_endpoint or os.environ.get("S3_ENDPOINT")
         self.client = boto3.client(
             "s3",
             endpoint_url=self.endpoint_url,
-            aws_access_key_id=aws_access_key_id
-            or os.environ.get("AWS_ACCESS_KEY_ID", None),
+            aws_access_key_id=aws_access_key_id or os.environ.get("AWS_ACCESS_KEY_ID"),
             aws_secret_access_key=aws_secret_access_key
-            or os.environ.get("AWS_SECRET_ACCESS_KEY", None),
-            aws_session_token=aws_session_token
-            or os.environ.get("AWS_SESSION_TOKEN", None),
-            region_name=aws_default_region
-            or os.environ.get("AWS_DEFAULT_REGION", None),
+            or os.environ.get("AWS_SECRET_ACCESS_KEY"),
+            aws_session_token=aws_session_token or os.environ.get("AWS_SESSION_TOKEN"),
+            region_name=aws_default_region or os.environ.get("AWS_DEFAULT_REGION"),
         )
 
     @retry(**RETRY_POLICY)

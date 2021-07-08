@@ -64,7 +64,7 @@ class StorageProvider:
             prefix or os.environ.get("MODELKIT_STORAGE_PREFIX") or "modelkit-assets"
         )
         self.force_download = force_download or bool(
-            os.environ.get("MODELKIT_STORAGE_FORCE_DOWNLOAD", False)
+            os.environ.get("MODELKIT_STORAGE_FORCE_DOWNLOAD")
         )
 
         provider = provider or os.environ.get("MODELKIT_STORAGE_PROVIDER")
