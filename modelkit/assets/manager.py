@@ -43,9 +43,9 @@ class AssetsManager:
 
     def __init__(
         self,
-        assets_dir: str = None,
-        timeout: int = None,
-        storage_provider: StorageProvider = None,
+        assets_dir: Optional[str] = None,
+        timeout: Optional[int] = None,
+        storage_provider: Optional[StorageProvider] = None,
     ):
         self.assets_dir = (
             assets_dir or os.environ.get("MODELKIT_ASSETS_DIR") or os.getcwd()

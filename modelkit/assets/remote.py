@@ -4,6 +4,7 @@ import json
 import os
 import tempfile
 import time
+from typing import Optional
 
 import humanize
 from dateutil import parser, tz
@@ -50,10 +51,10 @@ class StorageProvider:
 
     def __init__(
         self,
-        timeout_s: int = None,
-        prefix: str = None,
-        force_download: bool = None,
-        provider: str = None,
+        timeout_s: Optional[int] = None,
+        prefix: Optional[str] = None,
+        force_download: Optional[bool] = None,
+        provider: Optional[str] = None,
         **driver_settings,
     ):
         self.timeout = timeout_s or int(

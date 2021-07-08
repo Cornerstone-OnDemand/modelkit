@@ -1,9 +1,11 @@
 import abc
-from typing import Iterator
+from typing import Iterator, Optional
 
 
 class StorageDriver(abc.ABC):
-    def iterate_objects(self, prefix: str = None) -> Iterator[str]:  # pragma: no cover
+    def iterate_objects(
+        self, prefix: Optional[str] = None
+    ) -> Iterator[str]:  # pragma: no cover
         ...
 
     def upload_object(self, file_path: str, object_name: str):  # pragma: no cover

@@ -1,6 +1,7 @@
 import glob
 import os
 import shutil
+from typing import Optional
 
 from structlog import get_logger
 
@@ -11,14 +12,16 @@ logger = get_logger(__name__)
 
 
 class LocalStorageDriver(StorageDriver):
-    def __init__(self, bucket: str = None):
-        self.bucket = bucket or os.environ.get("MODELKIT_STORAGE_BUCKET")
+    bucket: str
+
+    def __init__(self, bucket: Optional[str] = None):
+        self.bucket = bucket or os.environ.get("MODELKIT_STORAGE_BUCKET") or ""
         if not self.bucket:
             raise ValueError("Bucket needs to be set for local storage driver")
         if not os.path.isdir(self.bucket):
             raise FileNotFoundError
 
-    def iterate_objects(self, prefix=None):
+    def iterate_objects(self, prefix: Optional[str] = None):
         for filename in glob.iglob(
             os.path.join(self.bucket, os.path.join("**", "*")), recursive=True
         ):

@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from google.api_core.exceptions import NotFound
 from google.cloud import storage
@@ -19,9 +20,9 @@ class GCSStorageDriver(StorageDriver):
 
     def __init__(
         self,
-        bucket: str = None,
-        service_account_path: str = None,
-        client: Client = None,
+        bucket: Optional[str] = None,
+        service_account_path: Optional[str] = None,
+        client: Optional[Client] = None,
     ):
         self.bucket = bucket or os.environ.get("MODELKIT_STORAGE_BUCKET", None)
         if not self.bucket:

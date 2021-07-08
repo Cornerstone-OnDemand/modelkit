@@ -20,12 +20,12 @@ class S3StorageDriver(StorageDriver):
 
     def __init__(
         self,
-        bucket: str = None,
-        aws_access_key_id: str = None,
-        aws_secret_access_key: str = None,
-        aws_default_region: str = None,
-        aws_session_token: str = None,
-        s3_endpoint: str = None,
+        bucket: Optional[str] = None,
+        aws_access_key_id: Optional[str] = None,
+        aws_secret_access_key: Optional[str] = None,
+        aws_default_region: Optional[str] = None,
+        aws_session_token: Optional[str] = None,
+        s3_endpoint: Optional[str] = None,
     ):
 
         bucket = bucket or os.environ.get("MODELKIT_STORAGE_BUCKET", None)
