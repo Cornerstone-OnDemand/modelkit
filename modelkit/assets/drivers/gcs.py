@@ -77,3 +77,8 @@ class GCSStorageDriver(StorageDriver):
         bucket = self.client.bucket(self.bucket)
         blob = bucket.blob(object_name)
         return blob.exists()
+
+    def get_object_uri(self, object_name, sub_part=None):
+        return "gs://" + "/".join(
+            self.bucket, object_name, *(sub_part or "").split("/")
+        )

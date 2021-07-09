@@ -3,6 +3,8 @@ from typing import Iterator, Optional
 
 
 class StorageDriver(abc.ABC):
+    bucket: str
+
     def iterate_objects(
         self, prefix: Optional[str] = None
     ) -> Iterator[str]:  # pragma: no cover
@@ -20,4 +22,9 @@ class StorageDriver(abc.ABC):
         ...
 
     def exists(self, object_name: str) -> bool:  # pragma: no cover
+        ...
+
+    def get_object_uri(
+        self, object_name: str, sub_part: Optional[str] = None
+    ) -> str:  # pragma: no cover
         ...
