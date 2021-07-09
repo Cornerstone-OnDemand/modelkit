@@ -29,6 +29,11 @@ def deploy_tf_models(lib, mode, config_name="config", verbose=False):
     manager = AssetsManager()
     configuration = lib.configuration
     model_paths = {}
+    if mode == "remote":
+        if not manager.storage_provider:
+            raise ValueError("A remote storage provider is required for `remote` mode")
+        driver = manager.storage_provider.driver
+
     for model_name in lib.required_models:
         model_configuration = configuration[model_name]
         if not issubclass(model_configuration.model_type, TensorflowModel):
@@ -38,29 +43,28 @@ def deploy_tf_models(lib, mode, config_name="config", verbose=False):
             raise ValueError(f"TensorFlow model `{model_name}` does not have an asset")
         spec = AssetSpec.from_string(model_configuration.asset)
         if mode == "local-docker":
-            model_paths[model_name] = os.path.join(
-                "/config",
-                f"{spec.name}/{spec.major_version}.{spec.minor_version}",
-            )
+            model_paths[model_name] = "/".join(
+                ("/config", spec.name, f"{spec.major_version}.{spec.minor_version}")
+            ) + (spec.sub_part or "")
         elif mode == "local-process":
             model_paths[model_name] = os.path.join(
                 manager.assets_dir,
-                f"{spec.name}/{spec.major_version}.{spec.minor_version}",
+                *spec.name.split("/"),
+                f"{spec.major_version}.{spec.minor_version}",
+                *(spec.sub_part.split("/") if spec.sub_part else ()),
             )
         elif mode == "remote":
-            object_name = manager.get_object_name(
+            object_name = manager.storage_provider.get_object_name(
                 spec.name, f"{spec.major_version}.{spec.minor_version}"
             )
-            model_paths[model_name] = f"gs://{manager.bucket}/{object_name}"
-        if spec.sub_part:
-            model_paths[model_name] += spec.sub_part
+            model_paths[model_name] = driver.get_object_uri(object_name)
 
     if mode == "local-docker" or mode == "local-process":
         logger.info("Checking that local models are present.")
         download_assets(
             configuration=configuration, required_models=lib.required_models
         )
-        target = os.path.join(manager.assets_dir, f"{config_name}.config")
+    target = os.path.join(manager.assets_dir, f"{config_name}.config")
 
     if model_paths:
         logger.info(

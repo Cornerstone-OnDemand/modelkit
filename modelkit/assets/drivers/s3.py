@@ -82,3 +82,8 @@ class S3StorageDriver(StorageDriver):
 
     def __repr__(self):
         return f"<S3StorageDriver endpoint_url={self.endpoint_url}>"
+
+    def get_object_uri(self, object_name, sub_part=None):
+        return "s3://" + "/".join(
+            self.bucket, object_name, *(sub_part or "").split("/")
+        )
