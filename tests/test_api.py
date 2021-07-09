@@ -10,6 +10,7 @@ from starlette.testclient import TestClient
 
 from modelkit import testing
 from modelkit.api import ModelkitAutoAPIRouter, create_modelkit_app
+from modelkit.core.errors import ModelsNotFound
 from modelkit.core.model import Asset, AsyncModel, Model
 from tests import TEST_DIR
 
@@ -216,3 +217,9 @@ def test_create_modelkit_app(
         monkeypatch.setenv("MODELKIT_REQUIRED_MODELS", required_models_env_var)
     app = create_modelkit_app(models=models, required_models=required_models)
     assert len([route.path for route in app.routes]) == n_endpoints
+
+
+def test_create_modelkit_app_no_model(monkeypatch):
+    monkeypatch.delenv("MODELKIT_DEFAULT_PACKAGE", raising=False)
+    with pytest.raises(ModelsNotFound):
+        create_modelkit_app(models=None)
