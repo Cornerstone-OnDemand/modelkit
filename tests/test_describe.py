@@ -60,7 +60,21 @@ def test_describe(monkeypatch):
         With **a lot** of documentation
         """
 
-        CONFIGURATIONS = {"some_complex_model_a": {}}
+        CONFIGURATIONS = {
+            "some_complex_model_a": {
+                "model_dependencies": ["some_model_a"],
+                "asset": os.path.join(
+                    TEST_DIR,
+                    "testdata",
+                    "test-bucket",
+                    "assets-prefix",
+                    "category",
+                    "asset",
+                    "0.0",
+                ),
+                "model_settings": {"batch_size": 128},
+            }
+        }
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -98,7 +112,7 @@ def test_describe(monkeypatch):
         # and write it
         r = ReferenceText(os.path.join(TEST_DIR, "testdata"))
         captured = capture.get()
-        EXCLUDED = ["load time", "load memory"]
+        EXCLUDED = ["load time", "load memory", "asset", "category/asset", os.path.sep]
         captured = "\n".join(
             line
             for line in captured.split("\n")

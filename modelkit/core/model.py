@@ -226,7 +226,7 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
                         data=(self._return_type, ...),
                         __base__=InternalDataModel,
                     )
-        except Exception as exc:
+        except Exception as exc:  # pragma: no cover
             raise errors.ValidationInitializationException(
                 f"{self.__class__.__name__}[{self.configuration_key}]", pydantic_exc=exc
             )
@@ -346,9 +346,6 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
                 )
         return item
 
-    def predict(self, item: ItemType, **kwargs):
-        raise NotImplementedError()
-
     def test(self):
         console = Console()
         for i, (model_key, item, expected, keyword_args) in enumerate(
@@ -437,9 +434,8 @@ class Model(AbstractModel[ItemType, ReturnType]):
             self.model_dependencies = ModelDependenciesMapping(_model_dependencies)
 
     @not_overriden
-    def _predict(self, item: ItemType, **kwargs) -> ReturnType:
-        result = self._predict_batch([item], **kwargs)
-        return result[0]
+    def _predict(self, item: ItemType, **kwargs) -> ReturnType:  # pragma: no cover
+        ...
 
     @not_overriden
     def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:
@@ -614,9 +610,10 @@ class Model(AbstractModel[ItemType, ReturnType]):
 
 class AsyncModel(AbstractModel[ItemType, ReturnType]):
     @not_overriden
-    async def _predict(self, item: ItemType, **kwargs) -> ReturnType:
-        result = await self._predict_batch([item], **kwargs)
-        return result[0]
+    async def _predict(
+        self, item: ItemType, **kwargs
+    ) -> ReturnType:  # pragma: no cover
+        ...
 
     @not_overriden
     async def _predict_batch(self, items: List[ItemType], **kwargs) -> List[ReturnType]:

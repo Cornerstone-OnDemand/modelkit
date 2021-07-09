@@ -45,7 +45,9 @@ class ModelkitDataValidationException(Exception):
         super().__init__(f"{error_str} `{model_identifier}`.\n" + pydantic_exc_output)
 
 
-class ValidationInitializationException(ModelkitDataValidationException):
+class ValidationInitializationException(
+    ModelkitDataValidationException
+):  # pragma: no cover
     def __init__(self, *args, **kwargs):
         super().__init__(
             *args,
