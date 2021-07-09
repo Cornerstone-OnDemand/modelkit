@@ -33,7 +33,7 @@ from modelkit import Model
 
 class MyModel(Model):
     def _predict(self, item):
-        # This is where your prediction logic goe
+        # This is where your prediction logic goes
         ...
         return result
 ```
