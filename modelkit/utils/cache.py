@@ -23,16 +23,20 @@ class CacheItem(Generic[ItemType]):
 
 class Cache(abc.ABC):
     @abc.abstractmethod
-    def hash_key(self, model_key: str, item: Any, kwargs: Dict[str, Any]):
-        pass
+    def hash_key(
+        self, model_key: str, item: Any, kwargs: Dict[str, Any]
+    ):  # pragma: no cover
+        ...
 
     @abc.abstractmethod
-    def get(self, model_key: str, item: Any, kwargs: Dict[str, Any]):
-        pass
+    def get(
+        self, model_key: str, item: Any, kwargs: Dict[str, Any]
+    ):  # pragma: no cover
+        ...
 
     @abc.abstractmethod
-    def set(self, k: bytes, d: Any):
-        pass
+    def set(self, k: bytes, d: Any):  # pragma: no cover
+        ...
 
 
 class RedisCache(Cache):
