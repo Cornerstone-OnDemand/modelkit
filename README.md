@@ -33,8 +33,7 @@ from modelkit import Model
 
 class MyModel(Model):
     def _predict(self, item):
-        # This is where your prediction logic goes, use any asset loaded by 
-        # _load here
+        # This is where your prediction logic goe
         ...
         return result
 ```
