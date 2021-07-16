@@ -11,7 +11,9 @@ def tf_serving_fixture(request, lib, deployment="docker"):
         "--rest_api_port=8501",
     ]
 
-    if deployment == "process":
+    # this cannot be easily tested in the CI because it requires installing
+    # tf serving as a process
+    if deployment == "process":  # pragma: no cover
         deploy_tf_models(lib, "local-process", config_name="testing")
         proc = subprocess.Popen(
             [

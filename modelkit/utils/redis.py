@@ -9,7 +9,7 @@ from tenacity import (
 logger = get_logger(__name__)
 try:
     import redis
-except ImportError:
+except ImportError:  # pragma: no cover
     logger.debug("Redis is not available " "(install modelkit[redis] or redis)")
 
 

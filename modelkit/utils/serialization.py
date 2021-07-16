@@ -8,4 +8,4 @@ def safe_np_dump(obj):
         return float(obj)
     elif isinstance(obj, np.ndarray):
         return obj.tolist()
-    return obj.item()
+    return obj
