@@ -91,7 +91,7 @@ def _check_asset_file_number(asset_path):
 @click.argument("asset_spec")
 @click.option("--storage-prefix", envvar="MODELKIT_STORAGE_PREFIX")
 @click.option("--dry-run", is_flag=True)
-def new(asset_path, asset_spec, prefix, dry_run):
+def new(asset_path, asset_spec, storage_prefix, dry_run):
     """
     Create a new asset.
 
@@ -109,11 +109,11 @@ def new(asset_path, asset_spec, prefix, dry_run):
     """
     _check_asset_file_number(asset_path)
     manager = StorageProvider(
-        prefix=prefix,
+        prefix=storage_prefix,
     )
     print("Current assets manager:")
     print(f" - storage provider = `{manager.driver}`")
-    print(f" - prefix = `{prefix}`")
+    print(f" - prefix = `{storage_prefix}`")
 
     print(f"Current asset: `{asset_spec}`")
     spec = AssetSpec.from_string(asset_spec)
@@ -141,7 +141,7 @@ def new(asset_path, asset_spec, prefix, dry_run):
 )
 @click.option("--storage-prefix", envvar="MODELKIT_STORAGE_PREFIX")
 @click.option("--dry-run", is_flag=True)
-def update(asset_path, asset_spec, prefix, bump_major, dry_run):
+def update(asset_path, asset_spec, storage_prefix, bump_major, dry_run):
     """
     Update an existing asset.
 
@@ -181,12 +181,12 @@ def update(asset_path, asset_spec, prefix, bump_major, dry_run):
     """
     _check_asset_file_number(asset_path)
     manager = StorageProvider(
-        prefix=prefix,
+        prefix=storage_prefix,
     )
 
     print("Current assets manager:")
     print(f" - storage provider = `{manager.driver}`")
-    print(f" - prefix = `{prefix}`")
+    print(f" - prefix = `{storage_prefix}`")
 
     print(f"Current asset: `{asset_spec}`")
     spec = AssetSpec.from_string(asset_spec)
@@ -238,16 +238,16 @@ def update(asset_path, asset_spec, prefix, bump_major, dry_run):
 
 @assets_cli.command("list")
 @click.option("--storage-prefix", envvar="MODELKIT_STORAGE_PREFIX")
-def list(prefix):
+def list(storage_prefix):
     """lists all available assets and their versions."""
     manager = StorageProvider(
-        prefix=prefix,
+        prefix=storage_prefix,
     )
 
     console = Console()
     tree = Tree("[bold]Assets store[/bold]")
     tree.add(f"[dim]storage provider[/dim] {manager.driver.__class__.__name__}")
-    tree.add(f"[dim]prefix[/dim] {prefix}")
+    tree.add(f"[dim]prefix[/dim] {storage_prefix}")
     console.print(tree)
 
     table = Table(show_header=True, header_style="bold")
