@@ -11,7 +11,6 @@ pydantic
 python-dateutil
 redis
 rich
-six==1.15.0
 sniffio
 structlog
 tenacity

@@ -113,16 +113,10 @@ rsa==4.7.2
     # via google-auth
 s3transfer==0.4.2
     # via boto3
-six==1.15.0
+six==1.16.0
     # via
-    #   -r requirements.in
-    #   google-api-core
-    #   google-auth
-    #   google-cloud-core
-    #   google-resumable-media
     #   protobuf
     #   python-dateutil
-    #   tenacity
 sniffio==1.2.0
     # via -r requirements.in
 structlog==21.1.0
