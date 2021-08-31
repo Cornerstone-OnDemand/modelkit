@@ -358,20 +358,14 @@ s3transfer==0.4.2
     #   boto3
 six==1.15.0
     # via
-    #   -c requirements.txt
-    #   -r requirements.in
     #   absl-py
     #   astunparse
-    #   google-api-core
     #   google-auth
-    #   google-cloud-core
     #   google-pasta
-    #   google-resumable-media
     #   grpcio
     #   keras-preprocessing
     #   protobuf
     #   python-dateutil
-    #   tenacity
     #   tensorflow
     #   virtualenv
 sniffio==1.2.0
