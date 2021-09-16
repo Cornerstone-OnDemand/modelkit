@@ -165,7 +165,7 @@ class AssetsManager:
                 local_path = os.path.join(
                     self.assets_dir, *spec.name.split("/"), version
                 )
-                if not _has_succeeded(local_path):
+                if not _has_succeeded(local_path) and self.storage_provider:
                     logger.info("Previous fetching of asset has failed, redownloading.")
                     _force_download = True
                 if _force_download:

@@ -59,8 +59,8 @@ def cache_settings():
 
 class LibrarySettings(pydantic.BaseSettings):
     lazy_loading: bool = pydantic.Field(False, env="MODELKIT_LAZY_LOADING")
-    override_prefix: Optional[str] = pydantic.Field(
-        None, env="MODELKIT_STORAGE_PREFIX_OVERRIDE"
+    override_assets_dir: Optional[str] = pydantic.Field(
+        None, env="MODELKIT_ASSETS_DIR_OVERRIDE"
     )
     enable_validation: bool = pydantic.Field(True, env="MODELKIT_ENABLE_VALIDATION")
     tf_serving: TFServingSettings = pydantic.Field(
