@@ -144,6 +144,7 @@ class ModelLibrary:
             self._override_assets_manager = AssetsManager(
                 assets_dir=self.settings.override_assets_dir
             )
+            self._override_assets_manager.storage_provider = None
 
         return self._override_assets_manager
 
