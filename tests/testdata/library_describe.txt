@@ -1,6 +1,5 @@
 Settings                                                                        
 ├── lazy_loading : bool = False                                                 
-├── override_prefix : str = None                                                
 ├── enable_validation : bool = True                                             
 ├── tf_serving : TFServingSettings                                              
 │   ├── enable : bool = False                                                   

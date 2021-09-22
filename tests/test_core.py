@@ -18,6 +18,7 @@ from modelkit.core.model_configuration import (
     list_assets,
 )
 from modelkit.core.settings import LibrarySettings
+from tests import TEST_DIR
 
 
 def test_predict():
@@ -461,7 +462,7 @@ def test_rename_dependencies():
     assert lib.get("model_rename")({}) == "boomer"
 
 
-def test_override_prefix(assetsmanager_settings):
+def test_override_assets_dir(assetsmanager_settings):
     class TestModel(Model):
         def _predict(self, item, **kwargs):
             return self.asset_path
@@ -495,7 +496,12 @@ def test_override_prefix(assetsmanager_settings):
                 model_type=TestModel, asset="category/override-asset"
             ),
         },
-        settings={"override_prefix": "override-assets-prefix", "lazy_loading": True},
+        settings={
+            "override_assets_dir": os.path.join(
+                TEST_DIR, "testdata", "override-assets-dir"
+            ),
+            "lazy_loading": True,
+        },
         assetsmanager_settings=assetsmanager_settings,
     )
 
@@ -503,7 +509,7 @@ def test_override_prefix(assetsmanager_settings):
     assert prediction.endswith(os.path.join("category", "asset", "1.0"))
 
     prediction = model_library_override.get("my_override_model").predict({})
-    assert prediction.endswith(os.path.join("category", "override-asset", "1.0"))
+    assert prediction.endswith(os.path.join("category", "override-asset", "0.0"))
 
 
 SYNC_ASYNC_TEST_CASES = [

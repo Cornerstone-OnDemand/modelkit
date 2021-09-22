@@ -4,7 +4,6 @@ ModelLibrary
 Ask for model using get. Handle loading, refresh...
 """
 import collections
-import copy
 import os
 import re
 from typing import (
@@ -135,7 +134,7 @@ class ModelLibrary:
 
     @property
     def override_assets_manager(self):
-        if not self.settings.override_prefix:
+        if not self.settings.override_assets_dir:
             return None
 
         if self._override_assets_manager is None:
@@ -143,11 +142,9 @@ class ModelLibrary:
                 "Instantiating Override AssetsManager", lazy_loading=self._lazy_loading
             )
             self._override_assets_manager = AssetsManager(
-                **copy.deepcopy(self.assetsmanager_settings)
+                assets_dir=self.settings.override_assets_dir
             )
-            self._override_assets_manager.storage_provider.prefix = (
-                self.settings.override_prefix
-            )
+            self._override_assets_manager.storage_provider = None
 
         return self._override_assets_manager
 
@@ -339,10 +336,10 @@ class ModelLibrary:
                     )
                 )
                 logger.debug(
-                    "Asset has been loaded with overriden prefix",
+                    "Asset has been overriden",
                     name=asset_spec.name,
                 )
-            except modelkit.assets.errors.ObjectDoesNotExistError:
+            except modelkit.assets.errors.AssetDoesNotExistError:
                 logger.debug(
                     "Asset not found in overriden prefix",
                     name=asset_spec.name,
