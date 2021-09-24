@@ -25,6 +25,7 @@ class S3StorageDriver(StorageDriver):
         aws_secret_access_key: Optional[str] = None,
         aws_default_region: Optional[str] = None,
         aws_session_token: Optional[str] = None,
+        aws_kms_key_id: Optional[str] = None,
         s3_endpoint: Optional[str] = None,
     ):
 
@@ -32,6 +33,7 @@ class S3StorageDriver(StorageDriver):
         if not self.bucket:
             raise ValueError("Bucket needs to be set for S3 storage driver")
         self.endpoint_url = s3_endpoint or os.environ.get("S3_ENDPOINT")
+        self.aws_kms_key_id = aws_kms_key_id or os.environ.get("AWS_KMS_KEY_ID")
         self.client = boto3.client(
             "s3",
             endpoint_url=self.endpoint_url,
@@ -52,7 +54,18 @@ class S3StorageDriver(StorageDriver):
 
     @retry(**RETRY_POLICY)
     def upload_object(self, file_path, object_name):
-        self.client.upload_file(file_path, self.bucket, object_name)
+        if self.aws_kms_key_id:
+            self.client.upload_file(  # pragma: no cover
+                file_path,
+                self.bucket,
+                object_name,
+                ExtraArgs={
+                    "ServerSideEncryption": "aws:kms",
+                    "SSEKMSKeyId": self.aws_kms_key_id,
+                },
+            )
+        else:
+            self.client.upload_file(file_path, self.bucket, object_name)
 
     @retry(**RETRY_POLICY)
     def download_object(self, object_name, destination_path):

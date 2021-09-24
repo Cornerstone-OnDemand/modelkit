@@ -48,6 +48,8 @@ The authentication information here is passed to the `boto3.client` object:
 
 Typically, if you use AWS: having `AWS_DEFAULT_PROFILE`, `AWS_DEFAULT_REGION` and valid credentials in `~/.aws` is enough.
 
+S3 storage driver is compatible with KMS encrypted s3 volumes.
+Use `AWS_KMS_KEY_ID` environment variable to set your key and be able to upload files to such volume.
 
 ### GCS storage
 
