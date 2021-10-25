@@ -1,6 +1,6 @@
 <p align="center">
-  <a href="https://github.com/clustree/modelkit">
-    <img src="https://raw.githubusercontent.com/clustree/modelkit/main/.github/resources/logo.svg" alt="Logo" width="80" height="80">
+  <a href="https://github.com/Cornerstone-OnDemand/modelkit">
+    <img src="https://raw.githubusercontent.com/Cornerstone-OnDemand/modelkit/main/.github/resources/logo.svg" alt="Logo" width="80" height="80">
   </a>
 </p>
 <h1 align="center"> modelkit </h1>
@@ -11,13 +11,13 @@
 ---
 
 <p align="center">
-  <a href="https://github.com/clustree/modelkit/actions?query=branch%3Amain+"><img src="https://img.shields.io/github/workflow/status/clustree/modelkit/CI/main" /></a>
-  <a href="https://github.com/clustree/modelkit/actions/workflows/main.yml?query=branch%3Amain+"><img src="badges/tests.svg" /></a>
-  <a href="https://clustree.github.io/modelkit/coverage/index.html"><img src="badges/coverage.svg" /></a>
+  <a href="https://github.com/Cornerstone-OnDemand/modelkit/actions?query=branch%3Amain+"><img src="https://img.shields.io/github/workflow/status/Cornerstone-OnDemand/modelkit/CI/main" /></a>
+  <a href="https://github.com/Cornerstone-OnDemand/modelkit/actions/workflows/main.yml?query=branch%3Amain+"><img src="badges/tests.svg" /></a>
+  <a href="https://Cornerstone-OnDemand.github.io/modelkit/coverage/index.html"><img src="badges/coverage.svg" /></a>
   <a href="https://pypi.org/project/modelkit/"><img src="https://img.shields.io/pypi/v/modelkit" /></a>
   <a href="https://pypi.org/project/modelkit/"><img src="https://img.shields.io/pypi/pyversions/modelkit" /></a>
-  <a href="https://clustree.github.io/modelkit/index.html"><img src="https://img.shields.io/badge/docs-latest-blue" /></a>
-  <a href="https://github.com/clustree/modelkit/blob/main/LICENSE"><img src="https://img.shields.io/github/license/clustree/modelkit" /></a>
+  <a href="https://Cornerstone-OnDemand.github.io/modelkit/index.html"><img src="https://img.shields.io/badge/docs-latest-blue" /></a>
+  <a href="https://github.com/Cornerstone-OnDemand/modelkit/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Cornerstone-OnDemand/modelkit" /></a>
 </p>
 
 
