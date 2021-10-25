@@ -67,8 +67,8 @@ plugins:
   - search
   # - git-revision-date-localized
 
-repo_name: 'clustree/modelkit'
-repo_url: 'https://github.com/clustree/modelkit'
+repo_name: 'Cornerstone-OnDemand/modelkit'
+repo_url: 'https://github.com/Cornerstone-OnDemand/modelkit'
 extra:
   repo_icon: 'github'
 

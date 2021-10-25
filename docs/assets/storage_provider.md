@@ -80,4 +80,4 @@ This is mostly used internally for development, but you can also use another fol
 ## Other options
 
 
-If you would like us to support other means of remote storage, do feel free to request it by posting [an issue](https://github.com/clustree/modelkit/issues)!
+If you would like us to support other means of remote storage, do feel free to request it by posting [an issue](https://github.com/Cornerstone-OnDemand/modelkit/issues)!
