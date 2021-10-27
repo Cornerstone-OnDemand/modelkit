@@ -69,6 +69,7 @@ plugins:
 
 repo_name: 'Cornerstone-OnDemand/modelkit'
 repo_url: 'https://github.com/Cornerstone-OnDemand/modelkit'
+edit_uri: 'edit/main/docs/'
 extra:
   repo_icon: 'github'
 
