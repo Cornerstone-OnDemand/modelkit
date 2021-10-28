@@ -5,13 +5,13 @@ We will use the [Universal Sentence Encoder](https://tfhub.dev/google/universal-
 
 # Download and extract
 
-Fisrtly download the file `universal-sentence-encoder-multilingual_3.tar.gz` and extract it in a `asset_name/1` directory
+Fisrt, download the file `universal-sentence-encoder-multilingual_3.tar.gz` and extract it in a `asset_name/1` directory
 
 In this tutorial we will use `/tmp/use/1`
 
 `tar -xzvf universal-sentence-encoder-multilingual_3.tar.gz --directory /tmp/use/1`
 
-this will create the following tree
+this will create the following tree:
 
 ```
 use
@@ -25,7 +25,7 @@ use
 
 # Check the model configuration
 
-In order to use `modelkit` to use the model we have to check the model configuation in order to exctract outputs informations (key name, layer name, shape and type) and the inputs key name
+In order to use `modelkit` to use the model we have to check the model configuation in order to exctract outputs informations (key name, layer name, shape and type) and the inputs key name:
 
 ```
 import tensorflow as tf
@@ -46,7 +46,7 @@ print(model.signatures["serving_default"].inputs[0])
 # Quick load with `modelkit`
 
 We can now load the model by creating a `TensorflowModel` class and configuring it
-with information we just get from the model
+with information we just got from the model.
 
 Note that we have to declare a "virtual" asset `"asset": "use"` to directly set an asset path `/tmp/use` (without the 1 directory)
 
@@ -72,7 +72,7 @@ class USEModel(TensorflowModel):
 
 ```
 
-and then we can test it using for example `load_model`
+and then we can test it using `load_model`
 
 ```
 model = modelkit.load_model("use", models=USEModel)
@@ -81,6 +81,7 @@ model.predict({"inputs": "Hello world"})
 ```
 
 That's all !
+
 We can start testing/using our model
 
 ```
@@ -107,9 +108,9 @@ print(cosine_similarity([sentence_1, sentence_2, sentence_3, sentence_4]))
 
 # Create an asset
 
-Once we have test our model, we may want push and use it as an versioned asset
+Once we have tested our model, we may want push and use it as an versioned asset
 
-`./bin/cli.py assets new /tmp/use my_assets/use`
+`modelkit assets new /tmp/use my_assets/use`
 
 and then we can remove `asset_path` and add our `asset` name to our `TensorflowModel`
 
@@ -133,7 +134,7 @@ class USEModel(TensorflowModel):
     }
 ```
 
-and then we may use the library to load it
+and then we may use a `ModelLibrary` to load it
 
 ```
 model_library = modelkit.ModelLibrary(
@@ -148,11 +149,9 @@ model.predict({"inputs": "Hello world"})
 
 Our model is directly compatible with our `tensorflow-serving` loading scripts
 
-Let's say we have save our model in `modelkit/use.py` file
+Let's say we have saved our model in `modelkit/use.py` file, generate the configuation:
 
-Generate the configuation
-
-`./bin/cli.py tf-serving local-docker modelkit.use -r "use"`
+`modelkit tf-serving local-docker modelkit.use -r "use"`
 
 it will create a config file `${MODELKIT_ASSETS_DIR}/config.config`
 
