@@ -7,6 +7,7 @@ import filelock
 from structlog import get_logger
 
 from modelkit.assets import errors
+from modelkit.assets.drivers.local import LocalStorageDriver
 from modelkit.assets.remote import NoConfiguredProviderError, StorageProvider
 from modelkit.assets.settings import AssetSpec
 from modelkit.assets.versioning import (
@@ -166,8 +167,23 @@ class AssetsManager:
                     self.assets_dir, *spec.name.split("/"), version
                 )
                 if not _has_succeeded(local_path) and self.storage_provider:
-                    logger.info("Previous fetching of asset has failed, redownloading.")
-                    _force_download = True
+                    if isinstance(
+                        self.storage_provider.driver, LocalStorageDriver
+                    ) and self.assets_dir == os.path.join(
+                        self.storage_provider.driver.bucket,
+                        self.storage_provider.prefix,
+                    ):
+                        # prevent modelkit from deleting assets locally
+                        # if LocalStorageDriver configured as
+                        # MODELKIT_ASSETS_DIR = \
+                        #     MODELKIT_STORAGE_BUCKET/MODELKIT_STORAGE_PREFIX
+                        _force_download = False
+                    else:
+                        logger.info(
+                            "Previous fetching of asset has failed, redownloading."
+                        )
+                        _force_download = True
+
                 if _force_download:
                     if os.path.exists(local_path):
                         if os.path.isdir(local_path):

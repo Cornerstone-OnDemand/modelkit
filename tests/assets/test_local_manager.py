@@ -139,3 +139,31 @@ def test_local_manager_with_fetch(working_dir):
 
     res = manager.fetch_asset("category/asset", return_info=True)
     assert res["path"] == os.path.join(working_dir, "category", "asset", "1.0")
+
+
+def test_local_manager_with_fetch_external_bucket(working_dir):
+
+    # when using external bucket in production (s3/gcs) in production
+    # but need to use some local asset for debug purpose with
+    # MODELKIT_ASSETS_DIR = MODELKIT_STORAGE_BUCKET/MODELKIT_STORAGE_PREFIX
+    # configuration
+
+    modelkit_storage_bucket = working_dir
+    modelkit_storage_prefix = "assets-prefix"
+    modelkit_assets_dir = os.path.join(modelkit_storage_bucket, modelkit_storage_prefix)
+
+    os.makedirs(os.path.join(modelkit_assets_dir, "category", "asset"))
+    with open(os.path.join(modelkit_assets_dir, "category", "asset", "0.0"), "w") as f:
+        f.write("OK")
+
+    manager = AssetsManager(
+        assets_dir=modelkit_assets_dir,
+        storage_provider=StorageProvider(
+            provider="local",
+            prefix=modelkit_storage_prefix,
+            bucket=modelkit_storage_bucket,
+        ),
+    )
+
+    res = manager.fetch_asset("category/asset:0.0", return_info=True)
+    assert res["path"] == os.path.join(modelkit_assets_dir, "category", "asset", "0.0")
