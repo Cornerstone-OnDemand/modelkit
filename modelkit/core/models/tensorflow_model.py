@@ -121,8 +121,8 @@ class TensorflowModel(Model[ItemType, ReturnType], TensorflowModelMixin):
                 self.service_settings.tf_serving.mode,
             )
         else:
-            saved_model = tf.saved_model.load(os.path.join(self.asset_path, "1"))
-            self.tf_model_signature = saved_model.signatures[
+            self.saved_model = tf.saved_model.load(os.path.join(self.asset_path, "1"))
+            self.tf_model_signature = self.saved_model.signatures[
                 DEFAULT_SERVING_SIGNATURE_DEF_KEY
             ]
         self.requests_session: Optional[requests.Session] = None
