@@ -82,53 +82,45 @@ class AssetsManager:
     def _fetch_asset(self, spec: AssetSpec, _force_download=False):
         with ContextualizedLogging(name=spec.name):
             local_name = os.path.join(self.assets_dir, *spec.name.split("/"))
-            local_versions_list = self.get_local_versions_info(local_name)
-            logger.debug("Local versions list", local_versions_list=local_versions_list)
+            local_versions = self.get_local_versions_info(local_name)
+            logger.debug("Local versions", local_versions=local_versions)
 
             if spec.major_version and spec.minor_version:
                 version = f"{spec.major_version}.{spec.minor_version}"
                 with ContextualizedLogging(version=version):
                     return self._fetch_asset_version(
-                        spec, version, local_versions_list, _force_download
+                        spec, version, local_versions, _force_download
                     )
 
-            remote_versions_list = []
+            remote_versions = []
             if self.storage_provider:
-                remote_versions_list = self.storage_provider.get_versions_info(
-                    spec.name
-                )
-                logger.debug(
-                    "Fetched remote versions list",
-                    remote_versions_list=remote_versions_list,
-                )
-            all_versions_list = sort_versions(
-                set(local_versions_list + remote_versions_list)
-            )
+                remote_versions = self.storage_provider.get_versions_info(spec.name)
+                logger.debug("Fetched remote versions", remote_versions=remote_versions)
+
+            all_versions = sort_versions(set(local_versions + remote_versions))
             if not spec.major_version and not spec.minor_version:
                 logger.debug("Asset has no version information")
                 # no version is specified
-                if not all_versions_list:
+                if not all_versions:
                     # and none exist
                     # in this case, the asset spec is likely a relative or absolute
                     # path to a file/directory
                     return _fetch_local_version(spec.name, local_name)
 
-            if not all_versions_list:
+            if not all_versions:
                 raise errors.LocalAssetDoesNotExistError(
                     name=spec.name,
                     major=spec.major_version,
                     minor=spec.minor_version,
-                    local_versions=local_versions_list,
+                    local_versions=local_versions,
                 )
 
             # at least one version info is missing, fetch the latest
             if not spec.major_version:
-                spec.major_version, spec.minor_version = parse_version(
-                    all_versions_list[0]
-                )
+                spec.major_version, spec.minor_version = parse_version(all_versions[0])
             elif not spec.minor_version:
                 spec.major_version, spec.minor_version = parse_version(
-                    filter_versions(all_versions_list, major=spec.major_version)[0]
+                    filter_versions(all_versions, major=spec.major_version)[0]
                 )
             logger.debug(
                 "Resolved latest version",
@@ -139,7 +131,7 @@ class AssetsManager:
             version = f"{spec.major_version}.{spec.minor_version}"
             with ContextualizedLogging(version=version):
                 return self._fetch_asset_version(
-                    spec, version, local_versions_list, _force_download
+                    spec, version, local_versions, _force_download
                 )
 
     def _fetch_asset_version(
