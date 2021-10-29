@@ -84,11 +84,16 @@ class AssetsManager:
             local_name = os.path.join(self.assets_dir, *spec.name.split("/"))
             local_versions_list = self.get_local_versions_info(local_name)
             logger.debug("Local versions list", local_versions_list=local_versions_list)
-            remote_versions_list = []
 
-            if self.storage_provider and (
-                not spec.major_version or not spec.minor_version
-            ):
+            if spec.major_version and spec.minor_version:
+                version = f"{spec.major_version}.{spec.minor_version}"
+                with ContextualizedLogging(version=version):
+                    return self._fetch_asset_version(
+                        spec, version, local_versions_list, _force_download
+                    )
+
+            remote_versions_list = []
+            if self.storage_provider:
                 remote_versions_list = self.storage_provider.get_versions_info(
                     spec.name
                 )
@@ -108,29 +113,28 @@ class AssetsManager:
                     # path to a file/directory
                     return _fetch_local_version(spec.name, local_name)
 
-            if not spec.major_version or not spec.minor_version:
-                if not all_versions_list:
-                    raise errors.LocalAssetDoesNotExistError(
-                        name=spec.name,
-                        major=spec.major_version,
-                        minor=spec.minor_version,
-                        local_versions=local_versions_list,
-                    )
-
-                # at least one version info is missing, fetch the latest
-                if not spec.major_version:
-                    spec.major_version, spec.minor_version = parse_version(
-                        all_versions_list[0]
-                    )
-                elif not spec.minor_version:
-                    spec.major_version, spec.minor_version = parse_version(
-                        filter_versions(all_versions_list, major=spec.major_version)[0]
-                    )
-                logger.debug(
-                    "Resolved latest version",
+            if not all_versions_list:
+                raise errors.LocalAssetDoesNotExistError(
+                    name=spec.name,
                     major=spec.major_version,
                     minor=spec.minor_version,
+                    local_versions=local_versions_list,
                 )
+
+            # at least one version info is missing, fetch the latest
+            if not spec.major_version:
+                spec.major_version, spec.minor_version = parse_version(
+                    all_versions_list[0]
+                )
+            elif not spec.minor_version:
+                spec.major_version, spec.minor_version = parse_version(
+                    filter_versions(all_versions_list, major=spec.major_version)[0]
+                )
+            logger.debug(
+                "Resolved latest version",
+                major=spec.major_version,
+                minor=spec.minor_version,
+            )
 
             version = f"{spec.major_version}.{spec.minor_version}"
             with ContextualizedLogging(version=version):
