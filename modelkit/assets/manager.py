@@ -85,6 +85,7 @@ class AssetsManager:
             local_versions_list = self.get_local_versions_info(local_name)
             logger.debug("Local versions list", local_versions_list=local_versions_list)
             remote_versions_list = []
+
             if self.storage_provider and (
                 not spec.major_version or not spec.minor_version
             ):
@@ -96,7 +97,7 @@ class AssetsManager:
                     remote_versions_list=remote_versions_list,
                 )
             all_versions_list = sort_versions(
-                list({x for x in local_versions_list + remote_versions_list})
+                set(local_versions_list + remote_versions_list)
             )
             if not spec.major_version and not spec.minor_version:
                 logger.debug("Asset has no version information")
@@ -214,10 +215,7 @@ class AssetsManager:
                             "version": version,
                             "path": local_path,
                         }
-                        if os.path.isdir(local_path):
-                            open(_success_file_path(local_path), "w").close()
-                        else:
-                            open(_success_file_path(local_path), "w").close()
+                        open(_success_file_path(local_path), "w").close()
                     else:
                         raise errors.LocalAssetDoesNotExistError(
                             name=spec.name,
