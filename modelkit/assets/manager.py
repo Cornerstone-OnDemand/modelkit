@@ -171,35 +171,32 @@ class AssetsManager:
             success_object_path = _success_file_path(local_path)
             if os.path.exists(success_object_path):
                 os.unlink(success_object_path)
+
         if not _force_download and (version in local_versions):
             asset_dict = {
                 "from_cache": True,
                 "version": version,
                 "path": local_path,
             }
+        elif self.storage_provider:
+            logger.info("Fetching distant asset", local_versions=local_versions)
+            asset_download_info = self.storage_provider.download(
+                spec.name, version, self.assets_dir
+            )
+            asset_dict = {
+                **asset_download_info,
+                "from_cache": False,
+                "version": version,
+                "path": local_path,
+            }
+            open(_success_file_path(local_path), "w").close()
         else:
-            if self.storage_provider:
-                logger.info(
-                    "Fetching distant asset",
-                    local_versions=local_versions,
-                )
-                asset_download_info = self.storage_provider.download(
-                    spec.name, version, self.assets_dir
-                )
-                asset_dict = {
-                    **asset_download_info,
-                    "from_cache": False,
-                    "version": version,
-                    "path": local_path,
-                }
-                open(_success_file_path(local_path), "w").close()
-            else:
-                raise errors.LocalAssetDoesNotExistError(
-                    name=spec.name,
-                    major=spec.major_version,
-                    minor=spec.minor_version,
-                    local_versions=local_versions,
-                )
+            raise errors.LocalAssetDoesNotExistError(
+                name=spec.name,
+                major=spec.major_version,
+                minor=spec.minor_version,
+                local_versions=local_versions,
+            )
 
         if spec.sub_part:
             local_sub_part = os.path.join(
