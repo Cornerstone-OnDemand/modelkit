@@ -39,6 +39,7 @@ nav:
         - Classifier: 'examples/nlp_sentiment/classifier.md'
         - Advanced models: 'examples/nlp_sentiment/advanced_models.md'
         - "TL;DR": 'examples/nlp_sentiment/tldr.md'
+      - Loading Model from TF Hub: 'examples/tf_hub.md'
   - Configuration: 'configuration.md'
   - CLI: 'cli.md'
   - Deployment:
