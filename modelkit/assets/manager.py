@@ -1,7 +1,7 @@
 import os
 import re
 import shutil
-from typing import Optional, Union, cast
+from typing import List, Optional, Union, cast
 
 import filelock
 from structlog import get_logger
@@ -134,75 +134,82 @@ class AssetsManager:
 
             version = f"{spec.major_version}.{spec.minor_version}"
             with ContextualizedLogging(version=version):
-                local_path = os.path.join(
-                    self.assets_dir, *spec.name.split("/"), version
+                return self._fetch_asset_version(
+                    spec, version, local_versions_list, _force_download
                 )
-                if not _has_succeeded(local_path) and self.storage_provider:
-                    if isinstance(
-                        self.storage_provider.driver, LocalStorageDriver
-                    ) and self.assets_dir == os.path.join(
-                        self.storage_provider.driver.bucket,
-                        self.storage_provider.prefix,
-                    ):
-                        # prevent modelkit from deleting assets locally
-                        # if LocalStorageDriver configured as
-                        # MODELKIT_ASSETS_DIR = \
-                        #     MODELKIT_STORAGE_BUCKET/MODELKIT_STORAGE_PREFIX
-                        _force_download = False
-                    else:
-                        logger.info(
-                            "Previous fetching of asset has failed, redownloading."
-                        )
-                        _force_download = True
 
-                if _force_download:
-                    if os.path.exists(local_path):
-                        if os.path.isdir(local_path):
-                            shutil.rmtree(local_path)
-                        else:
-                            os.unlink(local_path)
-                    success_object_path = _success_file_path(local_path)
-                    if os.path.exists(success_object_path):
-                        os.unlink(success_object_path)
-                if not _force_download and (version in local_versions_list):
-                    asset_dict = {
-                        "from_cache": True,
-                        "version": version,
-                        "path": local_path,
-                    }
+    def _fetch_asset_version(
+        self,
+        spec: AssetSpec,
+        version: str,
+        local_versions: List[str],
+        _force_download: bool,
+    ):
+        local_path = os.path.join(self.assets_dir, *spec.name.split("/"), version)
+        if not _has_succeeded(local_path) and self.storage_provider:
+            if isinstance(
+                self.storage_provider.driver, LocalStorageDriver
+            ) and self.assets_dir == os.path.join(
+                self.storage_provider.driver.bucket,
+                self.storage_provider.prefix,
+            ):
+                # prevent modelkit from deleting assets locally
+                # if LocalStorageDriver configured as
+                # MODELKIT_ASSETS_DIR = \
+                #     MODELKIT_STORAGE_BUCKET/MODELKIT_STORAGE_PREFIX
+                _force_download = False
+            else:
+                logger.info("Previous fetching of asset has failed, redownloading.")
+                _force_download = True
+
+        if _force_download:
+            if os.path.exists(local_path):
+                if os.path.isdir(local_path):
+                    shutil.rmtree(local_path)
                 else:
-                    if self.storage_provider:
-                        logger.info(
-                            "Fetching distant asset",
-                            local_versions=local_versions_list,
-                        )
-                        asset_download_info = self.storage_provider.download(
-                            spec.name, version, self.assets_dir
-                        )
-                        asset_dict = {
-                            **asset_download_info,
-                            "from_cache": False,
-                            "version": version,
-                            "path": local_path,
-                        }
-                        open(_success_file_path(local_path), "w").close()
-                    else:
-                        raise errors.LocalAssetDoesNotExistError(
-                            name=spec.name,
-                            major=spec.major_version,
-                            minor=spec.minor_version,
-                            local_versions=local_versions_list,
-                        )
-                if spec.sub_part:
-                    local_sub_part = os.path.join(
-                        *(
-                            list(os.path.split(str(asset_dict["path"])))
-                            + [p for p in spec.sub_part.split("/") if p]
-                        )
-                    )
-                    asset_dict["path"] = local_sub_part
+                    os.unlink(local_path)
+            success_object_path = _success_file_path(local_path)
+            if os.path.exists(success_object_path):
+                os.unlink(success_object_path)
+        if not _force_download and (version in local_versions):
+            asset_dict = {
+                "from_cache": True,
+                "version": version,
+                "path": local_path,
+            }
+        else:
+            if self.storage_provider:
+                logger.info(
+                    "Fetching distant asset",
+                    local_versions=local_versions,
+                )
+                asset_download_info = self.storage_provider.download(
+                    spec.name, version, self.assets_dir
+                )
+                asset_dict = {
+                    **asset_download_info,
+                    "from_cache": False,
+                    "version": version,
+                    "path": local_path,
+                }
+                open(_success_file_path(local_path), "w").close()
+            else:
+                raise errors.LocalAssetDoesNotExistError(
+                    name=spec.name,
+                    major=spec.major_version,
+                    minor=spec.minor_version,
+                    local_versions=local_versions,
+                )
 
-            return asset_dict
+        if spec.sub_part:
+            local_sub_part = os.path.join(
+                *(
+                    list(os.path.split(str(asset_dict["path"])))
+                    + [p for p in spec.sub_part.split("/") if p]
+                )
+            )
+            asset_dict["path"] = local_sub_part
+        return asset_dict
 
     def fetch_asset(
         self,
