@@ -98,16 +98,15 @@ class AssetsManager:
                 logger.debug("Fetched remote versions", remote_versions=remote_versions)
 
             all_versions = sort_versions(set(local_versions + remote_versions))
-            if not spec.major_version and not spec.minor_version:
-                logger.debug("Asset has no version information")
-                # no version is specified
-                if not all_versions:
-                    # and none exist
+
+            if not all_versions:
+                if not spec.major_version and not spec.minor_version:
+                    logger.debug("Asset has no version information")
+                    # no version is specified and none exist
                     # in this case, the asset spec is likely a relative or absolute
                     # path to a file/directory
                     return _fetch_local_version(spec.name, local_name)
 
-            if not all_versions:
                 raise errors.LocalAssetDoesNotExistError(
                     name=spec.name,
                     major=spec.major_version,
