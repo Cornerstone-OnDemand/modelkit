@@ -115,17 +115,14 @@ class AssetsManager:
                 )
 
             # at least one version info is missing, fetch the latest
-            if not spec.major_version:
-                spec.major_version, spec.minor_version = parse_version(all_versions[0])
-            elif not spec.minor_version:
-                spec.major_version, spec.minor_version = parse_version(
-                    filter_versions(all_versions, major=spec.major_version)[0]
-                )
-            logger.debug(
-                "Resolved latest version",
-                major=spec.major_version,
-                minor=spec.minor_version,
-            )
+            version = all_versions[0]
+            if spec.major_version:  #  minor is missing
+                version = filter_versions(all_versions, major=spec.major_version)[0]
+
+            major, minor = parse_version(version)
+            spec.major_version, spec.minor_version = str(major), str(minor)
+
+            logger.debug("Resolved latest version", major=major, minor=minor)
 
             version = f"{spec.major_version}.{spec.minor_version}"
             with ContextualizedLogging(version=version):
