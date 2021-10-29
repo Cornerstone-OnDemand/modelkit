@@ -106,37 +106,7 @@ class AssetsManager:
                     # and none exist
                     # in this case, the asset spec is likely a relative or absolute
                     # path to a file/directory
-                    if os.path.exists(local_name):
-                        logger.debug(
-                            "Asset is a valid local path relative to ASSETS_DIR",
-                            local_name=local_name,
-                        )
-                        # if the asset spec resolves to MODELKIT_ASSETS_DIR/spec.name
-                        return {"path": local_name}
-                    elif os.path.exists(
-                        os.path.join(os.getcwd(), *spec.name.split("/"))
-                    ):
-                        logger.debug(
-                            "Asset is a valid relative local path",
-                            local_name=os.path.exists(
-                                os.path.join(os.getcwd(), *spec.name.split("/"))
-                            ),
-                        )
-                        # if the assect spec resolves to cwd/spec.name
-                        return {
-                            "path": os.path.join(os.getcwd(), *spec.name.split("/"))
-                        }
-                    elif os.path.exists(spec.name):
-                        logger.debug(
-                            "Asset is a valid absolute local path",
-                            local_name=os.path.exists(
-                                os.path.join(os.getcwd(), *spec.name.split("/"))
-                            ),
-                        )
-                        # if the asset spec is a valid absolute path
-                        return {"path": spec.name}
-                    else:
-                        raise errors.AssetDoesNotExistError(spec.name)
+                    return _fetch_local_version(spec.name, local_name)
 
             if not spec.major_version or not spec.minor_version:
                 if not all_versions_list:
@@ -274,3 +244,35 @@ class AssetsManager:
         if not return_info:
             return path
         return asset_info
+
+
+def _fetch_local_version(asset_name: str, local_name: str):
+    if os.path.exists(local_name):
+        logger.debug(
+            "Asset is a valid local path relative to ASSETS_DIR",
+            local_name=local_name,
+        )
+        # if the asset spec resolves to MODELKIT_ASSETS_DIR/asset_name
+        return {"path": local_name}
+
+    if os.path.exists(os.path.join(os.getcwd(), *asset_name.split("/"))):
+        logger.debug(
+            "Asset is a valid relative local path",
+            local_name=os.path.exists(
+                os.path.join(os.getcwd(), *asset_name.split("/"))
+            ),
+        )
+        # if the assect spec resolves to cwd/asset_name
+        return {"path": os.path.join(os.getcwd(), *asset_name.split("/"))}
+
+    if os.path.exists(asset_name):
+        logger.debug(
+            "Asset is a valid absolute local path",
+            local_name=os.path.exists(
+                os.path.join(os.getcwd(), *asset_name.split("/"))
+            ),
+        )
+        # if the asset spec is a valid absolute path
+        return {"path": asset_name}
+
+    raise errors.AssetDoesNotExistError(asset_name)
