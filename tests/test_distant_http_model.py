@@ -34,43 +34,70 @@ def run_mocked_service():
     proc.terminate()
 
 
-async def _check_service_async(model, item):
-    res = await model.predict(item)
-    assert item == res
-
-
 @pytest.mark.asyncio
-async def test_distant_http_model(run_mocked_service, event_loop):
+@pytest.mark.parametrize(
+    "item,params,expected",
+    [
+        ({"some_content": "something"}, {}, {"some_content": "something"}),
+        (
+            {"some_content": "something"},
+            {"limit": 10},
+            {"some_content": "something", "limit": 10},
+        ),
+        (
+            {"some_content": "something"},
+            {"skip": 5},
+            {"some_content": "something", "skip": 5},
+        ),
+        (
+            {"some_content": "something"},
+            {"limit": 10, "skip": 5},
+            {"some_content": "something", "limit": 10, "skip": 5},
+        ),
+    ],
+)
+async def test_distant_http_model(
+    item, params, expected, run_mocked_service, event_loop
+):
+    async_model_settings = {
+        "endpoint": "http://127.0.0.1:8000/api/path/endpoint",
+        "async_mode": True,
+    }
+    sync_model_settings = {
+        "endpoint": "http://127.0.0.1:8000/api/path/endpoint",
+        "async_mode": False,
+    }
+
     class SomeDistantHTTPModel(DistantHTTPModel):
         CONFIGURATIONS = {
-            "some_model_sync": {
-                "model_settings": {
-                    "endpoint": "http://127.0.0.1:8000/api/path/endpoint",
-                    "async_mode": False,
-                }
-            },
+            "some_model_sync": {"model_settings": sync_model_settings},
         }
 
     class SomeAsyncDistantHTTPModel(AsyncDistantHTTPModel):
-        CONFIGURATIONS = {
-            "some_model_async": {
-                "model_settings": {
-                    "endpoint": "http://127.0.0.1:8000/api/path/endpoint",
-                    "async_mode": True,
-                }
-            }
-        }
+        CONFIGURATIONS = {"some_model_async": {"model_settings": async_model_settings}}
 
-    lib = ModelLibrary(models=[SomeDistantHTTPModel, SomeAsyncDistantHTTPModel])
-    ITEM = {"some_content": "something"}
+    lib_without_params = ModelLibrary(
+        models=[SomeDistantHTTPModel, SomeAsyncDistantHTTPModel]
+    )
+    lib_with_params = ModelLibrary(
+        models=[SomeDistantHTTPModel, SomeAsyncDistantHTTPModel],
+        configuration={
+            "some_model_sync": {
+                "model_settings": {**params, **sync_model_settings},
+            },
+            "some_model_async": {"model_settings": {**params, **async_model_settings}},
+        },
+    )
+    for lib in [lib_without_params, lib_with_params]:
+        # Test with asynchronous mode
+        m = lib.get("some_model_async")
+        with pytest.raises(AssertionError):
+            assert expected == m(item, endpoint_params=params)
 
-    # Test with asynchronous mode
-    m = lib.get("some_model_async")
-    with pytest.raises(AssertionError):
-        assert ITEM == m(ITEM)
-    await _check_service_async(m, ITEM)
-    await lib.aclose()
+        res = await m.predict(item, endpoint_params=params)
+        assert expected == res
+        await lib.aclose()
 
-    # Test with synchronous mode
-    m = lib.get("some_model_sync")
-    assert ITEM == m(ITEM)
+        # Test with synchronous mode
+        m = lib.get("some_model_sync")
+        assert expected == m(item, endpoint_params=params)
