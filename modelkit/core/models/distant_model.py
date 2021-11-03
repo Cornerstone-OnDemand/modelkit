@@ -1,5 +1,6 @@
 import json
-from typing import Optional
+import urllib.parse
+from typing import Any, Dict, Optional
 
 import aiohttp
 import requests
@@ -37,6 +38,12 @@ def retriable_error(exception):
     ) or isinstance(exception, requests.exceptions.ConnectionError)
 
 
+def build_url(url: str, params: Optional[Dict[str, Any]]) -> str:
+    if not params:
+        return url
+    return "{}?{}".format(url, urllib.parse.urlencode(params))
+
+
 SERVICE_MODEL_RETRY_POLICY = {
     "wait": wait_random_exponential(multiplier=1, min=4, max=10),
     "stop": stop_after_attempt(5),
@@ -50,17 +57,25 @@ class AsyncDistantHTTPModel(AsyncModel[ItemType, ReturnType]):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.endpoint = self.model_settings["endpoint"]
+        self.endpoint_params = self.model_settings.get("endpoint_params", {})
+        self.built_endpoint = build_url(self.endpoint, self.endpoint_params)
         self.aiohttp_session: Optional[aiohttp.ClientSession] = None
 
     def _load(self):
         pass
 
     @retry(**SERVICE_MODEL_RETRY_POLICY)
-    async def _predict(self, item):
+    async def _predict(self, item, **kwargs):
         if self.aiohttp_session is None:
             self.aiohttp_session = aiohttp.ClientSession()
+        endpoint_params = kwargs.get("endpoint_params")
+        built_endpoint = (
+            self.built_endpoint
+            if not endpoint_params
+            else build_url(self.endpoint, endpoint_params)
+        )
         async with self.aiohttp_session.post(
-            self.endpoint,
+            built_endpoint,
             data=json.dumps(item),
             headers={"content-type": "application/json"},
         ) as response:
@@ -79,17 +94,25 @@ class DistantHTTPModel(Model[ItemType, ReturnType]):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.endpoint = self.model_settings["endpoint"]
+        self.endpoint_params = self.model_settings.get("endpoint_params", {})
+        self.built_endpoint = build_url(self.endpoint, self.endpoint_params)
         self.requests_session: Optional[requests.Session] = None
 
     def _load(self):
         pass
 
     @retry(**SERVICE_MODEL_RETRY_POLICY)
-    def _predict(self, item):
+    def _predict(self, item, **kwargs):
         if not self.requests_session:
             self.requests_session = requests.Session()
+        endpoint_params = kwargs.get("endpoint_params")
+        built_endpoint = (
+            self.built_endpoint
+            if not endpoint_params
+            else build_url(self.endpoint, endpoint_params)
+        )
         response = self.requests_session.post(
-            self.endpoint,
+            built_endpoint,
             data=json.dumps(item),
             headers={"content-type": "application/json"},
         )

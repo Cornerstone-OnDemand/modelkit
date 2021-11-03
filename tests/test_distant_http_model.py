@@ -7,7 +7,11 @@ import pytest
 import requests
 
 from modelkit.core.library import ModelLibrary
-from modelkit.core.models.distant_model import AsyncDistantHTTPModel, DistantHTTPModel
+from modelkit.core.models.distant_model import (
+    AsyncDistantHTTPModel,
+    DistantHTTPModel,
+    build_url,
+)
 from tests import TEST_DIR
 
 
@@ -74,3 +78,25 @@ async def test_distant_http_model(run_mocked_service, event_loop):
     # Test with synchronous mode
     m = lib.get("some_model_sync")
     assert ITEM == m(ITEM)
+
+
+@pytest.mark.parametrize(
+    "url,params,expected",
+    [
+        ("", {}, ""),
+        ("", {"param1": "a", "param2": "b"}, "?param1=a&param2=b"),
+        ("some_url_without_params", {}, "some_url_without_params"),
+        (
+            "some_url_with_params",
+            {"param1": 10, "param2": 50},
+            "some_url_with_params?param1=10&param2=50",
+        ),
+        (
+            "some_url_with_none_params",
+            {"param1": None, "param2": None},
+            "some_url_with_none_params?param1=None&param2=None",
+        ),
+    ],
+)
+def test_build_url(url, params, expected):
+    assert build_url(url, params) == expected
