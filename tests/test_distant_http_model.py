@@ -11,7 +11,7 @@ from modelkit.core.models.distant_model import AsyncDistantHTTPModel, DistantHTT
 from tests import TEST_DIR
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def run_mocked_service():
     proc = subprocess.Popen(
         ["uvicorn", "mocked_service:app"], cwd=os.path.join(TEST_DIR, "testdata")
