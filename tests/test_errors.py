@@ -57,7 +57,7 @@ def test_prediction_error_composition():
 
 @pytest.mark.parametrize("model", [ErrorModel(), ErrorBatchModel()])
 def test_prediction_error_complex_tb(monkeypatch, model):
-    monkeypatch.setenv("ENABLE_SIMPLE_TRACEBACK", False)
+    monkeypatch.setenv("MODELKIT_ENABLE_SIMPLE_TRACEBACK", False)
     with pytest.raises(CustomError) as excinfo:
         model.predict({})
     assert len(excinfo.traceback) > 3
@@ -106,7 +106,7 @@ async def test_prediction_error_async(model):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("model", [AsyncErrorModel(), AsyncErrorBatchModel()])
 async def test_prediction_error_complex_tb_async(monkeypatch, model):
-    monkeypatch.setenv("ENABLE_SIMPLE_TRACEBACK", False)
+    monkeypatch.setenv("MODELKIT_ENABLE_SIMPLE_TRACEBACK", False)
     with pytest.raises(CustomError) as excinfo:
         await model.predict({})
     assert len(excinfo.traceback) > 3
