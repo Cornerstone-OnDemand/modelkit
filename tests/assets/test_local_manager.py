@@ -4,7 +4,7 @@ import shutil
 import pytest
 
 from modelkit.assets import errors
-from modelkit.assets.manager import AssetsManager
+from modelkit.assets.manager import AssetsManager, _fetch_local_version
 from modelkit.assets.remote import StorageProvider
 from modelkit.assets.settings import AssetSpec
 from tests import TEST_DIR
@@ -335,3 +335,19 @@ def test_fetch_asset_version_with_sub_parts(working_dir):
         "version": version,
         "path": os.path.join(working_dir, asset_name, version, sub_part),
     }
+
+
+def test_fetch_local_version():
+    asset_name = os.path.join("category", "asset")
+    local_name = os.path.join(
+        TEST_DIR, "testdata", "test-bucket", "assets-prefix", asset_name
+    )
+    assert _fetch_local_version("", local_name) == {"path": local_name}
+    assert _fetch_local_version("README.md", "") == {
+        "path": os.path.join(os.getcwd(), "README.md")
+    }
+    asset_name = os.path.join(os.getcwd(), "README.md")
+    assert _fetch_local_version(asset_name, "") == {"path": asset_name}
+
+    with pytest.raises(errors.AssetDoesNotExistError):
+        _fetch_local_version("asset/not/exists", "")
