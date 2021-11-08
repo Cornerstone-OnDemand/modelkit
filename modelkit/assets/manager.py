@@ -138,6 +138,12 @@ class AssetsManager:
         _force_download: bool,
     ):
         local_path = os.path.join(self.assets_dir, *spec.name.split("/"), version)
+
+        if _force_download and not self.storage_provider:
+            raise errors.StorageDriverError(
+                "can not force_download with no storage provider"
+            )
+
         if not _has_succeeded(local_path) and self.storage_provider:
             if isinstance(
                 self.storage_provider.driver, LocalStorageDriver
@@ -154,7 +160,7 @@ class AssetsManager:
                 logger.info("Previous fetching of asset has failed, redownloading.")
                 _force_download = True
 
-        if _force_download:
+        if _force_download and self.storage_provider:
             if os.path.exists(local_path):
                 if os.path.isdir(local_path):
                     shutil.rmtree(local_path)
