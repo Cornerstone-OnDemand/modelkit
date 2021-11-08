@@ -172,7 +172,7 @@ def test_local_manager_with_fetch_external_bucket(working_dir):
 
 def test_fetch_asset_version_no_storage_provider(working_dir):
     manager = AssetsManager(assets_dir=working_dir)
-    asset_name = "category/asset"
+    asset_name = os.path.join("category", "asset")
     spec = AssetSpec(
         name=asset_name,
         major_version="0",
@@ -228,7 +228,7 @@ def test_fetch_asset_version_with_storage_provider(working_dir):
             prefix="assets-prefix",
         ),
     )
-    asset_name = "category/asset"
+    asset_name = os.path.join("category", "asset")
     spec = AssetSpec(
         name=asset_name,
         major_version="0",
@@ -315,7 +315,7 @@ def test_fetch_asset_version_with_sub_parts(working_dir):
     manager = AssetsManager(
         assets_dir=working_dir,
     )
-    asset_name = "category/asset"
+    asset_name = os.path.join("category", "asset")
     sub_part = "sub_part"
     spec = AssetSpec(
         name=asset_name, major_version="0", minor_version="0", sub_part=sub_part
