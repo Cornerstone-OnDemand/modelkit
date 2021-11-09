@@ -50,17 +50,19 @@ class AsyncDistantHTTPModel(AsyncModel[ItemType, ReturnType]):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.endpoint = self.model_settings["endpoint"]
+        self.endpoint_params = self.model_settings.get("endpoint_params", {})
         self.aiohttp_session: Optional[aiohttp.ClientSession] = None
 
     def _load(self):
         pass
 
     @retry(**SERVICE_MODEL_RETRY_POLICY)
-    async def _predict(self, item):
+    async def _predict(self, item, **kwargs):
         if self.aiohttp_session is None:
             self.aiohttp_session = aiohttp.ClientSession()
         async with self.aiohttp_session.post(
             self.endpoint,
+            params=kwargs.get("endpoint_params", self.endpoint_params),
             data=json.dumps(item),
             headers={"content-type": "application/json"},
         ) as response:
@@ -79,17 +81,19 @@ class DistantHTTPModel(Model[ItemType, ReturnType]):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.endpoint = self.model_settings["endpoint"]
+        self.endpoint_params = self.model_settings.get("endpoint_params", {})
         self.requests_session: Optional[requests.Session] = None
 
     def _load(self):
         pass
 
     @retry(**SERVICE_MODEL_RETRY_POLICY)
-    def _predict(self, item):
+    def _predict(self, item, **kwargs):
         if not self.requests_session:
             self.requests_session = requests.Session()
         response = self.requests_session.post(
             self.endpoint,
+            params=kwargs.get("endpoint_params", self.endpoint_params),
             data=json.dumps(item),
             headers={"content-type": "application/json"},
         )
