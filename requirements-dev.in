@@ -7,7 +7,7 @@ coverage
 pytest
 pytest-asyncio
 black
-flake8
+flake8<4 # flake8==4.0.1 pins importlib-metadata<4.3 which leads to a conflict
 isort
 nox
 google-api-core
