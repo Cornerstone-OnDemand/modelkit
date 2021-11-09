@@ -1,7 +1,7 @@
 import os
 import re
 import shutil
-from typing import List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union, cast
 
 import filelock
 from structlog import get_logger
@@ -136,7 +136,7 @@ class AssetsManager:
         version: str,
         local_versions: List[str],
         _force_download: bool,
-    ):
+    ) -> Dict[str, Any]:
         local_path = os.path.join(self.assets_dir, *spec.name.split("/"), version)
 
         if _force_download and not self.storage_provider:
@@ -248,7 +248,7 @@ class AssetsManager:
         return asset_info
 
 
-def _fetch_local_version(asset_name: str, local_name: str):
+def _fetch_local_version(asset_name: str, local_name: str) -> Dict[str, str]:
     if os.path.exists(local_name):
         logger.debug(
             "Asset is a valid local path relative to ASSETS_DIR",
