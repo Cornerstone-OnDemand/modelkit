@@ -257,23 +257,14 @@ def _fetch_local_version(asset_name: str, local_name: str) -> Dict[str, str]:
         # if the asset spec resolves to MODELKIT_ASSETS_DIR/asset_name
         return {"path": local_name}
 
-    if os.path.exists(os.path.join(os.getcwd(), *asset_name.split("/"))):
-        logger.debug(
-            "Asset is a valid relative local path",
-            local_name=os.path.exists(
-                os.path.join(os.getcwd(), *asset_name.split("/"))
-            ),
-        )
-        # if the assect spec resolves to cwd/asset_name
-        return {"path": os.path.join(os.getcwd(), *asset_name.split("/"))}
+    path = os.path.join(os.getcwd(), *asset_name.split("/"))
+    if os.path.exists(path):
+        logger.debug("Asset is a valid relative local path", local_name=path)
+        # if the asset spec resolves to cwd/asset_name
+        return {"path": path}
 
     if os.path.exists(asset_name):
-        logger.debug(
-            "Asset is a valid absolute local path",
-            local_name=os.path.exists(
-                os.path.join(os.getcwd(), *asset_name.split("/"))
-            ),
-        )
+        logger.debug("Asset is a valid absolute local path", local_name=path)
         # if the asset spec is a valid absolute path
         return {"path": asset_name}
 
