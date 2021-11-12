@@ -132,7 +132,7 @@ class Asset:
         logger.debug(
             "Model loaded",
             model_name=self.configuration_key,
-            time=humanize.naturaldelta(m.time, minimum_unit="microseconds"),
+            time=humanize.naturaldelta(m.time, minimum_unit="seconds"),
             time_s=m.time,
             memory=humanize.naturalsize(m.increment)
             if m.increment is not None
@@ -297,7 +297,7 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
         if self._load_time:
             sub_t = t.add(
                 "[deep_sky_blue1]load time[/deep_sky_blue1]: [orange3]"
-                + humanize.naturaldelta(self._load_time, minimum_unit="microseconds")
+                + humanize.naturaldelta(self._load_time, minimum_unit="seconds")
             )
 
         if self._load_memory_increment is not None:
