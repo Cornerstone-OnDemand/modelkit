@@ -190,7 +190,7 @@ class ModelLibrary:
         logger.info(
             "Model and dependencies loaded",
             name=model_name,
-            time=humanize.naturaldelta(m.time, minimum_unit="microseconds"),
+            time=humanize.naturaldelta(m.time, minimum_unit="seconds"),
             time_s=m.time,
             memory=humanize.naturalsize(m.increment)
             if m.increment is not None
