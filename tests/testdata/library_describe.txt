@@ -35,7 +35,7 @@ Models
     ├── doc: More complex                                                       
     │                                                                           
     │           With **a lot** of documentation                                 
-    ├── signature: ItemModel -> ItemModel                                       
+    ├── signature: ItemModel -> ResultModel                                     
     ├── dependencies                                                            
     │   └── some_model_a                                                        
     ├── batch size: 128                                                         

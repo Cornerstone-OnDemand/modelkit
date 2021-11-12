@@ -63,7 +63,7 @@
   "paths": {
     "/predict/async_model": {
       "post": {
-        "description": "\n\n```                                                                                \n├── configuration: async_model                                                  \n├── signature: ItemModel -> ItemModel                                           \n```",
+        "description": "\n\n```                                                                                \n├── configuration: async_model                                                  \n├── signature: ItemModel -> ResultModel                                         \n```",
         "operationId": "_aendpoint_predict_async_model_post",
         "requestBody": {
           "content": {
@@ -103,7 +103,7 @@
     },
     "/predict/batch/async_model": {
       "post": {
-        "description": "\n\n```                                                                                \n├── configuration: async_model                                                  \n├── signature: ItemModel -> ItemModel                                           \n```",
+        "description": "\n\n```                                                                                \n├── configuration: async_model                                                  \n├── signature: ItemModel -> ResultModel                                         \n```",
         "operationId": "_aendpoint_predict_batch_async_model_post",
         "requestBody": {
           "content": {
@@ -189,7 +189,7 @@
     },
     "/predict/batch/some_complex_model": {
       "post": {
-        "description": "    With **a lot** of documentation\n\n```                                                                                \n├── configuration: some_complex_model                                           \n├── doc: More complex                                                           \n│                                                                               \n│       With **a lot** of documentation                                         \n├── signature: ItemModel -> ItemModel                                           \n```",
+        "description": "    With **a lot** of documentation\n\n```                                                                                \n├── configuration: some_complex_model                                           \n├── doc: More complex                                                           \n│                                                                               \n│       With **a lot** of documentation                                         \n├── signature: ItemModel -> ResultModel                                         \n```",
         "operationId": "_endpoint_predict_batch_some_complex_model_post",
         "requestBody": {
           "content": {
@@ -357,7 +357,7 @@
     },
     "/predict/some_complex_model": {
       "post": {
-        "description": "    With **a lot** of documentation\n\n```                                                                                \n├── configuration: some_complex_model                                           \n├── doc: More complex                                                           \n│                                                                               \n│       With **a lot** of documentation                                         \n├── signature: ItemModel -> ItemModel                                           \n```",
+        "description": "    With **a lot** of documentation\n\n```                                                                                \n├── configuration: some_complex_model                                           \n├── doc: More complex                                                           \n│                                                                               \n│       With **a lot** of documentation                                         \n├── signature: ItemModel -> ResultModel                                         \n```",
         "operationId": "_endpoint_predict_some_complex_model_post",
         "requestBody": {
           "content": {
