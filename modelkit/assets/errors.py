@@ -38,9 +38,23 @@ class InvalidAssetSpecError(AssetsManagerError):
         super().__init__(f"Invalid asset spec `{spec}`")
 
 
+class InvalidVersionError(InvalidAssetSpecError):
+    def __init__(self, version):
+        super().__init__(f"Asset version `{version}` is not valid.")
+
+
+class InvalidNameError(InvalidAssetSpecError):
+    def __init__(self, name):
+        super().__init__(f"Asset name `{name}` is not valid.")
+
+
 class LocalAssetDoesNotExistError(AssetsManagerError):
-    def __init__(self, name, major, minor, local_versions):
+    def __init__(self, name, version, local_versions):
         super().__init__(
-            f"Asset version `{major}.{minor}` for `{name}` does not exist locally. "
+            f"Asset version `{version}` for `{name}` does not exist locally. "
             f"Available asset versions: " + ", ".join(local_versions)
         )
+
+
+class UnknownAssetsVersioningSystemError(AssetsManagerError):
+    pass

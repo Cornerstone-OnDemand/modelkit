@@ -1,66 +1,116 @@
+import os
 import re
-from typing import Optional
+import typing
 
-from pydantic import BaseModel, validator
-from structlog import get_logger
+from modelkit.assets import errors
+from modelkit.assets.versioning.major_minor import MajorMinorAssetsVersioningSystem
+from modelkit.assets.versioning.simple_date import SimpleDateAssetsVersioningSystem
+from modelkit.assets.versioning.versioning import AssetsVersioningSystem
 
-from modelkit.assets.errors import InvalidAssetSpecError
+GENERIC_ASSET_NAME_RE = (
+    r"(([A-Z]:\\)|/)?[a-zA-Z0-9]([a-zA-Z0-9\-\_\.\/\\]*[a-zA-Z0-9])?"
+)
+GENERIC_ASSET_VERSION_RE = r"(?P<version>[0-9A-Za-z\.\-\_]+?)"
 
-SUPPORTED_MODELKIT_STORAGE_PROVIDERS = {"s3", "gcs", "local"}
-
-logger = get_logger(__name__)
-
-NAME_RE = r"[a-z0-9]([a-z0-9\-\_\.]*[a-z0-9])?"
-
-VERSION_SPEC_RE = r"(?P<major_version>[0-9]+)(\.(?P<minor_version>[0-9]+))?"
-
-ASSET_NAME_RE = r"(([A-Z]:\\)|/)?[a-zA-Z0-9]([a-zA-Z0-9\-\_\.\/\\]*[a-zA-Z0-9])?"
 
 REMOTE_ASSET_RE = (
-    f"^(?P<name>{ASSET_NAME_RE})"
-    rf"(:{VERSION_SPEC_RE})?(\[(?P<sub_part>(\/?{ASSET_NAME_RE})+)\])?$"
+    f"^(?P<name>{GENERIC_ASSET_NAME_RE})"
+    rf"(:{GENERIC_ASSET_VERSION_RE})?(\[(?P<sub_part>(\/?{GENERIC_ASSET_NAME_RE})+)\])?$"
 )
 
 
-class AssetSpec(BaseModel):
-    name: str
-    major_version: Optional[str]
-    minor_version: Optional[str]
-    sub_part: Optional[str]
+class AssetSpec:
+    versioning: AssetsVersioningSystem
 
-    @validator("name")
-    @classmethod
-    def is_name_valid(cls, v):
-        if not re.fullmatch(ASSET_NAME_RE, v or ""):
-            raise ValueError(
-                f"Invalid name `{v}`, can only contain [a-z], [0-9], [/], [-] or [_]"
+    def __init__(
+        self,
+        name: str,
+        versioning: str = None,
+        version: str = None,
+        sub_part: str = None,
+    ) -> None:
+
+        versioning = (
+            versioning
+            or os.environ.get("MODELKIT_ASSETS_VERSIONING_SYSTEM")
+            or "major_minor"
+        )
+
+        if versioning == "major_minor":
+            self.versioning = MajorMinorAssetsVersioningSystem()
+        elif versioning == "simple_date":
+            self.versioning = SimpleDateAssetsVersioningSystem()
+        else:
+            raise errors.UnknownAssetsVersioningSystemError(versioning)
+
+        self.check_name_valid(name)
+        self.name = name
+        if version:
+            self.check_version_valid(version)
+            self.versioning.check_version_valid(version)
+
+        self.version = version
+        self.sub_part = sub_part
+
+    def is_version_complete(self):
+        if self.version:
+            return self.versioning.is_version_complete(self.version)
+        return False
+
+    def sort_versions(self, version_list: typing.Iterable[str]) -> typing.List[str]:
+        return self.versioning.sort_versions(version_list)
+
+    def set_latest_version(self, all_versions: typing.List[str]):
+        if not self.version:
+            self.version = all_versions[0]
+        else:
+            self.version = self.versioning.get_latest_partial_version(
+                self.version, all_versions
             )
-        return v
 
-    @validator("major_version")
-    @classmethod
-    def is_version_valid(cls, v):
-        if v:
-            if not re.fullmatch("^[0-9]+$", v):
-                raise ValueError(f"Invalid asset version `{v}`")
-        return v
+    def get_local_versions(self, local_name) -> typing.List[str]:
+        if os.path.isdir(local_name):
+            return self.versioning.sort_versions(
+                version_list=[
+                    d
+                    for d in os.listdir(local_name)
+                    if self.versioning.is_version_valid(d)
+                ]
+            )
+        else:
+            return []
 
-    @validator("minor_version")
     @classmethod
-    def has_major_version(cls, v, values):
-        if v:
-            if not values.get("major_version"):
-                raise ValueError(
-                    "Cannot specify a minor version without a major version."
-                )
-        return v
+    def check_name_valid(cls, name: str):
+        if not re.fullmatch(GENERIC_ASSET_NAME_RE, name):
+            raise errors.InvalidNameError(
+                f"Invalid name `{name}`, can only contain [a-z], [0-9], [/], [-] or [_]"
+            )
+
+    @classmethod
+    def check_version_valid(cls, name: str):
+        if name and not re.fullmatch(GENERIC_ASSET_VERSION_RE, name):
+            raise errors.InvalidVersionError(
+                f"Invalid version `{name}`, can only contain [a-zA-Z0-9], [-._]"
+            )
 
     @staticmethod
-    def from_string(s):
-        m = re.match(REMOTE_ASSET_RE, s)
-        if not m:
-            raise InvalidAssetSpecError(s)
-        return AssetSpec(**m.groupdict())
+    def from_string(
+        input_string: str,
+        versioning: str = None,
+    ):
+        match = re.match(REMOTE_ASSET_RE, input_string)
+        if not match:
+            raise errors.InvalidAssetSpecError(input_string)
 
-    class Config:
-        extra = "forbid"
+        return AssetSpec(versioning=versioning, **match.groupdict())
+
+    def __eq__(self, other):
+        if not isinstance(other, AssetSpec):
+            return False
+
+        return (
+            self.name == other.name
+            and self.version == other.version
+            and self.sub_part == other.sub_part
+        )

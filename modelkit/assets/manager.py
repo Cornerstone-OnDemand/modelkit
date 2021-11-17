@@ -1,5 +1,4 @@
 import os
-import re
 import shutil
 from typing import Any, Dict, List, Optional, Union, cast
 
@@ -10,12 +9,6 @@ from modelkit.assets import errors
 from modelkit.assets.drivers.local import LocalStorageDriver
 from modelkit.assets.remote import NoConfiguredProviderError, StorageProvider
 from modelkit.assets.settings import AssetSpec
-from modelkit.assets.versioning import (
-    VERSION_RE,
-    filter_versions,
-    parse_version,
-    sort_versions,
-)
 from modelkit.utils.logging import ContextualizedLogging
 
 logger = get_logger(__name__)
@@ -71,25 +64,16 @@ class AssetsManager:
             except NoConfiguredProviderError:
                 logger.info("No remote storage provider configured")
 
-    def get_local_versions_info(self, name):
-        if os.path.isdir(name):
-            return sort_versions(
-                d for d in os.listdir(name) if re.fullmatch(VERSION_RE, d)
-            )
-        else:
-            return []
-
     def _fetch_asset(self, spec: AssetSpec, _force_download=False):
         with ContextualizedLogging(name=spec.name):
             local_name = os.path.join(self.assets_dir, *spec.name.split("/"))
-            local_versions = self.get_local_versions_info(local_name)
+            local_versions = spec.get_local_versions(local_name)
             logger.debug("Local versions", local_versions=local_versions)
 
-            if spec.major_version and spec.minor_version:
-                version = f"{spec.major_version}.{spec.minor_version}"
-                with ContextualizedLogging(version=version):
+            if spec.is_version_complete():
+                with ContextualizedLogging(version=spec.version):
                     return self._fetch_asset_version(
-                        spec, version, local_versions, _force_download
+                        spec, local_versions, _force_download
                     )
 
             remote_versions = []
@@ -97,10 +81,12 @@ class AssetsManager:
                 remote_versions = self.storage_provider.get_versions_info(spec.name)
                 logger.debug("Fetched remote versions", remote_versions=remote_versions)
 
-            all_versions = sort_versions(set(local_versions + remote_versions))
+            all_versions = spec.sort_versions(
+                version_list=set(local_versions + remote_versions)
+            )
 
             if not all_versions:
-                if not spec.major_version and not spec.minor_version:
+                if not spec.version:
                     logger.debug("Asset has no version information")
                     # no version is specified and none exist
                     # in this case, the asset spec is likely a relative or absolute
@@ -109,35 +95,26 @@ class AssetsManager:
 
                 raise errors.LocalAssetDoesNotExistError(
                     name=spec.name,
-                    major=spec.major_version,
-                    minor=spec.minor_version,
+                    version=spec.version,
                     local_versions=local_versions,
                 )
 
-            # at least one version info is missing, fetch the latest
-            version = all_versions[0]
-            if spec.major_version:  #  minor is missing
-                version = filter_versions(all_versions, major=spec.major_version)[0]
+            # at least one version info is missing, update to the latest
+            spec.set_latest_version(all_versions)
 
-            major, minor = parse_version(version)
-            spec.major_version, spec.minor_version = str(major), str(minor)
-
-            logger.debug("Resolved latest version", major=major, minor=minor)
-
-            version = f"{spec.major_version}.{spec.minor_version}"
-            with ContextualizedLogging(version=version):
-                return self._fetch_asset_version(
-                    spec, version, local_versions, _force_download
-                )
+            with ContextualizedLogging(version=spec.version):
+                logger.debug("Resolved latest version", version=spec.version)
+                return self._fetch_asset_version(spec, local_versions, _force_download)
 
     def _fetch_asset_version(
         self,
         spec: AssetSpec,
-        version: str,
         local_versions: List[str],
         _force_download: bool,
     ) -> Dict[str, Any]:
-        local_path = os.path.join(self.assets_dir, *spec.name.split("/"), version)
+        local_path = os.path.join(
+            self.assets_dir, *spec.name.split("/"), spec.version or ""
+        )
 
         if _force_download and not self.storage_provider:
             raise errors.StorageDriverError(
@@ -170,29 +147,28 @@ class AssetsManager:
             if os.path.exists(success_object_path):
                 os.unlink(success_object_path)
 
-        if not _force_download and (version in local_versions):
+        if not _force_download and (spec.version in local_versions):
             asset_dict = {
                 "from_cache": True,
-                "version": version,
+                "version": spec.version,
                 "path": local_path,
             }
         elif self.storage_provider:
             logger.info("Fetching distant asset", local_versions=local_versions)
             asset_download_info = self.storage_provider.download(
-                spec.name, version, self.assets_dir
+                spec.name, spec.version, self.assets_dir
             )
             asset_dict = {
                 **asset_download_info,
                 "from_cache": False,
-                "version": version,
+                "version": spec.version,
                 "path": local_path,
             }
             open(_success_file_path(local_path), "w").close()
         else:
             raise errors.LocalAssetDoesNotExistError(
                 name=spec.name,
-                major=spec.major_version,
-                minor=spec.minor_version,
+                version=spec.version,
                 local_versions=local_versions,
             )
 

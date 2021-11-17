@@ -80,7 +80,7 @@ def test_lock_assetsmanager(capsys, working_dir):
         prefix="prefix",
     )
     data_path = os.path.join(TEST_DIR, "assets", "testdata", "some_data_folder")
-    mng.new(data_path, "category-test/some-data.ext")
+    mng.new(data_path, "category-test/some-data.ext", "0.0")
 
     # start 4 processes that will attempt to download it
     script_path = os.path.join(TEST_DIR, "assets", "resources", "download_asset.py")

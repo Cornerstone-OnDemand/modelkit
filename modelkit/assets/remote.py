@@ -4,7 +4,7 @@ import json
 import os
 import tempfile
 import time
-from typing import Optional
+from typing import Optional, Union
 
 import humanize
 from dateutil import parser, tz
@@ -15,11 +15,7 @@ from modelkit.assets.drivers.abc import StorageDriver
 from modelkit.assets.drivers.gcs import GCSStorageDriver
 from modelkit.assets.drivers.local import LocalStorageDriver
 from modelkit.assets.drivers.s3 import S3StorageDriver
-from modelkit.assets.versioning import (
-    MajorVersionDoesNotExistError,
-    increment_version,
-    sort_versions,
-)
+from modelkit.assets.settings import AssetSpec
 from modelkit.utils.logging import ContextualizedLogging
 
 logger = get_logger(__name__)
@@ -115,65 +111,52 @@ class StorageProvider:
             meta["push_date"] = parser.isoparse(meta["push_date"])
         return meta
 
-    def new(self, asset_path, name, dry_run=False):
+    def new(self, asset_path: str, name: str, version: str, dry_run=False):
         """
         Upload a new asset
         """
         versions_object_name = self.get_versions_object_name(name)
         if self.driver.exists(versions_object_name):
             raise errors.AssetAlreadyExistsError(name)
-        logger.info(
-            "Pushing new asset",
-            name=name,
-            asset_path=asset_path,
-        )
-        self.push(asset_path, name, "0.0", dry_run=dry_run)
+        logger.info("Pushing new asset", name=name, asset_path=asset_path)
+        self.push(asset_path, name, version, dry_run=dry_run)
 
         with tempfile.TemporaryDirectory() as dversions:
             with open(os.path.join(dversions, "versions.json"), "w") as f:
-                json.dump({"versions": ["0.0"]}, f)
-            logger.debug(
-                "Pushing versions file",
-                name=name,
-            )
+                json.dump({"versions": [version]}, f)
+            logger.debug("Pushing versions file", name=name)
             if not dry_run:
                 self.driver.upload_object(
                     os.path.join(dversions, "versions.json"),
                     versions_object_name,
                 )
 
-    def update(self, asset_path, name, bump_major=False, major=None, dry_run=False):
+    def update(self, asset_path: str, name: str, version: str, dry_run=False):
         """
         Update an existing asset version
         """
-        versions_object_name = self.get_versions_object_name(name)
+        spec = AssetSpec(name=name, version=version)
+        versions_object_name = self.get_versions_object_name(spec.name)
         if not self.driver.exists(versions_object_name):
-            raise errors.AssetDoesNotExistError(name)
+            raise errors.AssetDoesNotExistError(spec.name)
         logger.info(
             "Updating asset",
-            name=name,
-            major=major,
+            name=spec.name,
+            version=spec.version,
             asset_path=asset_path,
         )
-        versions_list = self.get_versions_info(name)
+        versions_list = self.get_versions_info(spec.name)
 
-        try:
-            new_version = increment_version(
-                versions_list, major=major, bump_major=bump_major
-            )
-        except MajorVersionDoesNotExistError:
-            raise errors.AssetMajorVersionDoesNotExistError(name, major)
-
-        self.push(asset_path, name, new_version, dry_run=dry_run)
+        self.push(asset_path, spec.name, spec.version, dry_run=dry_run)
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             versions_fn = os.path.join(tmp_dir, "versions.json")
-            versions = sort_versions([new_version] + versions_list)
+            versions = spec.sort_versions([spec.version] + versions_list)
             with open(versions_fn, "w") as f:
                 json.dump({"versions": versions}, f)
             logger.debug(
                 "Pushing updated versions file",
-                name=name,
+                name=spec.name,
                 versions=versions,
             )
             if not dry_run:
@@ -192,7 +175,7 @@ class StorageProvider:
 
             object_name = self.get_object_name(name, version)
             if self.driver.exists(object_name):
-                raise Exception(
+                raise errors.AssetAlreadyExistsError(
                     f"`{name}` already exists, cannot"
                     f" overwrite asset for version `{version}`"
                 )
