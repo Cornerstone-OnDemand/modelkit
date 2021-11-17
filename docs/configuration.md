@@ -32,6 +32,9 @@ These variables are necessary to set a remote storage from which to retrieve ass
       machines)
     - for `MODELKIT_STORAGE_PROVIDER=s3`, you need to instantiate `AWS_PROFILE`
 
+### Assets versioning related environment variable
+
+ - `MODELKIT_ASSETS_VERSIONING_SYSTEM` will fix the assets versioning system. It can be `major_minor` or `simple_date`
 
 ### TF serving environment variables
 

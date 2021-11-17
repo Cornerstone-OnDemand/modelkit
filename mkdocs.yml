@@ -28,6 +28,7 @@ nav:
       - Retrieving assets: 'assets/retrieving_assets.md'
       - Local assets dir: 'assets/assets_dir.md'
       - Remote store organization: 'assets/store_organization.md'
+      - Versioning systems: 'assets/versioning.md'
     - Special models:
       - Tensorflow models: 'library/special/tensorflow.md'
       - Distant Models: 'library/special/distant.md'
