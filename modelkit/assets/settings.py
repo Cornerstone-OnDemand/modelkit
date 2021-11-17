@@ -14,8 +14,9 @@ GENERIC_ASSET_VERSION_RE = r"(?P<version>[0-9A-Za-z\.\-\_]+?)"
 
 
 REMOTE_ASSET_RE = (
-    f"^(?P<name>{GENERIC_ASSET_NAME_RE})"
-    rf"(:{GENERIC_ASSET_VERSION_RE})?(\[(?P<sub_part>(\/?{GENERIC_ASSET_NAME_RE})+)\])?$"
+    rf"^(?P<name>{GENERIC_ASSET_NAME_RE})"
+    rf"(:{GENERIC_ASSET_VERSION_RE})?"
+    rf"(\[(?P<sub_part>(\/?{GENERIC_ASSET_NAME_RE})+)\])?$"
 )
 
 

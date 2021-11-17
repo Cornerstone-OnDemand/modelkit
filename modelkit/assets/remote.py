@@ -4,7 +4,7 @@ import json
 import os
 import tempfile
 import time
-from typing import Optional, Union
+from typing import Optional
 
 import humanize
 from dateutil import parser, tz

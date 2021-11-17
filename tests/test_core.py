@@ -1,6 +1,5 @@
 import asyncio
 import os
-from sys import version
 
 import pytest
 

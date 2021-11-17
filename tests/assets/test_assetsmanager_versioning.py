@@ -4,7 +4,6 @@ import os
 import pytest
 
 from modelkit.assets import errors
-from modelkit.assets.settings import AssetSpec
 from tests.conftest import skip_unless
 
 test_path = os.path.dirname(os.path.realpath(__file__))
