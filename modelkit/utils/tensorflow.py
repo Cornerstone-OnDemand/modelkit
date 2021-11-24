@@ -44,18 +44,18 @@ def deploy_tf_models(lib, mode, config_name="config", verbose=False):
         spec = AssetSpec.from_string(model_configuration.asset)
         if mode == "local-docker":
             model_paths[model_name] = "/".join(
-                ("/config", spec.name, f"{spec.major_version}.{spec.minor_version}")
+                ("/config", spec.name, spec.version or "")
             ) + (spec.sub_part or "")
         elif mode == "local-process":
             model_paths[model_name] = os.path.join(
                 manager.assets_dir,
                 *spec.name.split("/"),
-                f"{spec.major_version}.{spec.minor_version}",
+                f"{spec.version}",
                 *(spec.sub_part.split("/") if spec.sub_part else ()),
             )
         elif mode == "remote":
             object_name = manager.storage_provider.get_object_name(
-                spec.name, f"{spec.major_version}.{spec.minor_version}"
+                spec.name, spec.version or ""
             )
             model_paths[model_name] = driver.get_object_uri(object_name)
 

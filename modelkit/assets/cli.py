@@ -14,12 +14,6 @@ from modelkit.assets.errors import ObjectDoesNotExistError
 from modelkit.assets.manager import AssetsManager
 from modelkit.assets.remote import StorageProvider
 from modelkit.assets.settings import AssetSpec
-from modelkit.assets.versioning import (
-    filter_versions,
-    increment_version,
-    parse_version,
-    sort_versions,
-)
 
 
 @click.group("assets")
@@ -117,9 +111,10 @@ def new(asset_path, asset_spec, storage_prefix, dry_run):
 
     print(f"Current asset: `{asset_spec}`")
     spec = AssetSpec.from_string(asset_spec)
+    version = spec.versioning.get_initial_version()
     print(f" - name = `{spec.name}`")
 
-    print(f"Push a new asset `{spec.name}` with version `0.0`?")
+    print(f"Push a new asset `{spec.name}` " f"with version `{version}`?")
 
     response = click.prompt("[y/N]")
     if response == "y":
@@ -128,7 +123,7 @@ def new(asset_path, asset_spec, storage_prefix, dry_run):
                 asset_path = _download_object_or_prefix(
                     manager, asset_path=asset_path, destination_dir=tmp_dir
                 )
-            manager.new(asset_path, spec.name, dry_run)
+            manager.new(asset_path, spec.name, version, dry_run)
     else:
         print("Aborting.")
 
@@ -137,48 +132,31 @@ def new(asset_path, asset_spec, storage_prefix, dry_run):
 @click.argument("asset_path")
 @click.argument("asset_spec")
 @click.option(
-    "--bump-major", is_flag=True, help="Push a new major version (1.0, 2.0, etc.)"
+    "--bump-major",
+    is_flag=True,
+    help="[minor-major] Push a new major version (1.0, 2.0, etc.)",
 )
 @click.option("--storage-prefix", envvar="MODELKIT_STORAGE_PREFIX")
 @click.option("--dry-run", is_flag=True)
 def update(asset_path, asset_spec, storage_prefix, bump_major, dry_run):
     """
-    Update an existing asset.
+    Update an existing asset using versioning system
+    set in MODELKIT_ASSETS_VERSIONING_SYSTEM (major/minor by default)
 
     Update an existing asset ASSET_SPEC with ASSET_PATH file.
 
+
     By default will upload a new minor version.
 
-    ASSET_PATH is the path to the file. The file can be local or on GCS
-    (starting with gs://)
+    ASSET_PATH is the path to the file. The file can be local remote (AWS or GCS)
+    (starting with gs:// or s3://)
 
     ASSET_SPEC is and asset specification of the form
-    [asset_name]:[major_version]
-    Minor version information is ignored.
+    [asset_name]:[version]
 
-    Examples:
-
-    - Bumping the minor version: assuming modelkit/sentence_piece has versions 0.1, 1.1,
-    running
-
-        $ assets update /path/to/vectorizer modelkit/vectorizer:1
-
-    will add a version 1.2
-
-    - Bumping the major version: assuming modelkit/sentence_piece has versions 0.1, 1.0,
-    running
-
-        $ assets update /path/to/vectorizer modelkit/vectorizer:1 --bump-major
-
-    will add a version 2.0
-
-    - Bumping the minor version of an older asset: assuming modelkit/sentence_piece has
-    versions 0.1, 1.0, running
-
-        $ assets update /path/to/vectorizer modelkit/vectorizer:0
-
-    will add a version 0.2
+    Specific documentation depends on the choosen model
     """
+
     _check_asset_file_number(asset_path)
     manager = StorageProvider(
         prefix=storage_prefix,
@@ -189,31 +167,30 @@ def update(asset_path, asset_spec, storage_prefix, bump_major, dry_run):
     print(f" - prefix = `{storage_prefix}`")
 
     print(f"Current asset: `{asset_spec}`")
-    spec = AssetSpec.from_string(asset_spec)
+    versioning_system = os.environ.get(
+        "MODELKIT_ASSETS_VERSIONING_SYSTEM", "major_minor"
+    )
+    spec = AssetSpec.from_string(asset_spec, versioning=versioning_system)
+    print(f" - versioning system = `{versioning_system}` ")
     print(f" - name = `{spec.name}`")
-    print(f" - major version = `{spec.major_version}`")
-    print(f" - minor version (ignored) = `{spec.minor_version}`")
+    print(f" - version = `{spec.version}`")
 
     try:
-        versions_list = manager.get_versions_info(spec.name)
+        version_list = manager.get_versions_info(spec.name)
     except ObjectDoesNotExistError:
         print("Remote asset not found. Create it first using `new`")
         sys.exit(1)
 
-    major_versions = {parse_version(v)[0] for v in versions_list}
-    print(
-        f"Found a total of {len(versions_list)} versions "
-        f"({len(major_versions)} major versions) "
-        f"for `{spec.name}`"
+    update_params = spec.versioning.get_update_cli_params(
+        version=spec.version,
+        version_list=version_list,
+        bump_major=bump_major,
     )
-    for major_version in sorted(major_versions):
-        print(
-            f" - major `{major_version}` = "
-            + ", ".join(filter_versions(versions_list, major=str(major_version)))
-        )
 
-    new_version = increment_version(
-        sort_versions(versions_list), major=spec.major_version, bump_major=bump_major
+    print(update_params["display"])
+    new_version = spec.versioning.increment_version(
+        spec.sort_versions(version_list),
+        update_params["params"],
     )
     print(f"Push a new asset version `{new_version}` " f"for `{spec.name}`?")
 
@@ -225,11 +202,11 @@ def update(asset_path, asset_spec, storage_prefix, bump_major, dry_run):
                 asset_path = _download_object_or_prefix(
                     manager, asset_path=asset_path, destination_dir=tmp_dir
                 )
+
             manager.update(
                 asset_path,
-                spec.name,
-                bump_major=bump_major,
-                major=spec.major_version,
+                name=spec.name,
+                version=new_version,
                 dry_run=dry_run,
             )
     else:

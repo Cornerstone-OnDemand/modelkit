@@ -1,4 +1,4 @@
-Remote assets allow you to share the necessary files and folders necessary to run your models with other members of your team, as well as with production services. 
+Remote assets allow you to share the necessary files and folders necessary to run your models with other members of your team, as well as with production services.
 
 In addition `modelkit` helps with the versioning of these files, and the management of your local developer copies.
 
@@ -11,7 +11,7 @@ For `modelkit` remote assets are **immutable**, and their source of truth has to
 - **loss of data** local machines can lose all of their data, assets will always be available from the remote store
 - **reproducibility** the code running on your local machine is guaranteed to use the same artifacts and code as the one running in production
 
-Although these come at a cost, `modelkit` helps you manage, update, and create new assets. 
+Although these come at a cost, `modelkit` helps you manage, update, and create new assets.
 
 It also helps with maintaining your local copies of the assets to make development quicker (in the **assets directory**).
 
@@ -19,7 +19,7 @@ It also helps with maintaining your local copies of the assets to make developme
 
 Using a remote asset in a `Model` is exactly the same thing as using a local one and using `_load` as [we have seen before](../library/models/model_with_load.md).
 
-We add a valid **remote asset specification** as a key in the configuration, 
+We add a valid **remote asset specification** as a key in the configuration,
 `modelkit` will make sure to retrieve it before the `Model` is instantiated:
 
 ```python
@@ -58,14 +58,19 @@ name/of/asset/object:version[/asset/subobject]
 
 Where:
 
-- the name of the asset has to be a valid object store name (using `/` as a prefix separator) 
-- `version` follows a semantic versioning system: `major.minor` (e.g. `1.2`).
-- `[/asset/subobject]` optionally allows one to refer directly to a sub object
+- the name of the asset has to be a valid object store name (using `/` as a prefix separator)
+- `version` follows a semantic versioning system: (by default `major.minor` (e.g. `1.2`))
+- `[/asset/subobject]` optionally allows one to refer directly to a `sub object
 
 ### Version resolution
 
 Whenever a version is not completely set, the missing information is resolved to the latest version. For example:
 
-- `name/of/asset/object:1` is resolved to the latest minor version `1.*`
 - `name/of/asset/object` is resolved to the latest version altogether
+
+Some versioning system can support partial version setting
+
+Example for major/minor system :
+
+- `name/of/asset/object:1` is resolved to the latest minor version `1.*`
 

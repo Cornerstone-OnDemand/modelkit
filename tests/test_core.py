@@ -19,6 +19,7 @@ from modelkit.core.model_configuration import (
 )
 from modelkit.core.settings import LibrarySettings
 from tests import TEST_DIR
+from tests.assets.test_versioning import test_versioning
 
 
 def test_predict():
@@ -288,45 +289,76 @@ def test_list_assets():
     )
 
 
-def test_download_assets_version(assetsmanager_settings):
+@pytest.mark.parametrize(*test_versioning.TWO_VERSIONING_PARAMETRIZE)
+def test_download_assets_version(
+    version_asset_name,
+    version_1,
+    version_2,
+    versioning,
+    assetsmanager_settings,
+    monkeypatch,
+):
+    if versioning:
+        monkeypatch.setenv("MODELKIT_ASSETS_VERSIONING_SYSTEM", versioning)
+
     class SomeModel(Asset):
-        CONFIGURATIONS = {"model0": {"asset": "category/asset:0.0"}}
+        CONFIGURATIONS = {
+            "model0": {"asset": f"category/{version_asset_name}:{version_1}"}
+        }
 
     model_assets, assets_info = download_assets(
         assetsmanager_settings=assetsmanager_settings,
         models=[SomeModel],
     )
-    assert model_assets["model0"] == {"category/asset:0.0"}
-    assert assets_info["category/asset:0.0"].version == "0.0"
+    assert model_assets["model0"] == {f"category/{version_asset_name}:{version_1}"}
+    assert (
+        assets_info[f"category/{version_asset_name}:{version_1}"].version == version_1
+    )
 
     class SomeModel(Asset):
-        CONFIGURATIONS = {"model0": {"asset": "category/asset"}}
+        CONFIGURATIONS = {"model0": {"asset": f"category/{version_asset_name}"}}
 
     model_assets, assets_info = download_assets(
         assetsmanager_settings=assetsmanager_settings,
         models=[SomeModel],
     )
-    assert model_assets["model0"] == {"category/asset"}
-    assert assets_info["category/asset"].version == "1.0"
+    assert model_assets["model0"] == {f"category/{version_asset_name}"}
+    assert assets_info[f"category/{version_asset_name}"].version == version_2
+
+    if versioning in (None, "major_minor"):
+
+        class SomeModel(Asset):
+            CONFIGURATIONS = {"model0": {"asset": "category/asset:0"}}
+
+        model_assets, assets_info = download_assets(
+            assetsmanager_settings=assetsmanager_settings,
+            models=[SomeModel],
+        )
+        assert model_assets["model0"] == {"category/asset:0"}
+        assert assets_info["category/asset:0"].version == "0.1"
+
+
+@pytest.mark.parametrize(*test_versioning.TWO_VERSIONING_PARAMETRIZE)
+def test_download_assets_dependencies(
+    version_asset_name,
+    version_1,
+    version_2,
+    versioning,
+    assetsmanager_settings,
+    monkeypatch,
+):
+    if versioning:
+        monkeypatch.setenv("MODELKIT_ASSETS_VERSIONING_SYSTEM", versioning)
 
     class SomeModel(Asset):
-        CONFIGURATIONS = {"model0": {"asset": "category/asset:0"}}
-
-    model_assets, assets_info = download_assets(
-        assetsmanager_settings=assetsmanager_settings,
-        models=[SomeModel],
-    )
-    assert model_assets["model0"] == {"category/asset:0"}
-    assert assets_info["category/asset:0"].version == "0.1"
-
-
-def test_download_assets_dependencies(assetsmanager_settings):
-    class SomeModel(Asset):
-        CONFIGURATIONS = {"model0": {"asset": "category/asset"}}
+        CONFIGURATIONS = {"model0": {"asset": f"category/{version_asset_name}"}}
 
     class SomeOtherModel(Asset):
         CONFIGURATIONS = {
-            "model1": {"asset": "category/asset:0", "model_dependencies": {"model0"}}
+            "model1": {
+                "asset": f"category/{version_asset_name}:{version_1}",
+                "model_dependencies": {"model0"},
+            }
         }
 
     model_assets, assets_info = download_assets(
@@ -334,10 +366,15 @@ def test_download_assets_dependencies(assetsmanager_settings):
         models=[SomeModel, SomeOtherModel],
     )
 
-    assert model_assets["model0"] == {"category/asset"}
-    assert model_assets["model1"] == {"category/asset:0", "category/asset"}
-    assert assets_info["category/asset"].version == "1.0"
-    assert assets_info["category/asset:0"].version == "0.1"
+    assert model_assets["model0"] == {f"category/{version_asset_name}"}
+    assert model_assets["model1"] == {
+        f"category/{version_asset_name}:{version_1}",
+        f"category/{version_asset_name}",
+    }
+    assert assets_info[f"category/{version_asset_name}"].version == version_2
+    assert (
+        assets_info[f"category/{version_asset_name}:{version_1}"].version == version_1
+    )
 
 
 def test_load_model():

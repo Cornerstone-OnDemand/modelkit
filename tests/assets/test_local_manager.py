@@ -8,6 +8,7 @@ from modelkit.assets.manager import AssetsManager, _fetch_local_version
 from modelkit.assets.remote import StorageProvider
 from modelkit.assets.settings import AssetSpec
 from tests import TEST_DIR
+from tests.assets.test_versioning import test_versioning
 
 
 def test_local_manager_no_versions(working_dir):
@@ -57,54 +58,74 @@ def test_local_manager_no_versions(working_dir):
         res = manager.fetch_asset("doesnotexist.txt", return_info=True)
 
 
-def test_local_manager_with_versions(working_dir):
-    os.makedirs(os.path.join(working_dir, "something", "0.0"))
-    open(os.path.join(working_dir, "something", "0.0", ".SUCCESS"), "w").close()
+@pytest.mark.parametrize(
+    "v00, v01, v11, v10, versioning",
+    [
+        ("0.0", "0.1", "1.0", "1.1", None),
+        ("0.0", "0.1", "1.0", "1.1", "major_minor"),
+        (
+            "0000-00-00T00-00-00Z",
+            "0000-00-00T01-00-00Z",
+            "0000-00-00T10-00-00Z",
+            "0000-00-00T11-00-00Z",
+            "simple_date",
+        ),
+    ],
+)
+def test_local_manager_with_versions(
+    v00, v01, v11, v10, versioning, working_dir, monkeypatch
+):
+    if versioning:
+        monkeypatch.setenv("MODELKIT_ASSETS_VERSIONING_SYSTEM", versioning)
 
-    os.makedirs(os.path.join(working_dir, "something", "0.1"))
-    open(os.path.join(working_dir, "something", "0.1", ".SUCCESS"), "w").close()
+    os.makedirs(os.path.join(working_dir, "something", v00))
+    open(os.path.join(working_dir, "something", v00, ".SUCCESS"), "w").close()
 
-    os.makedirs(os.path.join(working_dir, "something", "1.1", "subpart"))
+    os.makedirs(os.path.join(working_dir, "something", v01))
+    open(os.path.join(working_dir, "something", v01, ".SUCCESS"), "w").close()
+
+    os.makedirs(os.path.join(working_dir, "something", v11, "subpart"))
     with open(
-        os.path.join(working_dir, "something", "1.1", "subpart", "deep.txt"), "w"
+        os.path.join(working_dir, "something", v11, "subpart", "deep.txt"), "w"
     ) as f:
         f.write("OK")
-    open(os.path.join(working_dir, "something", "1.1", ".SUCCESS"), "w").close()
+    open(os.path.join(working_dir, "something", v11, ".SUCCESS"), "w").close()
 
     manager = AssetsManager(assets_dir=working_dir)
-    res = manager.fetch_asset("something:1.1[subpart/deep.txt]", return_info=True)
+    res = manager.fetch_asset(f"something:{v11}[subpart/deep.txt]", return_info=True)
     assert res["path"] == os.path.join(
-        working_dir, "something", "1.1", "subpart", "deep.txt"
+        working_dir, "something", v11, "subpart", "deep.txt"
     )
 
     manager = AssetsManager(assets_dir=working_dir)
-    res = manager.fetch_asset("something/1.1/subpart/deep.txt", return_info=True)
+    res = manager.fetch_asset(f"something/{v11}/subpart/deep.txt", return_info=True)
     assert res["path"] == os.path.join(
-        working_dir, "something", "1.1", "subpart", "deep.txt"
+        working_dir, "something", v11, "subpart", "deep.txt"
     )
 
     manager = AssetsManager(assets_dir=working_dir)
-    res = manager.fetch_asset("something:0.0", return_info=True)
-    assert res["path"] == os.path.join(working_dir, "something", "0.0")
-
-    manager = AssetsManager(assets_dir=working_dir)
-    res = manager.fetch_asset("something:0", return_info=True)
-    assert res["path"] == os.path.join(working_dir, "something", "0.1")
+    res = manager.fetch_asset(f"something:{v00}", return_info=True)
+    assert res["path"] == os.path.join(working_dir, "something", v00)
 
     manager = AssetsManager(assets_dir=working_dir)
     res = manager.fetch_asset("something", return_info=True)
-    assert res["path"] == os.path.join(working_dir, "something", "1.1")
+    assert res["path"] == os.path.join(working_dir, "something", v11)
+
+    if versioning in (None, "major_minor"):
+        manager = AssetsManager(assets_dir=working_dir)
+        res = manager.fetch_asset("something:0", return_info=True)
+        assert res["path"] == os.path.join(working_dir, "something", v01)
 
     try:
         manager = AssetsManager()
-        local_dir = os.path.join("tmp-local-asset", "1.0", "subpart")
+        local_dir = os.path.join("tmp-local-asset", v10, "subpart")
         os.makedirs(local_dir)
-        open(os.path.join("tmp-local-asset", "1.0", ".SUCCESS"), "w").close()
+        open(os.path.join("tmp-local-asset", v10, ".SUCCESS"), "w").close()
 
         shutil.copy("README.md", local_dir)
 
         res = manager.fetch_asset(
-            "tmp-local-asset:1.0[subpart/README.md]", return_info=True
+            f"tmp-local-asset:{v10}[subpart/README.md]", return_info=True
         )
         assert res["path"] == os.path.abspath(os.path.join(local_dir, "README.md"))
 
@@ -118,9 +139,17 @@ def test_local_manager_with_versions(working_dir):
         shutil.rmtree("tmp-local-asset")
 
 
-def test_local_manager_with_fetch(working_dir):
-    os.makedirs(os.path.join(working_dir, "category", "asset"))
-    with open(os.path.join(working_dir, "category", "asset", "0.0"), "w") as f:
+@pytest.mark.parametrize(*test_versioning.TWO_VERSIONING_PARAMETRIZE)
+def test_local_manager_with_fetch(
+    version_asset_name, version_1, version_2, versioning, working_dir, monkeypatch
+):
+    if versioning:
+        monkeypatch.setenv("MODELKIT_ASSETS_VERSIONING_SYSTEM", versioning)
+
+    os.makedirs(os.path.join(working_dir, "category", version_asset_name))
+    with open(
+        os.path.join(working_dir, "category", version_asset_name, version_1), "w"
+    ) as f:
         f.write("OK")
 
     manager = AssetsManager(
@@ -132,29 +161,45 @@ def test_local_manager_with_fetch(working_dir):
         ),
     )
 
-    res = manager.fetch_asset("category/asset:0.0", return_info=True)
-    assert res["path"] == os.path.join(working_dir, "category", "asset", "0.0")
+    res = manager.fetch_asset(
+        f"category/{version_asset_name}:{version_1}", return_info=True
+    )
+    assert res["path"] == os.path.join(
+        working_dir, "category", version_asset_name, version_1
+    )
 
-    res = manager.fetch_asset("category/asset:0", return_info=True)
-    assert res["path"] == os.path.join(working_dir, "category", "asset", "0.1")
+    res = manager.fetch_asset(f"category/{version_asset_name}", return_info=True)
+    assert res["path"] == os.path.join(
+        working_dir, "category", version_asset_name, version_2
+    )
 
-    res = manager.fetch_asset("category/asset", return_info=True)
-    assert res["path"] == os.path.join(working_dir, "category", "asset", "1.0")
+    if versioning in ["major_minor", None]:
+        res = manager.fetch_asset(f"category/{version_asset_name}:0", return_info=True)
+        assert res["path"] == os.path.join(
+            working_dir, "category", version_asset_name, "0.1"
+        )
 
 
-def test_local_manager_with_fetch_external_bucket(working_dir):
+@pytest.mark.parametrize(*test_versioning.INIT_VERSIONING_PARAMETRIZE)
+def test_local_manager_with_fetch_external_bucket(
+    version_asset_name, version, versioning, working_dir, monkeypatch
+):
 
     # when using external bucket in production (s3/gcs) in production
     # but need to use some local asset for debug purpose with
     # MODELKIT_ASSETS_DIR = MODELKIT_STORAGE_BUCKET/MODELKIT_STORAGE_PREFIX
     # configuration
+    if versioning:
+        monkeypatch.setenv("MODELKIT_ASSETS_VERSIONING_SYSTEM", versioning)
 
     modelkit_storage_bucket = working_dir
     modelkit_storage_prefix = "assets-prefix"
     modelkit_assets_dir = os.path.join(modelkit_storage_bucket, modelkit_storage_prefix)
 
-    os.makedirs(os.path.join(modelkit_assets_dir, "category", "asset"))
-    with open(os.path.join(modelkit_assets_dir, "category", "asset", "0.0"), "w") as f:
+    os.makedirs(os.path.join(modelkit_assets_dir, "category", version_asset_name))
+    with open(
+        os.path.join(modelkit_assets_dir, "category", version_asset_name, version), "w"
+    ) as f:
         f.write("OK")
 
     manager = AssetsManager(
@@ -166,23 +211,24 @@ def test_local_manager_with_fetch_external_bucket(working_dir):
         ),
     )
 
-    res = manager.fetch_asset("category/asset:0.0", return_info=True)
-    assert res["path"] == os.path.join(modelkit_assets_dir, "category", "asset", "0.0")
-
-
-def test_fetch_asset_version_no_storage_provider(working_dir):
-    manager = AssetsManager(assets_dir=working_dir)
-    asset_name = os.path.join("category", "asset")
-    spec = AssetSpec(
-        name=asset_name,
-        major_version="0",
-        minor_version="0",
+    res = manager.fetch_asset(
+        f"category/{version_asset_name}:{version}", return_info=True
     )
-    version = "0.0"
+    assert res["path"] == os.path.join(
+        modelkit_assets_dir, "category", version_asset_name, version
+    )
+
+
+@pytest.mark.parametrize(*test_versioning.INIT_VERSIONING_PARAMETRIZE)
+def test_fetch_asset_version_no_storage_provider(
+    version_asset_name, version, versioning, working_dir
+):
+    manager = AssetsManager(assets_dir=working_dir)
+    asset_name = os.path.join("category", version_asset_name)
+    spec = AssetSpec(name=asset_name, version=version, versioning=versioning)
 
     asset_dict = manager._fetch_asset_version(
         spec=spec,
-        version=version,
         local_versions=[version],  # version in local version
         _force_download=False,
     )
@@ -196,7 +242,6 @@ def test_fetch_asset_version_no_storage_provider(working_dir):
     with pytest.raises(errors.StorageDriverError):
         manager._fetch_asset_version(
             spec=spec,
-            version=version,
             local_versions=[version],  # version in local version
             _force_download=True,
         )
@@ -204,7 +249,6 @@ def test_fetch_asset_version_no_storage_provider(working_dir):
     with pytest.raises(errors.StorageDriverError):
         manager._fetch_asset_version(
             spec=spec,
-            version=version,
             local_versions=[],  # version not in local version
             _force_download=True,
         )
@@ -212,13 +256,15 @@ def test_fetch_asset_version_no_storage_provider(working_dir):
     with pytest.raises(errors.LocalAssetDoesNotExistError):
         manager._fetch_asset_version(
             spec=spec,
-            version=version,
             local_versions=[],  #  version not in local version
             _force_download=False,
         )
 
 
-def test_fetch_asset_version_with_storage_provider(working_dir):
+@pytest.mark.parametrize(*test_versioning.INIT_VERSIONING_PARAMETRIZE)
+def test_fetch_asset_version_with_storage_provider(
+    version_asset_name, version, versioning, working_dir
+):
 
     manager = AssetsManager(
         assets_dir=working_dir,
@@ -228,18 +274,13 @@ def test_fetch_asset_version_with_storage_provider(working_dir):
             prefix="assets-prefix",
         ),
     )
-    asset_name = os.path.join("category", "asset")
-    spec = AssetSpec(
-        name=asset_name,
-        major_version="0",
-        minor_version="0",
-    )
-    version = "0.0"
+
+    asset_name = os.path.join("category", version_asset_name)
+    spec = AssetSpec(name=asset_name, version=version, versioning=versioning)
 
     # no _has_succeeded cache => fetch
     asset_dict = manager._fetch_asset_version(
         spec=spec,
-        version=version,
         local_versions=[version],  # version in local version
         _force_download=False,
     )
@@ -254,7 +295,6 @@ def test_fetch_asset_version_with_storage_provider(working_dir):
     #  cache
     asset_dict = manager._fetch_asset_version(
         spec=spec,
-        version=version,
         local_versions=[version],  # version in local version
         _force_download=False,
     )
@@ -268,7 +308,6 @@ def test_fetch_asset_version_with_storage_provider(working_dir):
     #  cache but force download
     asset_dict = manager._fetch_asset_version(
         spec=spec,
-        version=version,
         local_versions=[version],  # version in local version
         _force_download=True,
     )
@@ -283,7 +322,6 @@ def test_fetch_asset_version_with_storage_provider(working_dir):
     # download asset
     asset_dict = manager._fetch_asset_version(
         spec=spec,
-        version=version,
         local_versions=[],  # version not in local version
         _force_download=True,
     )
@@ -298,7 +336,6 @@ def test_fetch_asset_version_with_storage_provider(working_dir):
     # download asset
     asset_dict = manager._fetch_asset_version(
         spec=spec,
-        version=version,
         local_versions=[],  # version not in local version
         _force_download=False,
     )
@@ -311,21 +348,22 @@ def test_fetch_asset_version_with_storage_provider(working_dir):
     }
 
 
-def test_fetch_asset_version_with_sub_parts(working_dir):
+@pytest.mark.parametrize(*test_versioning.INIT_VERSIONING_PARAMETRIZE)
+def test_fetch_asset_version_with_sub_parts(
+    version_asset_name, version, versioning, working_dir
+):
     manager = AssetsManager(
         assets_dir=working_dir,
     )
-    asset_name = os.path.join("category", "asset")
+    asset_name = os.path.join("category", version_asset_name)
     sub_part = "sub_part"
     spec = AssetSpec(
-        name=asset_name, major_version="0", minor_version="0", sub_part=sub_part
+        name=asset_name, version=version, sub_part=sub_part, versioning=versioning
     )
-    version = "0.0"
 
     # no _has_succeeded cache => fetch
     asset_dict = manager._fetch_asset_version(
         spec=spec,
-        version=version,
         local_versions=[version],  # version in local version
         _force_download=False,
     )
