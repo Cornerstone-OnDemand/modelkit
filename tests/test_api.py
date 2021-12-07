@@ -3,7 +3,6 @@ import os
 import platform
 
 import fastapi
-import numpy as np
 import pydantic
 import pytest
 from starlette.testclient import TestClient
@@ -64,13 +63,6 @@ class SomeAsyncModel(AsyncModel[ItemModel, ResultModel]):
         return {"sorted": "".join(sorted(item.string))}
 
 
-class ValidationNotSupported(Model[np.ndarray, np.ndarray]):
-    CONFIGURATIONS = {"no_supported_model": {}}
-
-    def _predict(self, item):
-        return item
-
-
 class SomeAsset(Asset):
     """
     This is not a Model, it won't appear in the service
@@ -84,6 +76,13 @@ class SomeAsset(Asset):
 
 @pytest.fixture(scope="module")
 def api_no_type(event_loop):
+    np = pytest.importorskip("numpy")
+
+    class ValidationNotSupported(Model[np.ndarray, np.ndarray]):
+        CONFIGURATIONS = {"no_supported_model": {}}
+
+        def _predict(self, item):
+            return item
 
     router = ModelkitAutoAPIRouter(
         required_models=[
