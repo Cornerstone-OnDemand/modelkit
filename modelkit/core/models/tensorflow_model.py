@@ -4,7 +4,6 @@ import os
 from typing import Any, Dict, List, Optional, Tuple, Type
 
 import aiohttp
-import numpy as np
 import requests
 from structlog import get_logger
 from tenacity import (
@@ -39,6 +38,13 @@ except ModuleNotFoundError:  # pragma: no cover
     logger.info("Tensorflow serving is not installed")
 
 
+try:
+    import numpy as np
+
+except ModuleNotFoundError:  # pragma: no cover
+    logger.info("numpy is not installed")
+
+
 class TensorflowModelMixin(abc.ABC):
     output_shapes: Dict[str, Tuple]
     output_dtypes: Dict[str, Type]
@@ -55,7 +61,7 @@ class TensorflowModelMixin(abc.ABC):
         }
 
     def _rebuild_predictions_with_mask(
-        self, mask: List[bool], predictions: Dict[str, np.ndarray]
+        self, mask: List[bool], predictions: Dict[str, "np.ndarray"]
     ) -> List[Dict[str, Any]]:
         """Merge the just-computed predictions with empty vectors for empty input items.
         Making sure everything is well-aligned"
@@ -78,7 +84,7 @@ class TensorflowModel(Model[ItemType, ReturnType], TensorflowModelMixin):
         self,
         output_tensor_mapping: Optional[Dict[str, str]] = None,
         output_shapes: Optional[Dict[str, Tuple]] = None,
-        output_dtypes: Optional[Dict[str, np.dtype]] = None,
+        output_dtypes: Optional[Dict[str, "np.dtype"]] = None,
         tf_model_name: Optional[str] = None,
         **kwargs,
     ):
@@ -142,8 +148,8 @@ class TensorflowModel(Model[ItemType, ReturnType], TensorflowModelMixin):
         return self._rebuild_predictions_with_mask(mask, predictions)
 
     def _tensorflow_predict(
-        self, vects: Dict[str, np.ndarray], grpc_dtype=None
-    ) -> Dict[str, np.ndarray]:
+        self, vects: Dict[str, "np.ndarray"], grpc_dtype=None
+    ) -> Dict[str, "np.ndarray"]:
         """
         a predict_multiple dispatching tf serving requests with the correct mode
         It takes a dictionary of numpy arrays of shape (Nitems, ?) and returns a
@@ -157,8 +163,8 @@ class TensorflowModel(Model[ItemType, ReturnType], TensorflowModelMixin):
         return self._tensorflow_predict_local(vects)
 
     def _tensorflow_predict_grpc(
-        self, vects: Dict[str, np.ndarray], dtype=None
-    ) -> Dict[str, np.ndarray]:
+        self, vects: Dict[str, "np.ndarray"], dtype=None
+    ) -> Dict[str, "np.ndarray"]:
         request = PredictRequest()
         request.model_spec.name = self.tf_model_name
         for key, vect in vects.items():
@@ -183,8 +189,8 @@ class TensorflowModel(Model[ItemType, ReturnType], TensorflowModelMixin):
         }
 
     def _tensorflow_predict_rest(
-        self, vects: Dict[str, np.ndarray]
-    ) -> Dict[str, np.ndarray]:
+        self, vects: Dict[str, "np.ndarray"]
+    ) -> Dict[str, "np.ndarray"]:
         if not self.requests_session:
             self.requests_session = requests.Session()
         response = self.requests_session.post(
@@ -211,8 +217,8 @@ class TensorflowModel(Model[ItemType, ReturnType], TensorflowModelMixin):
         }
 
     def _tensorflow_predict_local(
-        self, vects: Dict[str, np.ndarray]
-    ) -> Dict[str, np.ndarray]:
+        self, vects: Dict[str, "np.ndarray"]
+    ) -> Dict[str, "np.ndarray"]:
         results = self.tf_model_signature(
             **{key: tf.convert_to_tensor(value) for key, value in vects.items()}
         )
@@ -234,7 +240,7 @@ class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType], TensorflowModelMixi
         self,
         output_tensor_mapping: Optional[Dict[str, str]] = None,
         output_shapes: Optional[Dict[str, Tuple]] = None,
-        output_dtypes: Optional[Dict[str, np.dtype]] = None,
+        output_dtypes: Optional[Dict[str, "np.dtype"]] = None,
         tf_model_name: Optional[str] = None,
         **kwargs,
     ):
@@ -283,8 +289,8 @@ class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType], TensorflowModelMixi
         return self._rebuild_predictions_with_mask(mask, predictions)
 
     async def _tensorflow_predict(
-        self, vects: Dict[str, np.ndarray]
-    ) -> Dict[str, np.ndarray]:
+        self, vects: Dict[str, "np.ndarray"]
+    ) -> Dict[str, "np.ndarray"]:
         if self.aiohttp_session is None:
             # aiohttp wants us to initialize the session in an event loop
             self.aiohttp_session = aiohttp.ClientSession()
@@ -351,7 +357,7 @@ def tf_serving_retry_policy(name):
 
 def connect_tf_serving_grpc(
     model_name, host, port
-) -> prediction_service_pb2_grpc.PredictionServiceStub:
+) -> "prediction_service_pb2_grpc.PredictionServiceStub":
 
     try:
         for attempt in Retrying(**tf_serving_retry_policy("tf-serving-grpc")):

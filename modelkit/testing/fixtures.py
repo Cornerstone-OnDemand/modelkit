@@ -2,7 +2,6 @@ import dataclasses
 import inspect
 import os
 
-import numpy as np
 import pydantic
 import pydantic.generics
 
@@ -10,6 +9,13 @@ from modelkit.core.library import ModelLibrary
 from modelkit.core.model import Model
 from modelkit.core.model_configuration import configure
 from modelkit.testing.reference import ReferenceJson
+
+try:
+    import numpy as np
+
+    has_numpy = True
+except ModuleNotFoundError:  # pragma: no cover
+    has_numpy = False
 
 
 @dataclasses.dataclass
@@ -56,7 +62,7 @@ def modellibrary_auto_test(
             if isinstance(pred, pydantic.BaseModel):
                 pred = pred.dict()
             ref.assert_equal(os.path.basename(result.fn), pred)
-        elif isinstance(result, np.ndarray):
+        elif has_numpy and isinstance(result, np.ndarray):
             assert np.array_equal(pred, result), f"{pred} != {result}"
         else:
             assert pred == result, f"{pred} != {result}"
