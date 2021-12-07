@@ -1,5 +1,6 @@
 -r "requirements-dev.txt"
 
+numpy
 grpcio
 tensorflow
 tensorflow-serving-api
