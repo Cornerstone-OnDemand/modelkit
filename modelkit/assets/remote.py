@@ -21,12 +21,15 @@ except ModuleNotFoundError:
     has_az = False
 try:
     from modelkit.assets.drivers.gcs import GCSStorageDriver
+
     has_gcs = True
 except ModuleNotFoundError:
     has_gcs = False
 from modelkit.assets.drivers.local import LocalStorageDriver
+
 try:
     from modelkit.assets.drivers.s3 import S3StorageDriver
+
     has_s3 = True
 except ModuleNotFoundError:
     has_s3 = False
@@ -88,11 +91,15 @@ class StorageProvider:
 
         if provider == "gcs":
             if not has_gcs:
-                raise DriverNotInstalledError("GCS driver not installed, install modelkit[assets-gcs]")
+                raise DriverNotInstalledError(
+                    "GCS driver not installed, install modelkit[assets-gcs]"
+                )
             self.driver = GCSStorageDriver(**driver_settings)
         elif provider == "s3":
             if not has_s3:
-                raise DriverNotInstalledError("S3 driver not installed, install modelkit[assets-s3]")
+                raise DriverNotInstalledError(
+                    "S3 driver not installed, install modelkit[assets-s3]"
+                )
             self.driver = S3StorageDriver(**driver_settings)
         elif provider == "local":
             self.driver = LocalStorageDriver(**driver_settings)
