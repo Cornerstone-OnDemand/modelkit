@@ -4,3 +4,5 @@ numpy
 grpcio
 tensorflow
 tensorflow-serving-api
+# assets-s3
+boto3

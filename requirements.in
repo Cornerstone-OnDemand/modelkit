@@ -1,6 +1,5 @@
 aiohttp
 asgiref
-boto3
 cachetools
 click
 filelock
