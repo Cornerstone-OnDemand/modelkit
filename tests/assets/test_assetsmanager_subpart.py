@@ -70,3 +70,8 @@ def test_gcs_assetsmanager_subpart(gcs_assetsmanager):
 @skip_unless("ENABLE_S3_TEST", "True")
 def test_s3_assetsmanager_subpart(s3_assetsmanager):
     _perform_mng_test_subpart(s3_assetsmanager)
+
+
+@skip_unless("ENABLE_AZ_TEST", "True")
+def test_az_assetsmanager_subpart(az_assetsmanager):
+    _perform_mng_test_subpart(az_assetsmanager)

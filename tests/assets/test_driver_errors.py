@@ -27,3 +27,9 @@ def test_gcs_driver(gcs_assetsmanager):
 def test_s3_driver(s3_assetsmanager):
     s3_driver = s3_assetsmanager.storage_provider.driver
     _perform_driver_error_object_not_found(s3_driver)
+
+
+@skip_unless("ENABLE_AZ_TEST", "True")
+def test_az_driver(az_assetsmanager):
+    az_driver = az_assetsmanager.storage_provider.driver
+    _perform_driver_error_object_not_found(az_driver)

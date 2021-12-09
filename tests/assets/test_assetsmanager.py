@@ -93,6 +93,11 @@ def test_s3_assetsmanager(s3_assetsmanager):
     _perform_mng_test(s3_assetsmanager)
 
 
+@skip_unless("ENABLE_AZ_TEST", "True")
+def test_az_assetsmanager(az_assetsmanager):
+    _perform_mng_test(az_assetsmanager)
+
+
 @skip_unless("ENABLE_GCS_TEST", "True")
 def test_download_object_or_prefix_cli(gcs_assetsmanager):
     original_asset_path = os.path.join(test_path, "testdata", "some_data.json")
