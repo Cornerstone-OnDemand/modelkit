@@ -28,11 +28,11 @@ Developers may additionally need to be able to push new assets and or update exi
 
 ## Using different providers
 
-The flavor of the remote store that is used depends on the `STORAGE_PROVIDER` environment variables
+The flavor of the remote store that is used depends on the `MODELKIT_STORAGE_PROVIDER` environment variables
 
 ### Using AWS S3 storage
 
-Use `STORAGE_PROVIDER=s3` to connect to S3 storage.
+Use `MODELKIT_STORAGE_PROVIDER=s3` to connect to S3 storage.
 
 We use [boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html) under the hood.
 
@@ -53,7 +53,7 @@ Use `AWS_KMS_KEY_ID` environment variable to set your key and be able to upload 
 
 ### GCS storage
 
-Use `STORAGE_PROVIDER=gcs` to connect to GCS storage.
+Use `MODELKIT_STORAGE_PROVIDER=gcs` to connect to GCS storage.
 
 We use [google-cloud-storage](https://googleapis.dev/python/storage/latest/index.html).
 
@@ -67,7 +67,7 @@ If `GOOGLE_APPLICATION_CREDENTIALS` is provided, it should point to a local JSON
 
 ### Using Azure blob storage
 
-Use `STORAGE_PROVIDER=az` to connect to Azure blob storage.
+Use `MODELKIT_STORAGE_PROVIDER=az` to connect to Azure blob storage.
 
 We use [azure-storage-blobl](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-python) under the hood.
 
@@ -80,7 +80,7 @@ The client is created by passing the authentication information to `BlobServiceC
 
 ### `local` mode
 
-Use `STORAGE_PROVIDER=local` to connect to GCS storage.
+Use `MODELKIT_STORAGE_PROVIDER=local` to connect to GCS storage.
 
 This is mostly used internally for development, but you can also use another folder on your file system as a storage provider
 
