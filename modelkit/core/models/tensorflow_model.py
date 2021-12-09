@@ -96,7 +96,7 @@ class TensorflowModel(Model[ItemType, ReturnType], TensorflowModelMixin):
             "output_shapes"
         )
         self.output_dtypes = (
-            output_dtypes
+            output_dtypes  # type: ignore
             or kwargs["model_settings"].get("output_dtypes")
             or {name: float for name in self.output_tensor_mapping}
         )
@@ -252,7 +252,7 @@ class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType], TensorflowModelMixi
             "output_shapes"
         )
         self.output_dtypes = (
-            output_dtypes
+            output_dtypes  # type: ignore
             or kwargs["model_settings"].get("output_dtypes")
             or {name: float for name in self.output_tensor_mapping}
         )
