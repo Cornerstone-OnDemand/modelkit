@@ -1,7 +1,8 @@
-import numpy as np
 import pytest
 
 from modelkit.utils.serialization import safe_np_dump
+
+np = pytest.importorskip("numpy")
 
 
 @pytest.mark.parametrize(

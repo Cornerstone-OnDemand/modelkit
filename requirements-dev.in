@@ -21,10 +21,6 @@ uvicorn
 fastapi
 # releases
 bump2version
-# optional
-grpcio
-tensorflow
-tensorflow-serving-api
 # docs
 mkdocs-material
 pymdown-extensions

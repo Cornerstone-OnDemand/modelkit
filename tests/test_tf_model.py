@@ -1,7 +1,5 @@
 import os
 
-import grpc
-import numpy as np
 import pytest
 import requests
 
@@ -11,6 +9,7 @@ from tests import TEST_DIR
 from tests.conftest import skip_unless
 
 try:
+
     from modelkit.core.models.tensorflow_model import (
         AsyncTensorflowModel,
         TensorflowModel,
@@ -23,6 +22,9 @@ except NameError:
     # `NameError: name 'prediction_service_pb2_grpc' is not defined`
     # when tensorflow-serving-api is not installed
     pass
+
+np = pytest.importorskip("numpy")
+grpc = pytest.importorskip("grpc")
 
 
 @pytest.fixture

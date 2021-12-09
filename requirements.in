@@ -6,7 +6,6 @@ click
 filelock
 google-cloud-storage
 humanize
-numpy~=1.19.3
 pydantic
 python-dateutil
 redis

@@ -2,7 +2,6 @@ import os
 import shutil
 import tempfile
 
-import numpy as np
 import pytest
 
 from modelkit import testing
@@ -12,6 +11,8 @@ from modelkit.core.models.tensorflow_model import TensorflowModel
 from modelkit.utils.tensorflow import deploy_tf_models, write_config
 from tests import TEST_DIR
 from tests.conftest import skip_unless
+
+np = pytest.importorskip("numpy")
 
 
 @skip_unless("ENABLE_TF_SERVING_TEST", "True")
@@ -32,6 +33,8 @@ def test_write_config():
 @skip_unless("ENABLE_TF_SERVING_TEST", "True")
 @skip_unless("ENABLE_TF_TEST", "True")
 def test_deploy_tf_models_no_asset():
+    np = pytest.importorskip("numpy")
+
     class DummyTFModelNoAsset(TensorflowModel):
         CONFIGURATIONS = {
             "dummy_non_tf_model": {
