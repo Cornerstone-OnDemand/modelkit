@@ -25,7 +25,9 @@ try:
         DEFAULT_SERVING_SIGNATURE_DEF_KEY,
     )
 
+    has_tensorflow = True
 except ModuleNotFoundError:  # pragma: no cover
+    has_tensorflow = False
     logger.info("tensorflow is not installed")
 
 try:
@@ -49,6 +51,12 @@ class TensorflowModelMixin(abc.ABC):
     output_shapes: Dict[str, Tuple]
     output_dtypes: Dict[str, Type]
     output_tensor_mapping: Dict[str, str]
+
+    def __init__(self, *args, **kwargs):
+        if not has_tensorflow:
+            raise ImportError(
+                "Tensorflow is not installed, instal modelkit[tensorflow]."
+            )
 
     def _is_empty(self, item) -> bool:
         return False
