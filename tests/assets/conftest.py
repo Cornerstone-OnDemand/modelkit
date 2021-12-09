@@ -63,7 +63,7 @@ def _get_mock_gcs_client():
 def gcs_assetsmanager(request, working_dir):
     # kill previous fake gcs container (if any)
     subprocess.call(
-        ["docker", "rm", "-f", "storage-gcs-tests"], stderr=subprocess.DEVNULL
+        ["docker", "rm", "-f", "modelkit-storage-gcs-tests"], stderr=subprocess.DEVNULL
     )
     # start minio as docker container
     minio_proc = subprocess.Popen(
@@ -73,13 +73,13 @@ def gcs_assetsmanager(request, working_dir):
             "-p",
             "4443:4443",
             "--name",
-            "storage-gcs-tests",
+            "modelkit-storage-gcs-tests",
             "fsouza/fake-gcs-server",
         ]
     )
 
     def finalize():
-        subprocess.call(["docker", "stop", "storage-gcs-tests"])
+        subprocess.call(["docker", "stop", "modelkit-storage-gcs-tests"])
         minio_proc.terminate()
         minio_proc.wait()
 
@@ -124,7 +124,8 @@ def _start_s3_manager(working_dir):
 def s3_assetsmanager(request, working_dir):
     # kill previous minio container (if any)
     subprocess.call(
-        ["docker", "rm", "-f", "storage-minio-tests"], stderr=subprocess.DEVNULL
+        ["docker", "rm", "-f", "modelkit-storage-minio-tests"],
+        stderr=subprocess.DEVNULL,
     )
     # start minio as docker container
     minio_proc = subprocess.Popen(
@@ -134,7 +135,7 @@ def s3_assetsmanager(request, working_dir):
             "-p",
             "9000:9000",
             "--name",
-            "storage-minio-tests",
+            "modelkit-storage-minio-tests",
             "minio/minio",
             "server",
             "/data",
@@ -142,7 +143,7 @@ def s3_assetsmanager(request, working_dir):
     )
     yield _start_s3_manager(working_dir)
 
-    subprocess.call(["docker", "stop", "storage-minio-tests"])
+    subprocess.call(["docker", "stop", "modelkit-storage-minio-tests"])
     minio_proc.wait()
 
 
@@ -178,7 +179,8 @@ def _start_az_manager(working_dir):
 def az_assetsmanager(request, working_dir):
     # kill previous minio container (if any)
     subprocess.call(
-        ["docker", "rm", "-f", "storage-azurite-tests"], stderr=subprocess.DEVNULL
+        ["docker", "rm", "-f", "modelkit-storage-azurite-tests"],
+        stderr=subprocess.DEVNULL,
     )
     # start minio as docker container
     azurite_proc = subprocess.Popen(
@@ -192,11 +194,11 @@ def az_assetsmanager(request, working_dir):
             "-p",
             "10000:10000",
             "--name",
-            "storage-azurite-tests",
+            "modelkit-storage-azurite-tests",
             "mcr.microsoft.com/azure-storage/azurite",
         ]
     )
     yield _start_az_manager(working_dir)
 
-    subprocess.call(["docker", "stop", "storage-azurite-tests"])
+    subprocess.call(["docker", "stop", "modelkit-storage-azurite-tests"])
     azurite_proc.wait()
