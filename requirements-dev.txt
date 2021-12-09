@@ -32,15 +32,24 @@ attrs==21.2.0
     #   -c requirements.txt
     #   aiohttp
     #   pytest
+azure-core==1.21.1
+    # via
+    #   -c requirements.txt
+    #   azure-storage-blob
+azure-storage-blob==12.9.0
+    # via
+    #   -c requirements.txt
+    #   -r requirements-dev.in
+    #   -r requirements.in
 backports.entry-points-selectable==1.1.1
     # via virtualenv
 black==21.10b0
     # via -r requirements-dev.in
-boto3==1.20.21
+boto3==1.20.22
     # via
     #   -c requirements.txt
     #   -r requirements.in
-botocore==1.23.21
+botocore==1.23.22
     # via
     #   -c requirements.txt
     #   boto3
@@ -55,7 +64,12 @@ cachetools==4.2.4
 certifi==2021.10.8
     # via
     #   -c requirements.txt
+    #   msrest
     #   requests
+cffi==1.15.0
+    # via
+    #   -c requirements.txt
+    #   cryptography
 charset-normalizer==2.0.9
     # via
     #   -c requirements.txt
@@ -81,6 +95,10 @@ commonmark==0.9.1
     #   rich
 coverage==6.1.1
     # via -r requirements-dev.in
+cryptography==36.0.0
+    # via
+    #   -c requirements.txt
+    #   azure-storage-blob
 deprecated==1.2.13
     # via
     #   -c requirements.txt
@@ -103,7 +121,7 @@ frozenlist==1.2.0
     #   aiosignal
 ghp-import==2.0.2
     # via mkdocs
-google-api-core==2.2.2
+google-api-core==2.3.0
     # via
     #   -c requirements.txt
     #   -r requirements-dev.in
@@ -132,7 +150,7 @@ google-resumable-media==2.1.0
     # via
     #   -c requirements.txt
     #   google-cloud-storage
-googleapis-common-protos==1.53.0
+googleapis-common-protos==1.54.0
     # via
     #   -c requirements.txt
     #   google-api-core
@@ -152,6 +170,10 @@ importlib-metadata==4.8.2
     # via mkdocs
 iniconfig==1.1.1
     # via pytest
+isodate==0.6.0
+    # via
+    #   -c requirements.txt
+    #   msrest
 isort==5.10.1
     # via -r requirements-dev.in
 jinja2==3.0.2
@@ -182,6 +204,10 @@ mkdocs-material==7.3.6
     # via -r requirements-dev.in
 mkdocs-material-extensions==1.0.3
     # via mkdocs-material
+msrest==0.6.21
+    # via
+    #   -c requirements.txt
+    #   azure-storage-blob
 multidict==5.2.0
     # via
     #   -c requirements.txt
@@ -197,6 +223,10 @@ networkx==2.6.3
     # via -r requirements-dev.in
 nox==2021.10.1
     # via -r requirements-dev.in
+oauthlib==3.1.1
+    # via
+    #   -c requirements.txt
+    #   requests-oauthlib
 packaging==21.2
     # via
     #   mkdocs
@@ -237,6 +267,10 @@ pyasn1-modules==0.2.8
     #   google-auth
 pycodestyle==2.7.0
     # via flake8
+pycparser==2.21
+    # via
+    #   -c requirements.txt
+    #   cffi
 pydantic==1.8.2
     # via
     #   -c requirements.txt
@@ -282,8 +316,15 @@ regex==2021.11.2
 requests==2.26.0
     # via
     #   -c requirements.txt
+    #   azure-core
     #   google-api-core
     #   google-cloud-storage
+    #   msrest
+    #   requests-oauthlib
+requests-oauthlib==1.3.0
+    # via
+    #   -c requirements.txt
+    #   msrest
 rich==10.15.2
     # via
     #   -c requirements.txt
@@ -299,8 +340,10 @@ s3transfer==0.5.0
 six==1.16.0
     # via
     #   -c requirements.txt
+    #   azure-core
     #   google-auth
     #   google-cloud-storage
+    #   isodate
     #   python-dateutil
     #   virtualenv
 sniffio==1.2.0
