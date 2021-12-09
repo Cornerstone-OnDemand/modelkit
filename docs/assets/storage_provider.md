@@ -65,6 +65,18 @@ By default, the GCS client use the credentials setup up on the machine.
 
 If `GOOGLE_APPLICATION_CREDENTIALS` is provided, it should point to a local JSON service account file, which we use to instantiate the client with `google.cloud.storage.Client.from_service_account_json`
 
+### Using Azure blob storage
+
+Use `STORAGE_PROVIDER=az` to connect to Azure blob storage.
+
+We use [azure-storage-blobl](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-python) under the hood.
+
+The client is created by passing the authentication information to `BlobServiceClient.from_connection_string`:
+
+| Environment variable    | Note   |
+| ----------------------- | ----------------------- |
+| `AZURE_STORAGE_CONNECTION_STRING`     | azure connection string     |
+
 
 ### `local` mode
 

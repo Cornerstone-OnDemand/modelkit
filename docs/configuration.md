@@ -31,6 +31,7 @@ These variables are necessary to set a remote storage from which to retrieve ass
       pointing to a service account credentials JSON file (this is not necessary on dev
       machines)
     - for `MODELKIT_STORAGE_PROVIDER=s3`, you need to instantiate `AWS_PROFILE`
+    - for `MODELKIT_STORAGE_PROVIDER=az`, you need to instantiate `AZURE_STORAGE_CONNECTION_STRING` with a connection string
 
 ### Assets versioning related environment variable
 

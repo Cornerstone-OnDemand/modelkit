@@ -10,7 +10,7 @@ The parameters necessary to instantiate an `AssetsManager` can all be read from 
 
 | Environment variable | Default value | Parameter | Notes |
 | --- | --- | --- | --- |
-| `MODELKIT_STORAGE_PROVIDER` | `gcs` | `storage_provider` | `gcs` (default), `s3` or `local` |
+| `MODELKIT_STORAGE_PROVIDER` | `gcs` | `storage_provider` | `gcs` (default), `s3`, `az` or `local` |
 | `MODELKIT_STORAGE_BUCKET` | None | `bucket` | Bucket in which data is stored |
 | `MODELKIT_STORAGE_PREFIX` | `modelkit-assets` | `prefix` | Objects prefix |
 | `MODELKIT_STORAGE_TIMEOUT_S` | `300` | `timeout_s` | max time when retrying storage downloads |
