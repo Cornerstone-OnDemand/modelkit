@@ -12,7 +12,7 @@ Remote assets are stored in object stores, referenced as:
 
 In this "path":
 
-- `provider` is `s3` or `gcs` or `file` depending on the storage driver (value of `MODELKIT_STORAGE_PROVIDER`)
+- `provider` is `s3`, `azfs` or `gcs` or `file` depending on the storage driver (value of `MODELKIT_STORAGE_PROVIDER`)
 - `bucket` is the remote container name (`MODELKIT_STORAGE_BUCKET`)
 
 The rest of the "path" is the remote object's name and consists of

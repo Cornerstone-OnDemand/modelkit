@@ -12,6 +12,7 @@ isort
 nox
 google-api-core
 google-cloud-storage
+azure-storage-blob
 tenacity
 # cli
 memory-profiler

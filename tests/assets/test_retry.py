@@ -1,6 +1,7 @@
 import copy
 
 import botocore
+import botocore.exceptions
 import google.api_core
 import pytest
 import requests

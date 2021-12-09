@@ -63,7 +63,7 @@ def _get_mock_gcs_client():
 def gcs_assetsmanager(request, working_dir):
     # kill previous fake gcs container (if any)
     subprocess.call(
-        ["docker", "rm", "-f", "storage-gcs-tests"], stderr=subprocess.DEVNULL
+        ["docker", "rm", "-f", "modelkit-storage-gcs-tests"], stderr=subprocess.DEVNULL
     )
     # start minio as docker container
     minio_proc = subprocess.Popen(
@@ -73,13 +73,13 @@ def gcs_assetsmanager(request, working_dir):
             "-p",
             "4443:4443",
             "--name",
-            "storage-gcs-tests",
+            "modelkit-storage-gcs-tests",
             "fsouza/fake-gcs-server",
         ]
     )
 
     def finalize():
-        subprocess.call(["docker", "stop", "storage-gcs-tests"])
+        subprocess.call(["docker", "stop", "modelkit-storage-gcs-tests"])
         minio_proc.terminate()
         minio_proc.wait()
 
@@ -124,7 +124,8 @@ def _start_s3_manager(working_dir):
 def s3_assetsmanager(request, working_dir):
     # kill previous minio container (if any)
     subprocess.call(
-        ["docker", "rm", "-f", "storage-minio-tests"], stderr=subprocess.DEVNULL
+        ["docker", "rm", "-f", "modelkit-storage-minio-tests"],
+        stderr=subprocess.DEVNULL,
     )
     # start minio as docker container
     minio_proc = subprocess.Popen(
@@ -134,7 +135,7 @@ def s3_assetsmanager(request, working_dir):
             "-p",
             "9000:9000",
             "--name",
-            "storage-minio-tests",
+            "modelkit-storage-minio-tests",
             "minio/minio",
             "server",
             "/data",
@@ -142,5 +143,62 @@ def s3_assetsmanager(request, working_dir):
     )
     yield _start_s3_manager(working_dir)
 
-    subprocess.call(["docker", "stop", "storage-minio-tests"])
+    subprocess.call(["docker", "stop", "modelkit-storage-minio-tests"])
     minio_proc.wait()
+
+
+@retry(
+    wait=wait_random_exponential(multiplier=1, min=4, max=10),
+    stop=stop_after_attempt(5),
+    retry=retry_if_exception(lambda x: isinstance(x, Exception)),
+    reraise=True,
+)
+def _start_az_manager(working_dir):
+    mng = AssetsManager(
+        assets_dir=working_dir,
+        storage_provider=StorageProvider(
+            prefix=f"test-assets-{uuid.uuid1().hex}",
+            provider="az",
+            bucket="test-assets",
+            connection_string=(
+                "DefaultEndpointsProtocol=http;"
+                "AccountName=devstoreaccount1;"
+                "AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSR"
+                "Z6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;"
+                "BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;"
+                "QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;"
+                "TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
+            ),
+        ),
+    )
+    mng.storage_provider.driver.client.create_container("test-assets")
+    return mng
+
+
+@pytest.fixture(scope="function")
+def az_assetsmanager(request, working_dir):
+    # kill previous minio container (if any)
+    subprocess.call(
+        ["docker", "rm", "-f", "modelkit-storage-azurite-tests"],
+        stderr=subprocess.DEVNULL,
+    )
+    # start minio as docker container
+    azurite_proc = subprocess.Popen(
+        [
+            "docker",
+            "run",
+            "-p",
+            "10002:10002",
+            "-p",
+            "10001:10001",
+            "-p",
+            "10000:10000",
+            "--name",
+            "modelkit-storage-azurite-tests",
+            "mcr.microsoft.com/azure-storage/azurite",
+        ]
+    )
+    yield _start_az_manager(working_dir)
+
+    subprocess.call(["docker", "stop", "modelkit-storage-azurite-tests"])
+    azurite_proc.wait()

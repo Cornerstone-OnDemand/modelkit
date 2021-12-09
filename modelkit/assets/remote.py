@@ -12,6 +12,7 @@ from structlog import get_logger
 
 from modelkit.assets import errors
 from modelkit.assets.drivers.abc import StorageDriver
+from modelkit.assets.drivers.azure import AzureStorageDriver
 from modelkit.assets.drivers.gcs import GCSStorageDriver
 from modelkit.assets.drivers.local import LocalStorageDriver
 from modelkit.assets.drivers.s3 import S3StorageDriver
@@ -73,6 +74,8 @@ class StorageProvider:
             self.driver = S3StorageDriver(**driver_settings)
         elif provider == "local":
             self.driver = LocalStorageDriver(**driver_settings)
+        elif provider == "az":
+            self.driver = AzureStorageDriver(**driver_settings)
         else:
             raise UnknownDriverError()
 
