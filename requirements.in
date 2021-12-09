@@ -3,7 +3,6 @@ asgiref
 cachetools
 click
 filelock
-google-cloud-storage
 azure-storage-blob
 humanize
 pydantic

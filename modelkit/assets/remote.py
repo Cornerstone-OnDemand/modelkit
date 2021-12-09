@@ -13,7 +13,11 @@ from structlog import get_logger
 from modelkit.assets import errors
 from modelkit.assets.drivers.abc import StorageDriver
 from modelkit.assets.drivers.azure import AzureStorageDriver
-from modelkit.assets.drivers.gcs import GCSStorageDriver
+try:
+    from modelkit.assets.drivers.gcs import GCSStorageDriver
+    has_gcs = True
+except ModuleNotFoundError:
+    has_gcs = False
 from modelkit.assets.drivers.local import LocalStorageDriver
 try:
     from modelkit.assets.drivers.s3 import S3StorageDriver
@@ -77,6 +81,8 @@ class StorageProvider:
             raise NoConfiguredProviderError()
 
         if provider == "gcs":
+            if not has_gcs:
+                raise DriverNotInstalledError("GCS driver not installed, install modelkit[assets-gcs]")
             self.driver = GCSStorageDriver(**driver_settings)
         elif provider == "s3":
             if not has_s3:

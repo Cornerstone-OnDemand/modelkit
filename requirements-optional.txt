@@ -6,3 +6,5 @@ tensorflow
 tensorflow-serving-api
 # assets-s3
 boto3
+# assets-gcs
+google-cloud-storage
