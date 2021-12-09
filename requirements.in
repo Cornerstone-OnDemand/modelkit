@@ -3,7 +3,6 @@ asgiref
 cachetools
 click
 filelock
-azure-storage-blob
 humanize
 pydantic
 python-dateutil

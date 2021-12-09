@@ -8,3 +8,5 @@ tensorflow-serving-api
 boto3
 # assets-gcs
 google-cloud-storage
+# assets-az
+azure-storage-blob

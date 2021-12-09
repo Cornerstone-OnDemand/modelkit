@@ -12,7 +12,13 @@ from structlog import get_logger
 
 from modelkit.assets import errors
 from modelkit.assets.drivers.abc import StorageDriver
-from modelkit.assets.drivers.azure import AzureStorageDriver
+
+try:
+    from modelkit.assets.drivers.azure import AzureStorageDriver
+
+    has_az = True
+except ModuleNotFoundError:
+    has_az = False
 try:
     from modelkit.assets.drivers.gcs import GCSStorageDriver
     has_gcs = True
@@ -91,6 +97,10 @@ class StorageProvider:
         elif provider == "local":
             self.driver = LocalStorageDriver(**driver_settings)
         elif provider == "az":
+            if not has_az:
+                raise DriverNotInstalledError(
+                    "Azure driver not installed, install modelkit[assets-az]"
+                )
             self.driver = AzureStorageDriver(**driver_settings)
         else:
             raise UnknownDriverError()
