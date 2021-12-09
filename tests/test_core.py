@@ -148,7 +148,7 @@ def test__configurations_from_objects():
     assert "les simpsons" in configurations
 
     configurations = _configurations_from_objects(ModelNoConf)
-    assert {} == configurations
+    assert "model_no_conf" in configurations
 
     configurations = _configurations_from_objects([SomeModel, SomeModel2, ModelNoConf])
     assert "yolo" in configurations
