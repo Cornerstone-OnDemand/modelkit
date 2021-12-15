@@ -4,6 +4,7 @@ import os
 import pytest
 
 from modelkit.assets.errors import InvalidAssetSpecError
+from modelkit.core import errors
 from modelkit.core.library import (
     ConfigurationNotFoundException,
     ModelLibrary,
@@ -241,9 +242,32 @@ def test_modellibrary_no_models(monkeypatch):
     assert p.configuration == {}
     assert p.required_models == {}
 
-    with pytest.raises(KeyError):
+    with pytest.raises(errors.ModelsNotFound):
         # model does not exist
         p.get("some_model")
+
+
+@pytest.mark.parametrize("error", [KeyError, ZeroDivisionError])
+def test_modellibrary_error_in_load(error):
+    class SomeModel(Model):
+        CONFIGURATIONS = {"model": {}}
+
+        def _load(self):
+            raise error
+
+        def _predict(self, item):
+            return item
+
+    library = ModelLibrary(
+        models=SomeModel,
+        settings={"lazy_loading": True},
+    )
+
+    try:
+        library.get("model")
+        assert False
+    except error as err:
+        assert "not loaded" not in str(err)
 
 
 def test_lazy_loading_dependencies():
