@@ -2,6 +2,7 @@ import importlib
 import inspect
 import os
 import pkgutil
+import re
 from collections import ChainMap
 from types import ModuleType
 from typing import Any, Dict, List, Mapping, Optional, Set, Type, Union
@@ -52,20 +53,33 @@ def walk_objects(mod):
         yield from walk_module_objects(mod, already_seen)
 
 
+TO_SNAKE_CASE_PATTERN = re.compile(r"(?<!^)(?=[A-Z])")
+
+
+def to_snake_case(name):
+    return TO_SNAKE_CASE_PATTERN.sub("_", name).lower()
+
+
 def _configurations_from_objects(m) -> Dict[str, ModelConfiguration]:
     if inspect.isclass(m) and issubclass(m, Asset):
-        return {
-            key: ModelConfiguration(**{**config, "model_type": m})
-            for key, config in m.CONFIGURATIONS.items()
-        }
+        configs = {}
+        if m.CONFIGURATIONS:
+            for key, config in m.CONFIGURATIONS.items():
+                configs[key] = ModelConfiguration(**{**config, "model_type": m})
+        else:
+            configs[to_snake_case(m.__name__)] = ModelConfiguration(model_type=m)
+        return configs
     elif isinstance(m, (list, tuple)):
         return dict(ChainMap(*(_configurations_from_objects(sub_m) for sub_m in m)))
     elif isinstance(m, ModuleType):
-        return {
-            key: ModelConfiguration(**{**config, "model_type": m})
-            for m in walk_objects(m)
-            for key, config in m.CONFIGURATIONS.items()
-        }
+        configs = {}
+        for m in walk_objects(m):
+            if m.CONFIGURATIONS:
+                for key, config in m.CONFIGURATIONS.items():
+                    configs[key] = ModelConfiguration(**{**config, "model_type": m})
+            else:
+                configs[to_snake_case(m.__name__)] = ModelConfiguration(model_type=m)
+        return configs
     elif isinstance(m, str):
         models = [importlib.import_module(modname) for modname in m.split(",")]
         return _configurations_from_objects(models)
