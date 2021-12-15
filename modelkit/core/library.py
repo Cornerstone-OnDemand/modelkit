@@ -31,6 +31,7 @@ from structlog import get_logger
 import modelkit.assets
 from modelkit.assets.manager import AssetsManager
 from modelkit.assets.settings import AssetSpec
+from modelkit.core import errors
 from modelkit.core.model import Asset, AsyncModel, Model
 from modelkit.core.model_configuration import ModelConfiguration, configure, list_assets
 from modelkit.core.settings import LibrarySettings, NativeCacheSettings, RedisSettings
@@ -155,21 +156,18 @@ class ModelLibrary:
         :param name: The name of the required model
         :return: required model
         """
-        try:
-            if self._lazy_loading:
-                # When in lazy mode ensure the model object and its dependencies
-                # are instantiated, this will download the asset
-                if name not in self.models:
-                    self._load(name)
-                # Ensure that it is loaded
-                if not self.models[name]._loaded:
-                    self.models[name].load()
-            m = self.models[name]
-            if model_type and not isinstance(m, model_type):
-                raise ValueError(f"Model `{m}` is not an instance of {model_type}")
-            return cast(T, m)
-        except KeyError:
-            raise KeyError(
+
+        if self._lazy_loading:
+            # When in lazy mode ensure the model object and its dependencies
+            # are instantiated, this will download the asset
+            if name not in self.models:
+                self._load(name)
+            # Ensure that it is loaded
+            if not self.models[name]._loaded:
+                self.models[name].load()
+
+        if name not in self.models:
+            raise errors.ModelsNotFound(
                 f"Model `{name}` not loaded."
                 + (
                     f" (loaded models: {', '.join(self.models)})."
@@ -177,6 +175,10 @@ class ModelLibrary:
                     else "."
                 )
             )
+        m = self.models[name]
+        if model_type and not isinstance(m, model_type):
+            raise ValueError(f"Model `{m}` is not an instance of {model_type}")
+        return cast(T, m)
 
     def _load(self, model_name):
         """
