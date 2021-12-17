@@ -1,14 +1,11 @@
 import os
-import stat
 import shutil
+import stat
 
 import pytest
 
 from modelkit.assets import errors
-from modelkit.assets.manager import (
-    AssetsManager,
-    _fetch_local_version,
-)
+from modelkit.assets.manager import AssetsManager, _fetch_local_version
 from modelkit.assets.remote import StorageProvider
 from modelkit.assets.settings import AssetSpec
 from tests import TEST_DIR
