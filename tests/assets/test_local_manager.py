@@ -1,10 +1,14 @@
 import os
+import stat
 import shutil
 
 import pytest
 
 from modelkit.assets import errors
-from modelkit.assets.manager import AssetsManager, _fetch_local_version
+from modelkit.assets.manager import (
+    AssetsManager,
+    _fetch_local_version,
+)
 from modelkit.assets.remote import StorageProvider
 from modelkit.assets.settings import AssetSpec
 from tests import TEST_DIR
@@ -180,43 +184,65 @@ def test_local_manager_with_fetch(
         )
 
 
-@pytest.mark.parametrize(*test_versioning.INIT_VERSIONING_PARAMETRIZE)
-def test_local_manager_with_fetch_external_bucket(
-    version_asset_name, version, versioning, working_dir, monkeypatch
-):
-
-    # when using external bucket in production (s3/gcs) in production
-    # but need to use some local asset for debug purpose with
-    # MODELKIT_ASSETS_DIR = MODELKIT_STORAGE_BUCKET/MODELKIT_STORAGE_PREFIX
-    # configuration
-    if versioning:
-        monkeypatch.setenv("MODELKIT_ASSETS_VERSIONING_SYSTEM", versioning)
+def test_local_manager_invalid_configuration(working_dir):
 
     modelkit_storage_bucket = working_dir
     modelkit_storage_prefix = "assets-prefix"
     modelkit_assets_dir = os.path.join(modelkit_storage_bucket, modelkit_storage_prefix)
+    os.makedirs(modelkit_assets_dir)
 
-    os.makedirs(os.path.join(modelkit_assets_dir, "category", version_asset_name))
-    with open(
-        os.path.join(modelkit_assets_dir, "category", version_asset_name, version), "w"
-    ) as f:
-        f.write("OK")
+    with pytest.raises(errors.StorageDriverError):
+        AssetsManager(
+            assets_dir=modelkit_assets_dir,
+            storage_provider=StorageProvider(
+                provider="local",
+                prefix=modelkit_storage_prefix,
+                bucket=modelkit_storage_bucket,
+            ),
+        )
 
-    manager = AssetsManager(
-        assets_dir=modelkit_assets_dir,
-        storage_provider=StorageProvider(
-            provider="local",
-            prefix=modelkit_storage_prefix,
-            bucket=modelkit_storage_bucket,
-        ),
-    )
 
-    res = manager.fetch_asset(
-        f"category/{version_asset_name}:{version}", return_info=True
+@pytest.mark.parametrize(*test_versioning.TWO_VERSIONING_PARAMETRIZE)
+def test_read_only_manager_with_fetch(
+    version_asset_name, version_1, version_2, versioning, base_dir, monkeypatch
+):
+    if versioning:
+        monkeypatch.setenv("MODELKIT_ASSETS_VERSIONING_SYSTEM", versioning)
+
+    # Prepare a read-only dir with raw assets
+    working_dir = os.path.join(base_dir, "working-dir")
+    shutil.copytree(
+        os.path.join(TEST_DIR, "testdata", "test-bucket", "assets-prefix"), working_dir
     )
-    assert res["path"] == os.path.join(
-        modelkit_assets_dir, "category", version_asset_name, version
-    )
+    os.chmod(working_dir, stat.S_IREAD | stat.S_IEXEC)
+
+    try:
+        manager = AssetsManager(
+            assets_dir=working_dir,
+            storage_provider=None,
+        )
+
+        res = manager.fetch_asset(
+            f"category/{version_asset_name}:{version_1}", return_info=True
+        )
+        assert res["path"] == os.path.join(
+            working_dir, "category", version_asset_name, version_1
+        )
+
+        res = manager.fetch_asset(f"category/{version_asset_name}", return_info=True)
+        assert res["path"] == os.path.join(
+            working_dir, "category", version_asset_name, version_2
+        )
+
+        if versioning in ["major_minor", None]:
+            res = manager.fetch_asset(
+                f"category/{version_asset_name}:0", return_info=True
+            )
+            assert res["path"] == os.path.join(
+                working_dir, "category", version_asset_name, "0.1"
+            )
+    finally:
+        os.chmod(working_dir, stat.S_IREAD | stat.S_IWRITE | stat.S_IEXEC)
 
 
 @pytest.mark.parametrize(*test_versioning.INIT_VERSIONING_PARAMETRIZE)
