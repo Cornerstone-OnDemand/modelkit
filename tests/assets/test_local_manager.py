@@ -147,12 +147,6 @@ def test_local_manager_with_fetch(
     if versioning:
         monkeypatch.setenv("MODELKIT_ASSETS_VERSIONING_SYSTEM", versioning)
 
-    os.makedirs(os.path.join(working_dir, "category", version_asset_name))
-    with open(
-        os.path.join(working_dir, "category", version_asset_name, version_1), "w"
-    ) as f:
-        f.write("OK")
-
     manager = AssetsManager(
         assets_dir=working_dir,
         storage_provider=StorageProvider(
@@ -244,42 +238,34 @@ def test_read_only_manager_with_fetch(
 
 @pytest.mark.parametrize(*test_versioning.INIT_VERSIONING_PARAMETRIZE)
 def test_fetch_asset_version_no_storage_provider(
-    version_asset_name, version, versioning, working_dir
+    version_asset_name, version, versioning
 ):
-    manager = AssetsManager(assets_dir=working_dir)
+    manager = AssetsManager(
+        assets_dir=os.path.join(TEST_DIR, "testdata", "test-bucket", "assets-prefix")
+    )
     asset_name = os.path.join("category", version_asset_name)
     spec = AssetSpec(name=asset_name, version=version, versioning=versioning)
 
     asset_dict = manager._fetch_asset_version(
         spec=spec,
-        local_versions=[version],  # version in local version
         _force_download=False,
     )
-
     assert asset_dict == {
         "from_cache": True,
         "version": version,
-        "path": os.path.join(working_dir, asset_name, version),
+        "path": os.path.join(manager.assets_dir, asset_name, version),
     }
 
     with pytest.raises(errors.StorageDriverError):
         manager._fetch_asset_version(
             spec=spec,
-            local_versions=[version],  # version in local version
             _force_download=True,
         )
 
-    with pytest.raises(errors.StorageDriverError):
-        manager._fetch_asset_version(
-            spec=spec,
-            local_versions=[],  # version not in local version
-            _force_download=True,
-        )
-
+    spec.name = os.path.join("not-existing-asset", version_asset_name)
     with pytest.raises(errors.LocalAssetDoesNotExistError):
         manager._fetch_asset_version(
             spec=spec,
-            local_versions=[],  #  version not in local version
             _force_download=False,
         )
 
@@ -304,7 +290,6 @@ def test_fetch_asset_version_with_storage_provider(
     # no _has_succeeded cache => fetch
     asset_dict = manager._fetch_asset_version(
         spec=spec,
-        local_versions=[version],  # version in local version
         _force_download=False,
     )
 
@@ -318,7 +303,6 @@ def test_fetch_asset_version_with_storage_provider(
     #  cache
     asset_dict = manager._fetch_asset_version(
         spec=spec,
-        local_versions=[version],  # version in local version
         _force_download=False,
     )
 
@@ -331,7 +315,6 @@ def test_fetch_asset_version_with_storage_provider(
     #  cache but force download
     asset_dict = manager._fetch_asset_version(
         spec=spec,
-        local_versions=[version],  # version in local version
         _force_download=True,
     )
 
@@ -342,24 +325,10 @@ def test_fetch_asset_version_with_storage_provider(
         "path": os.path.join(working_dir, asset_name, version),
     }
 
-    # download asset
+    # Re-Download asset when missing version
+    os.remove(os.path.join(working_dir, asset_name, version))
     asset_dict = manager._fetch_asset_version(
         spec=spec,
-        local_versions=[],  # version not in local version
-        _force_download=True,
-    )
-
-    del asset_dict["meta"]  #  fetch meta data
-    assert asset_dict == {
-        "from_cache": False,
-        "version": version,
-        "path": os.path.join(working_dir, asset_name, version),
-    }
-
-    # download asset
-    asset_dict = manager._fetch_asset_version(
-        spec=spec,
-        local_versions=[],  # version not in local version
         _force_download=False,
     )
 
@@ -376,7 +345,7 @@ def test_fetch_asset_version_with_sub_parts(
     version_asset_name, version, versioning, working_dir
 ):
     manager = AssetsManager(
-        assets_dir=working_dir,
+        assets_dir=os.path.join(TEST_DIR, "testdata", "test-bucket", "assets-prefix")
     )
     asset_name = os.path.join("category", version_asset_name)
     sub_part = "sub_part"
@@ -387,14 +356,13 @@ def test_fetch_asset_version_with_sub_parts(
     # no _has_succeeded cache => fetch
     asset_dict = manager._fetch_asset_version(
         spec=spec,
-        local_versions=[version],  # version in local version
         _force_download=False,
     )
 
     assert asset_dict == {
         "from_cache": True,
         "version": version,
-        "path": os.path.join(working_dir, asset_name, version, sub_part),
+        "path": os.path.join(manager.assets_dir, asset_name, version, sub_part),
     }
 
 

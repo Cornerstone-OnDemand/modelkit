@@ -81,74 +81,79 @@ class AssetsManager:
 
     def _fetch_asset(self, spec: AssetSpec, _force_download=False):
         with ContextualizedLogging(name=spec.name):
-            local_name = os.path.join(self.assets_dir, *spec.name.split("/"))
-            local_versions = spec.get_local_versions(local_name)
-            logger.debug("Local versions", local_versions=local_versions)
 
-            if spec.is_version_complete():
-                with ContextualizedLogging(version=spec.version):
-                    return self._fetch_asset_version(
-                        spec, local_versions, _force_download
-                    )
-
-            remote_versions = []
-            if self.storage_provider:
-                remote_versions = self.storage_provider.get_versions_info(spec.name)
-                logger.debug("Fetched remote versions", remote_versions=remote_versions)
-
-            all_versions = spec.sort_versions(
-                version_list=set(local_versions + remote_versions)
-            )
-
-            if not all_versions:
-                if not spec.version:
-                    logger.debug("Asset has no version information")
-                    # no version is specified and none exist
-                    # in this case, the asset spec is likely a relative or absolute
-                    # path to a file/directory
-                    return _fetch_local_version(spec.name, local_name)
-
-                raise errors.LocalAssetDoesNotExistError(
-                    name=spec.name,
-                    version=spec.version,
-                    local_versions=local_versions,
-                )
-
-            # at least one version info is missing, update to the latest
-            spec.set_latest_version(all_versions)
-
+            self._resolve_version(spec)
             with ContextualizedLogging(version=spec.version):
                 logger.debug("Resolved latest version", version=spec.version)
-                return self._fetch_asset_version(spec, local_versions, _force_download)
+                return self._fetch_asset_version(spec, _force_download)
+
+    def _resolve_version(self, spec: AssetSpec) -> None:
+        local_versions = self._list_local_versions(spec)
+        logger.debug("Local versions", local_versions=local_versions)
+
+        if spec.is_version_complete():
+            return
+
+        remote_versions = []
+        if self.storage_provider:
+            remote_versions = self.storage_provider.get_versions_info(spec.name)
+            logger.debug("Fetched remote versions", remote_versions=remote_versions)
+
+        all_versions = spec.sort_versions(
+            version_list=set(local_versions + remote_versions)
+        )
+
+        if not all_versions:
+            if not spec.version:
+                logger.debug("Asset has no version information")
+                # no version is specified and none exist
+                # in this case, the asset spec is likely a relative or absolute
+                # path to a file/directory
+                return None
+
+            raise errors.LocalAssetDoesNotExistError(
+                name=spec.name,
+                version=spec.version,
+                local_versions=local_versions,
+            )
+
+        # at least one version info is missing, update to the latest
+        spec.set_latest_version(all_versions)
 
     def _fetch_asset_version(
         self,
         spec: AssetSpec,
-        local_versions: List[str],
         _force_download: bool,
     ) -> Dict[str, Any]:
         local_path = os.path.join(
             self.assets_dir, *spec.name.split("/"), spec.version or ""
         )
 
-        if _force_download and not self.storage_provider:
-            raise errors.StorageDriverError(
-                "can not force_download with no storage provider"
+        if not spec.version:
+            return _fetch_local_version(
+                spec.name, os.path.join(self.assets_dir, *spec.name.split("/"))
             )
 
         if not self.storage_provider:
-            if spec.version in local_versions:
-                asset_dict = {
-                    "from_cache": True,
-                    "version": spec.version,
-                    "path": local_path,
-                }
-            else:
+
+            if _force_download:
+                raise errors.StorageDriverError(
+                    "can not force_download with no storage provider"
+                )
+            local_versions = self._list_local_versions(spec)
+            if spec.version not in local_versions:
                 raise errors.LocalAssetDoesNotExistError(
                     name=spec.name,
                     version=spec.version,
                     local_versions=local_versions,
                 )
+
+            asset_dict = {
+                "from_cache": True,
+                "version": spec.version,
+                "path": local_path,
+            }
+
         else:
 
             # Ensure assets are not downloaded concurrently
@@ -158,9 +163,9 @@ class AssetsManager:
             os.makedirs(os.path.dirname(lock_path), exist_ok=True)
             with filelock.FileLock(lock_path, timeout=self.timeout):
 
-                # Update local versions in case a concurrent download happened
-                local_name = os.path.join(self.assets_dir, *spec.name.split("/"))
-                local_versions = spec.get_local_versions(local_name)
+                # Update local versions after lock aquisition to account for concurrent
+                # download
+                local_versions = self._list_local_versions(spec)
 
                 if not _has_succeeded(local_path):
                     logger.info("Previous fetching of asset has failed, redownloading.")
@@ -205,6 +210,10 @@ class AssetsManager:
             )
             asset_dict["path"] = local_sub_part
         return asset_dict
+
+    def _list_local_versions(self, spec: AssetSpec) -> List[str]:
+        local_name = os.path.join(self.assets_dir, *spec.name.split("/"))
+        return spec.get_local_versions(local_name)
 
     def fetch_asset(
         self,
