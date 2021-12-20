@@ -84,7 +84,7 @@ Use `MODELKIT_STORAGE_PROVIDER=local` to treat a local folder as a remote source
 
 Assets will be downloaded from this folder to the configured asset dir.
 
-If you would like to run on already downloaded assets.
+If you would like to run on already downloaded assets please refer to "Pre-downloaded mode" section below.
 
 | Environment variable             | Notes                 |
 | -------------------------------- | --------------------- |
@@ -93,7 +93,7 @@ If you would like to run on already downloaded assets.
 
 ### Pre-downloaded mode
 
-Use `MODELKIT_STORAGE_PROVIDER=` to use only assets available in assets dir.
+Use `MODELKIT_STORAGE_PROVIDER=` or unset it to use only assets available in assets dir.
 
 This can be used for local development or for deploying assets in read-only artifacts.
 
