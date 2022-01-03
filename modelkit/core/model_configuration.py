@@ -62,6 +62,8 @@ def to_snake_case(name):
 
 def _configurations_from_objects(m) -> Dict[str, ModelConfiguration]:
     if inspect.isclass(m) and issubclass(m, Asset):
+        if m._abstract:
+            return {}
         configs = {}
         if m.CONFIGURATIONS:
             for key, config in m.CONFIGURATIONS.items():

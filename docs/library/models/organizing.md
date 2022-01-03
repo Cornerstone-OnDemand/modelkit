@@ -53,8 +53,8 @@ import my_ml_package
 service = ModelLibrary(models=my_ml_package)
 ```
 
-!!! note 
-    It is also possible to refer to a sub module `ModelLibrary(models=package.subpackage)` the `Model` classes themselves `ModelLibrary(models=SomeModelClass)`, string package names `ModelLibrary(models="package.module_2")` or any combination of the above `ModelLibrary(models=[package.subpackage, SomeModelClass])`
+> **Note:**<br>
+It is also possible to refer to a sub module `ModelLibrary(models=package.subpackage)` the `Model` classes themselves `ModelLibrary(models=SomeModelClass)`, string package names `ModelLibrary(models="package.module_2")` or any combination of the above `ModelLibrary(models=[package.subpackage, SomeModelClass])`
 
 In order to restrict the models that are actually being loaded, pass a list of `required_models` keys to the `ModelLibrary` instantiation:
 
@@ -63,4 +63,22 @@ service = ModelLibrary(
     models=[package.module_2, package.subpackage],
     required_models=["some_model"]
 )
+```
+
+### Abstract models
+
+It is possible to define models that inherits from an abstract model in order to share common behavior.
+
+For instance, it can be usefull to implement common prediction algorithm on different data assets
+
+```python
+class BaseModel(AbstractMixin, Model):
+    def _predict(self, item, **kwargs):
+        ...
+
+class DerivedModel(ConcreteMixin, BaseModel):
+    CONFIGURATIONS = {"derived": {"asset": "something.txt"}}
+
+    def _load(self):
+        ...
 ```
