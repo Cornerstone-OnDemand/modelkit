@@ -11,7 +11,7 @@ from tenacity import (
     wait_random_exponential,
 )
 
-from modelkit.core.model import AsyncModel, Model
+from modelkit.core.model import AbstractMixin, AsyncModel, Model
 from modelkit.core.types import ItemType, ReturnType
 
 logger = get_logger(__name__)
@@ -46,7 +46,7 @@ SERVICE_MODEL_RETRY_POLICY = {
 }
 
 
-class AsyncDistantHTTPModel(AsyncModel[ItemType, ReturnType]):
+class AsyncDistantHTTPModel(AbstractMixin, AsyncModel[ItemType, ReturnType]):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.endpoint = self.model_settings["endpoint"]
@@ -77,7 +77,7 @@ class AsyncDistantHTTPModel(AsyncModel[ItemType, ReturnType]):
             return self.aiohttp_session.close()
 
 
-class DistantHTTPModel(Model[ItemType, ReturnType]):
+class DistantHTTPModel(AbstractMixin, Model[ItemType, ReturnType]):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.endpoint = self.model_settings["endpoint"]
