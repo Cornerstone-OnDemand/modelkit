@@ -5,9 +5,8 @@ Sometimes models will simply need to call another microservice, in this case `Di
 
 ```python
 from modelkit.core.models.distant_model import DistantHTTPModel
-from modelkit.core.model import ConcreteMixin
 
-class SomeDistantHTTPModel(ConcreteMixin, DistantHTTPModel):
+class SomeDistantHTTPModel(DistantHTTPModel):
     CONFIGURATIONS = {
         "some_model": {
             "model_settings": {

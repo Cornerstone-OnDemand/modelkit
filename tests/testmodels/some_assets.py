@@ -1,10 +1,10 @@
-from modelkit.core.model import AbstractMixin, Asset, ConcreteMixin
+from modelkit.core.model import Asset
 
 
-class BaseAsset(AbstractMixin, Asset):
+class BaseAsset(Asset):
     def _load(self):
         assert self.asset_path
 
 
-class DerivedAsset(ConcreteMixin, BaseAsset):
+class DerivedAsset(BaseAsset):
     CONFIGURATIONS = {"derived_asset": {"asset": "something.txt"}}

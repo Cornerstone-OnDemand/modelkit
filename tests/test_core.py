@@ -11,7 +11,7 @@ from modelkit.core.library import (
     download_assets,
     load_model,
 )
-from modelkit.core.model import AbstractMixin, Asset, AsyncModel, ConcreteMixin, Model
+from modelkit.core.model import Asset, AsyncModel, Model
 from modelkit.core.model_configuration import (
     ModelConfiguration,
     _configurations_from_objects,
@@ -149,7 +149,7 @@ def test__configurations_from_objects():
     assert "les simpsons" in configurations
 
     configurations = _configurations_from_objects(ModelNoConf)
-    assert "model_no_conf" in configurations
+    assert {} == configurations
 
     configurations = _configurations_from_objects([SomeModel, SomeModel2, ModelNoConf])
     assert "yolo" in configurations
@@ -727,11 +727,11 @@ def test_model_sub_class(working_dir, monkeypatch):
     with open(os.path.join(working_dir, "something.txt"), "w") as f:
         f.write("OK")
 
-    class BaseAsset(AbstractMixin, Asset):
+    class BaseAsset(Asset):
         def _load(self):
             assert self.asset_path
 
-    class DerivedAsset(ConcreteMixin, BaseAsset):
+    class DerivedAsset(BaseAsset):
         CONFIGURATIONS = {"derived": {"asset": "something.txt"}}
 
         def _predict(self, item):
