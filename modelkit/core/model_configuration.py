@@ -62,6 +62,8 @@ def to_snake_case(name):
 
 def _configurations_from_objects(m) -> Dict[str, ModelConfiguration]:
     if inspect.isclass(m) and issubclass(m, Asset):
+        if m._abstract:
+            return {}
         configs = {}
         if m.CONFIGURATIONS:
             for key, config in m.CONFIGURATIONS.items():
@@ -72,14 +74,11 @@ def _configurations_from_objects(m) -> Dict[str, ModelConfiguration]:
     elif isinstance(m, (list, tuple)):
         return dict(ChainMap(*(_configurations_from_objects(sub_m) for sub_m in m)))
     elif isinstance(m, ModuleType):
-        configs = {}
-        for m in walk_objects(m):
-            if m.CONFIGURATIONS:
-                for key, config in m.CONFIGURATIONS.items():
-                    configs[key] = ModelConfiguration(**{**config, "model_type": m})
-            else:
-                configs[to_snake_case(m.__name__)] = ModelConfiguration(model_type=m)
-        return configs
+        return dict(
+            ChainMap(
+                *(_configurations_from_objects(sub_m) for sub_m in walk_objects(m))
+            )
+        )
     elif isinstance(m, str):
         models = [importlib.import_module(modname) for modname in m.split(",")]
         return _configurations_from_objects(models)

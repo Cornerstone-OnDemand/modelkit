@@ -11,7 +11,7 @@ from modelkit.core.library import (
     download_assets,
     load_model,
 )
-from modelkit.core.model import Asset, AsyncModel, Model
+from modelkit.core.model import AbstractMixin, Asset, AsyncModel, ConcreteMixin, Model
 from modelkit.core.model_configuration import (
     ModelConfiguration,
     _configurations_from_objects,
@@ -19,7 +19,7 @@ from modelkit.core.model_configuration import (
     list_assets,
 )
 from modelkit.core.settings import LibrarySettings
-from tests import TEST_DIR
+from tests import TEST_DIR, testmodels
 from tests.assets.test_versioning import test_versioning
 
 
@@ -720,3 +720,29 @@ def test_model_multiple_asset_load(working_dir, monkeypatch):
     lib.preload()
 
     assert fetched == 1
+
+
+def test_model_sub_class(working_dir, monkeypatch):
+    monkeypatch.setenv("MODELKIT_ASSETS_DIR", working_dir)
+    with open(os.path.join(working_dir, "something.txt"), "w") as f:
+        f.write("OK")
+
+    class BaseAsset(AbstractMixin, Asset):
+        def _load(self):
+            assert self.asset_path
+
+    class DerivedAsset(ConcreteMixin, BaseAsset):
+        CONFIGURATIONS = {"derived": {"asset": "something.txt"}}
+
+        def _predict(self, item):
+            return item
+
+    # Abstract models are not loaded even when explicitly requesting them
+    lib = ModelLibrary(models=[DerivedAsset, BaseAsset])
+    lib.preload()
+    assert ["derived"] == list(lib.models.keys())
+
+    # Abstract models are ignored when walking through modules
+    lib = ModelLibrary(models=testmodels)
+    lib.preload()
+    assert ["derived_asset", "derived_model"] == sorted(list(lib.models.keys()))
