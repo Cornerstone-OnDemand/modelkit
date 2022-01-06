@@ -81,7 +81,6 @@ class Asset:
     """
 
     CONFIGURATIONS: Dict[str, Dict[str, Any]] = {}
-    _abstract = False
 
     def __init__(
         self,
@@ -786,11 +785,3 @@ class WrappedAsyncModel:
         # The following does not currently work, because AsyncToSync does not
         # seem to correctly wrap asynchronous generators
         # self.predict_gen = AsyncToSync(self.async_model.predict_gen)
-
-
-class AbstractMixin:
-    _abstract = True
-
-
-class ConcreteMixin:
-    _abstract = False

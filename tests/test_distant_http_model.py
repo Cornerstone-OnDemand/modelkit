@@ -7,7 +7,6 @@ import pytest
 import requests
 
 from modelkit.core.library import ModelLibrary
-from modelkit.core.model import ConcreteMixin
 from modelkit.core.models.distant_model import AsyncDistantHTTPModel, DistantHTTPModel
 from tests import TEST_DIR
 
@@ -69,12 +68,12 @@ async def test_distant_http_model(
         "async_mode": False,
     }
 
-    class SomeDistantHTTPModel(ConcreteMixin, DistantHTTPModel):
+    class SomeDistantHTTPModel(DistantHTTPModel):
         CONFIGURATIONS = {
             "some_model_sync": {"model_settings": sync_model_settings},
         }
 
-    class SomeAsyncDistantHTTPModel(ConcreteMixin, AsyncDistantHTTPModel):
+    class SomeAsyncDistantHTTPModel(AsyncDistantHTTPModel):
         CONFIGURATIONS = {"some_model_async": {"model_settings": async_model_settings}}
 
     lib_without_params = ModelLibrary(

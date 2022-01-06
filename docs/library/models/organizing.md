@@ -67,16 +67,16 @@ service = ModelLibrary(
 
 ### Abstract models
 
-It is possible to define models that inherits from an abstract model in order to share common behavior.
+It is possible to define models that inherits from an abstract model in order to share common behavior. It only requires to not set CONFIGURATIONS dict for those models to be ignored from the configuration steps.
 
-For instance, it can be usefull to implement common prediction algorithm on different data assets
+For instance, it can be usefull to implement common prediction algorithm on different data assets.
 
 ```python
-class BaseModel(AbstractMixin, Model):
+class BaseModel(Model):
     def _predict(self, item, **kwargs):
         ...
 
-class DerivedModel(ConcreteMixin, BaseModel):
+class DerivedModel(BaseModel):
     CONFIGURATIONS = {"derived": {"asset": "something.txt"}}
 
     def _load(self):
