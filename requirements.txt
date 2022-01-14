@@ -125,7 +125,7 @@ requests==2.27.1
     #   requests-oauthlib
 requests-oauthlib==1.3.0
     # via msrest
-rich==10.15.2
+rich==11.0.0
     # via -r requirements.in
 rsa==4.8
     # via google-auth

@@ -323,7 +323,7 @@ requests-oauthlib==1.3.0
     # via
     #   -c requirements.txt
     #   msrest
-rich==10.15.2
+rich==11.0.0
     # via
     #   -c requirements.txt
     #   -r requirements.in
