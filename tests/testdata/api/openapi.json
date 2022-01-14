@@ -63,7 +63,7 @@
   "paths": {
     "/predict/async_model": {
       "post": {
-        "description": "\n\n```                                                                                \n├── configuration: async_model                                                  \n├── signature: ItemModel -> ResultModel                                         \n```",
+        "description": "\n\n```                                                                                \n├── configuration: async_model                                                  \n├── signature: tests.test_api.ItemModel -> tests.test_api.ResultModel           \n```",
         "operationId": "_aendpoint_predict_async_model_post",
         "requestBody": {
           "content": {
@@ -103,7 +103,7 @@
     },
     "/predict/batch/async_model": {
       "post": {
-        "description": "\n\n```                                                                                \n├── configuration: async_model                                                  \n├── signature: ItemModel -> ResultModel                                         \n```",
+        "description": "\n\n```                                                                                \n├── configuration: async_model                                                  \n├── signature: tests.test_api.ItemModel -> tests.test_api.ResultModel           \n```",
         "operationId": "_aendpoint_predict_batch_async_model_post",
         "requestBody": {
           "content": {
@@ -147,7 +147,7 @@
     },
     "/predict/batch/no_supported_model": {
       "post": {
-        "description": "\n\n```                                                                                \n├── configuration: no_supported_model                                           \n├── signature: ndarray -> ndarray                                               \n```",
+        "description": "\n\n```                                                                                \n├── configuration: no_supported_model                                           \n├── signature: numpy.ndarray -> numpy.ndarray                                   \n```",
         "operationId": "_endpoint_predict_batch_no_supported_model_post",
         "requestBody": {
           "content": {
@@ -189,7 +189,7 @@
     },
     "/predict/batch/some_complex_model": {
       "post": {
-        "description": "    With **a lot** of documentation\n\n```                                                                                \n├── configuration: some_complex_model                                           \n├── doc: More complex                                                           \n│                                                                               \n│       With **a lot** of documentation                                         \n├── signature: ItemModel -> ResultModel                                         \n```",
+        "description": "    With **a lot** of documentation\n\n```                                                                                \n├── configuration: some_complex_model                                           \n├── doc: More complex                                                           \n│                                                                               \n│       With **a lot** of documentation                                         \n├── signature: tests.test_api.ItemModel -> tests.test_api.ResultModel           \n```",
         "operationId": "_endpoint_predict_batch_some_complex_model_post",
         "requestBody": {
           "content": {
@@ -317,7 +317,7 @@
     },
     "/predict/no_supported_model": {
       "post": {
-        "description": "\n\n```                                                                                \n├── configuration: no_supported_model                                           \n├── signature: ndarray -> ndarray                                               \n```",
+        "description": "\n\n```                                                                                \n├── configuration: no_supported_model                                           \n├── signature: numpy.ndarray -> numpy.ndarray                                   \n```",
         "operationId": "_endpoint_predict_no_supported_model_post",
         "requestBody": {
           "content": {
@@ -357,7 +357,7 @@
     },
     "/predict/some_complex_model": {
       "post": {
-        "description": "    With **a lot** of documentation\n\n```                                                                                \n├── configuration: some_complex_model                                           \n├── doc: More complex                                                           \n│                                                                               \n│       With **a lot** of documentation                                         \n├── signature: ItemModel -> ResultModel                                         \n```",
+        "description": "    With **a lot** of documentation\n\n```                                                                                \n├── configuration: some_complex_model                                           \n├── doc: More complex                                                           \n│                                                                               \n│       With **a lot** of documentation                                         \n├── signature: tests.test_api.ItemModel -> tests.test_api.ResultModel           \n```",
         "operationId": "_endpoint_predict_some_complex_model_post",
         "requestBody": {
           "content": {
