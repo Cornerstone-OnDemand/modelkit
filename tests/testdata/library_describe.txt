@@ -1,7 +1,7 @@
 Settings                                                                        
 ├── lazy_loading : bool = False                                                 
 ├── enable_validation : bool = True                                             
-├── tf_serving : modelkit.core.settings.TFServingSettings
+├── tf_serving : modelkit.core.settings.TFServingSettings                       
 │   ├── enable : bool = False                                                   
 │   ├── mode : str = 'rest'                                                     
 │   ├── host : str = 'localhost'                                                
@@ -10,17 +10,17 @@ Settings
     modelkit.core.settings.NativeCacheSettings, NoneType] = None                
 Configuration                                                                   
 ├── some_complex_model_a : ModelConfiguration                                   
-│   ├── model_type : typing.Type[modelkit.core.model.Asset] = 
-│   │   SomeComplexValidatedModelA type              
-│   ├── model_settings : typing.Dict[str, typing.Any]                                   
+│   ├── model_type : typing.Type[modelkit.core.model.Asset] =                   
+│   │   SomeComplexValidatedModelA type                                         
+│   ├── model_settings : typing.Dict[str, typing.Any]                           
 │   │   └── batch_size : int = 128                                              
-│   └── model_dependencies : typing.Dict[str, str]                                      
-│       └── some_model_a : str = 'some_model_a'
-└── some_model_a : ModelConfiguration
-    ├── model_type : typing.Type[modelkit.core.model.Asset] =
-    │   SomeSimpleValidatedModelA type
-    ├── model_settings : typing.Dict[str, typing.Any] = {}
-    └── model_dependencies : typing.Dict[str, str] = {}
+│   └── model_dependencies : typing.Dict[str, str]                              
+│       └── some_model_a : str = 'some_model_a'                                 
+└── some_model_a : ModelConfiguration                                           
+    ├── model_type : typing.Type[modelkit.core.model.Asset] =                   
+    │   SomeSimpleValidatedModelA type                                          
+    ├── model_settings : typing.Dict[str, typing.Any] = {}                      
+    └── model_dependencies : typing.Dict[str, str] = {}                         
 Assets                                                                          
     └── version : str = None                                                    
 Models                                                                          
@@ -37,8 +37,8 @@ Models
     ├── doc: More complex                                                       
     │                                                                           
     │           With **a lot** of documentation                                 
-    ├── signature: tests.test_describe.test_describe.<locals>.ItemModel -> 
-    │   tests.test_describe.test_describe.<locals>.ResultModel                                     
+    ├── signature: tests.test_describe.test_describe.<locals>.ItemModel ->      
+    │   tests.test_describe.test_describe.<locals>.ResultModel                  
     ├── dependencies                                                            
     │   └── some_model_a                                                        
     ├── batch size: 128                                                         
