@@ -3,22 +3,10 @@ from rich.tree import Tree
 
 
 def pretty_print_type(typ):
-    try:
-        # For typing types
-        s = typ._name
-        if typ.__args__:
-            s += "["
-            s += ",".join(pretty_print_type(x) for x in typ.__args__)
-            s += "]"
-        return escape(s)
-    except (AttributeError, TypeError):
-        pass
-    try:
-        # For classes
-        return escape(typ.__name__)
-    except AttributeError:
-        pass
-    return escape(str(typ))
+    typ_str = str(typ)
+    if "'" in typ_str:  # for class wrapper
+        typ_str = typ_str.split("'")[1]
+    return escape(typ_str)
 
 
 def describe(obj, t=None):
