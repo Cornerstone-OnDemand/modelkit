@@ -198,3 +198,29 @@ async def test_predict_gen_async():
     await _do_gen_test_async(m, 16, 66)
     await _do_gen_test_async(m, 10, 8)
     await _do_gen_test_async(m, 100, 5)
+
+
+def test_generator_exit_callback():
+    steps = 0
+    batch_size = 32
+    batch_break = int(batch_size / 2)
+
+    def _callback(batch_step, batch_items, batch_results):
+        nonlocal steps
+        # batch_items' length equals batch size by definition
+        assert len(batch_items) == batch_size
+        # however, we just saw mid-batch size items
+        assert len(batch_results) == batch_break
+        # (despite batch_size items we actually computed)
+        assert callback_func(batch_items)[:batch_break] == batch_results
+        # we break during the first batch, at mid-batch size
+        assert batch_step < 1
+        steps += 1
+
+    m = SomeModel()
+    for i, prediction in enumerate(
+        m.predict_gen(range(100), _callback=_callback, batch_size=batch_size)
+    ):
+        if i + 1 == batch_break:
+            break
+    assert steps == 1
