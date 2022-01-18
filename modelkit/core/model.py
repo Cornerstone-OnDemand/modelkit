@@ -580,29 +580,31 @@ class Model(AbstractModel[ItemType, ReturnType]):
             predictions = iter(self._predict_batch(batch, **kwargs))
         except BaseException as exc:
             raise errors.PredictionError(exc=exc)
+        current_predictions = []
         for cache_item in cache_items:
             if cache_item.missing:
-                r = next(predictions)
+                current_predictions.append(next(predictions))
                 if (
                     cache_item.cache_key
                     and self.configuration_key
                     and self.cache
                     and self.model_settings.get("cache_predictions")
                 ):
-                    self.cache.set(cache_item.cache_key, r)
+                    self.cache.set(cache_item.cache_key, current_predictions[-1])
                 yield self._validate(
-                    r,
+                    current_predictions[-1],
                     self._return_model,
                     errors.ReturnValueValidationException,
                 )
             else:
+                current_predictions.append(cache_item.cache_value)
                 yield self._validate(
-                    cache_item.cache_value,
+                    current_predictions[-1],
                     self._return_model,
                     errors.ReturnValueValidationException,
                 )
         if _callback:
-            _callback(_step, batch, predictions)
+            _callback(_step, batch, current_predictions)
 
     def close(self):
         pass
@@ -748,29 +750,31 @@ class AsyncModel(AbstractModel[ItemType, ReturnType]):
             predictions = iter(await self._predict_batch(batch, **kwargs))
         except BaseException as exc:
             raise errors.PredictionError(exc=exc)
+        current_predictions = []
         for cache_item in cache_items:
             if cache_item.missing:
-                r = next(predictions)
+                current_predictions.append(next(predictions))
                 if (
                     cache_item.cache_key
                     and self.configuration_key
                     and self.cache
                     and self.model_settings.get("cache_predictions")
                 ):
-                    self.cache.set(cache_item.cache_key, r)
+                    self.cache.set(cache_item.cache_key, current_predictions[-1])
                 yield self._validate(
-                    r,
+                    current_predictions[-1],
                     self._return_model,
                     errors.ReturnValueValidationException,
                 )
             else:
+                current_predictions.append(cache_item.cache_value)
                 yield self._validate(
-                    cache_item.cache_value,
+                    current_predictions[-1],
                     self._return_model,
                     errors.ReturnValueValidationException,
                 )
         if _callback:
-            _callback(_step, batch, predictions)
+            _callback(_step, batch, current_predictions)
 
     async def close(self):
         pass
