@@ -48,31 +48,31 @@ CALLBACK_TEST_CASES = [
 ]
 
 
+def callback_func(items):
+    return [item + 1 for item in items]
+
+
+class SomeModel(Model):
+    def _predict_batch(self, items, **_):
+        return callback_func(items)
+
+
 @pytest.mark.parametrize(
     "items,batch_size,expected_steps,expected_steps_gen",
     CALLBACK_TEST_CASES,
 )
-def test_callback_batch_process(
-    items, batch_size, expected_steps, expected_steps_gen, monkeypatch
-):
+def test_callback_batch_process(items, batch_size, expected_steps, expected_steps_gen):
     steps = 0
-
-    def func(items):
-        return [item + 1 for item in items]
 
     def _callback(batch_step, batch_items, batch_results):
         nonlocal steps
         nonlocal items
         if batch_size:
             assert items[batch_step : batch_step + batch_size] == batch_items
+        assert callback_func(batch_items) == batch_results
         steps += 1
 
-    class SomeModel(Model):
-        def _predict(self, item):
-            return item
-
     m = SomeModel()
-    monkeypatch.setattr(m, "_predict_batch", func)
     m.predict_batch(items, batch_size=batch_size, _callback=_callback)
     assert steps == expected_steps
 
@@ -85,6 +85,7 @@ def test_callback_batch_process(
             assert items[batch_step : batch_step + batch_size] == batch_items
         else:
             assert len(batch_items) == 1
+        assert callback_func(batch_items) == batch_results
 
     list(m.predict_gen(iter(items), batch_size=batch_size, _callback=_callback_gen))
     assert steps == expected_steps_gen
@@ -101,15 +102,16 @@ async def test_callback_batch_process_async(
     steps = 0
 
     class SomeAsyncModel(AsyncModel):
-        async def _predict_batch(self, items):
+        async def _predict_batch(self, items, **_):
             await asyncio.sleep(0)
-            return [item + 1 for item in items]
+            return callback_func(items)
 
     def _callback(batch_step, batch_items, batch_results):
         nonlocal steps
         nonlocal items
         if batch_size:
             assert items[batch_step : batch_step + batch_size] == batch_items
+        assert callback_func(batch_items) == batch_results
         steps += 1
 
     m = SomeAsyncModel()
@@ -125,6 +127,7 @@ async def test_callback_batch_process_async(
             assert items[batch_step : batch_step + batch_size] == batch_items
         else:
             assert len(batch_items) == 1
+        assert callback_func(batch_items) == batch_results
 
     async for _ in m.predict_gen(
         iter(items), batch_size=batch_size, _callback=_callback_gen
@@ -195,3 +198,29 @@ async def test_predict_gen_async():
     await _do_gen_test_async(m, 16, 66)
     await _do_gen_test_async(m, 10, 8)
     await _do_gen_test_async(m, 100, 5)
+
+
+def test_generator_exit_callback():
+    steps = 0
+    batch_size = 32
+    batch_break = int(batch_size / 2)
+
+    def _callback(batch_step, batch_items, batch_results):
+        nonlocal steps
+        # batch_items' length equals batch size by definition
+        assert len(batch_items) == batch_size
+        # however, we just saw mid-batch size items
+        assert len(batch_results) == batch_break
+        # (despite batch_size items we actually computed)
+        assert callback_func(batch_items)[:batch_break] == batch_results
+        # we break during the first batch, at mid-batch size
+        assert batch_step < 1
+        steps += 1
+
+    m = SomeModel()
+    for i, prediction in enumerate(
+        m.predict_gen(range(100), _callback=_callback, batch_size=batch_size)
+    ):
+        if i + 1 == batch_break:
+            break
+    assert steps == 1
