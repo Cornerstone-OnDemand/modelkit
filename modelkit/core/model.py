@@ -1,6 +1,8 @@
 import copy
 import enum
+import functools
 import typing
+from contextlib import ExitStack
 from typing import (
     Any,
     AsyncIterator,
@@ -39,6 +41,18 @@ logger = get_logger(__name__)
 ModelDependency = TypeVar(
     "ModelDependency", bound=Union["Model", "AsyncModel", "WrappedAsyncModel"]
 )
+
+
+def modelkit_predict_profiler(func):
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        with ExitStack() as stack:
+            if hasattr(self, "profiler"):
+                stack.enter_context(self.profiler.profile(self.configuration_key))
+            vals = func(self, *args, **kwargs)
+            yield from vals
+
+    return wrapper
 
 
 class ModelDependenciesMapping:
@@ -523,6 +537,7 @@ class Model(AbstractModel[ItemType, ReturnType]):
             )
         )
 
+    @modelkit_predict_profiler
     @errors.wrap_modelkit_exceptions_gen
     def predict_gen(
         self,
