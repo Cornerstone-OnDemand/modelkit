@@ -116,8 +116,8 @@ class Asset:
         )
 
         self._loaded: bool = False
-        self._load_time: Optional[float] = None
-        self._load_memory_increment: Optional[float] = None
+        self._load_time: Optional[float] = 0
+        self._load_memory_increment: Optional[float] = 0
 
         if not self.service_settings.lazy_loading:
             self.load()
@@ -294,17 +294,15 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
                 f" {pretty_print_type(self._return_type)}"
             )
 
-        if self._load_time:
-            sub_t = t.add(
-                "[deep_sky_blue1]load time[/deep_sky_blue1]: [orange3]"
-                + humanize.naturaldelta(self._load_time, minimum_unit="seconds")
-            )
+        sub_t = t.add(
+            "[deep_sky_blue1]load time[/deep_sky_blue1]: [orange3]"
+            + humanize.naturaldelta(self._load_time, minimum_unit="seconds")
+        )
 
-        if self._load_memory_increment is not None:
-            sub_t = t.add(
-                f"[deep_sky_blue1]load memory[/deep_sky_blue1]: "
-                f"[orange3]{humanize.naturalsize(self._load_memory_increment)}"
-            )
+        sub_t = t.add(
+            f"[deep_sky_blue1]load memory[/deep_sky_blue1]: "
+            f"[orange3]{humanize.naturalsize(self._load_memory_increment)}"
+        )
         if self.model_dependencies.models:
             dep_t = t.add("[deep_sky_blue1]dependencies")
             for m in self.model_dependencies.models:
