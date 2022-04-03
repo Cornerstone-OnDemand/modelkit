@@ -150,3 +150,63 @@ class SomeObject:
 )
 def test_pretty_describe(value):
     describe(value)
+
+
+def test_describe_load_info():
+    class top(Model[str, str]):
+        CONFIGURATIONS = {
+            "top": {
+                "model_dependencies": ["right", "left"],
+            }
+        }
+
+        def _predict(self, item):
+            return item
+
+    class right(Model[str, str]):
+        CONFIGURATIONS = {
+            "right": {
+                "model_dependencies": ["right_dep", "join_dep"],
+            }
+        }
+
+        def _predict(self, item):
+            return item
+
+    class left(Model[str, str]):
+        CONFIGURATIONS = {
+            "left": {
+                "model_dependencies": ["join_dep"],
+            }
+        }
+
+        def _predict(self, item):
+            return item
+
+    class right_dep(Model[str, str]):
+        CONFIGURATIONS = {"right_dep": {}}
+
+        def _predict(self, item):
+            return item
+
+    class join_dep(Model[str, str]):
+        CONFIGURATIONS = {"join_dep": {}}
+
+        def _predict(self, item):
+            return item
+
+    console = Console()
+    library = ModelLibrary(models=[top, right, left, join_dep, right_dep])
+    for m in ["top", "right", "left", "join_dep", "right_dep"]:
+        library.get(m)._load_time = 1
+        library.get(m)._load_memory_increment = 1
+
+    if platform.system() == "Windows":
+        # Output is different on Windows platforms since
+        # modelkit.utils.memory cannot track memory increment
+        # and write it
+        return
+    with console.capture() as capture:
+        console.print(library.get("top").describe())
+    r = ReferenceText(os.path.join(TEST_DIR, "testdata"))
+    r.assert_equal("test_describe_load_info.txt", capture.get())
