@@ -18,7 +18,7 @@
   <a href="https://pypi.org/project/modelkit/"><img src="https://img.shields.io/pypi/pyversions/modelkit" /></a>
   <a href="https://cornerstone-ondemand.github.io/modelkit/index.html"><img src="https://img.shields.io/badge/docs-latest-blue" /></a>
   <a href="https://github.com/cornerstone-ondemand/modelkit/blob/main/LICENSE"><img src="https://img.shields.io/github/license/cornerstone-ondemand/modelkit" /></a>
-  <a href="https://pepy.tech/project/modelkit"><imga src="https://pepy.tech/badge/modelkit">
+    [![Downloads](https://pepy.tech/badge/modelkit)](https://pepy.tech/project/modelkit)
 </p>
 
 `modelkit` is a minimalist yet powerful MLOps library for Python, built for people who want to deploy ML models to production. 
