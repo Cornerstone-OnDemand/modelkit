@@ -7,7 +7,7 @@ import pytest
 from rich.console import Console
 
 from modelkit.core.library import ModelLibrary
-from modelkit.core.model import Model
+from modelkit.core.model import Model, add_dependencies_load_info
 from modelkit.testing import ReferenceText
 from modelkit.utils.pretty import describe
 from tests import TEST_DIR
@@ -200,6 +200,26 @@ def test_describe_load_info():
     for m in ["top", "right", "left", "join_dep", "right_dep"]:
         library.get(m)._load_time = 1
         library.get(m)._load_memory_increment = 1
+
+    load_info_top = {}
+    add_dependencies_load_info(load_info_top, library.get("top"))
+    assert load_info_top == {
+        "right": {"time": 1, "memory_increment": 1},
+        "left": {"time": 1, "memory_increment": 1},
+        "join_dep": {"time": 1, "memory_increment": 1},
+        "right_dep": {"time": 1, "memory_increment": 1},
+    }
+
+    load_info_right = {}
+    add_dependencies_load_info(load_info_right, library.get("right"))
+    assert load_info_right == {
+        "join_dep": {"time": 1, "memory_increment": 1},
+        "right_dep": {"time": 1, "memory_increment": 1},
+    }
+
+    load_info_join_dep = {}
+    add_dependencies_load_info(load_info_join_dep, library.get("join_dep"))
+    assert load_info_join_dep == {}
 
     if platform.system() == "Windows":
         # Output is different on Windows platforms since

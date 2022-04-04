@@ -342,15 +342,6 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
         return t
 
     def _compute_dependencies_load_info(self):
-        def add_dependencies_load_info(load_info_dict, my_model):
-            for model_name, model_dep in my_model.model_dependencies.models.items():
-                if model_name not in load_info_dict:
-                    load_info_dict[model_name] = {
-                        "time": model_dep._load_time or 0,
-                        "memory_increment": model_dep._load_memory_increment or 0,
-                    }
-                    add_dependencies_load_info(load_info_dict, model_dep)
-
         global_load_info = {}
         add_dependencies_load_info(global_load_info, self)
         global_load_time = (self._load_memory_increment or 0) + sum(
@@ -420,6 +411,16 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
             raise NoPredictOverridenError(
                 "_predict or _predict_batch must be overriden"
             )
+
+
+def add_dependencies_load_info(load_info_dict, my_model):
+    for model_name, model_dep in my_model.model_dependencies.models.items():
+        if model_name not in load_info_dict:
+            load_info_dict[model_name] = {
+                "time": model_dep._load_time or 0,
+                "memory_increment": model_dep._load_memory_increment or 0,
+            }
+            add_dependencies_load_info(load_info_dict, model_dep)
 
 
 class CallableWithAttribute(Protocol):
