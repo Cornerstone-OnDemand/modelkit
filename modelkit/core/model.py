@@ -305,6 +305,20 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
                 f"[deep_sky_blue1]load memory[/deep_sky_blue1]: "
                 f"[orange3]{humanize.naturalsize(self._load_memory_increment)}"
             )
+
+        global_load_time, global_load_memory = self._compute_dependencies_load_info()
+        sub_t = t.add(
+            "[deep_sky_blue1]load time including dependencies[/deep_sky_blue1]:"
+            + " [orange3]"
+            + humanize.naturaldelta(global_load_time, minimum_unit="seconds")
+        )
+
+        sub_t = t.add(
+            "[deep_sky_blue1]load memory including dependencies[/deep_sky_blue1]:"
+            + " [orange3]"
+            + humanize.naturalsize(global_load_memory)
+        )
+
         if self.model_dependencies.models:
             dep_t = t.add("[deep_sky_blue1]dependencies")
             for m in self.model_dependencies.models:
@@ -326,6 +340,17 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
             describe(self.model_settings, t=sub_t)
 
         return t
+
+    def _compute_dependencies_load_info(self):
+        global_load_info = {}
+        add_dependencies_load_info(global_load_info, self)
+        global_load_time = (self._load_memory_increment or 0) + sum(
+            x["memory_increment"] for x in global_load_info.values()
+        )
+        global_load_memory = (self._load_time or 0) + sum(
+            x["time"] for x in global_load_info.values()
+        )
+        return global_load_time, global_load_memory
 
     def _validate(
         self,
@@ -386,6 +411,16 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
             raise NoPredictOverridenError(
                 "_predict or _predict_batch must be overriden"
             )
+
+
+def add_dependencies_load_info(load_info_dict, my_model):
+    for model_name, model_dep in my_model.model_dependencies.models.items():
+        if model_name not in load_info_dict:
+            load_info_dict[model_name] = {
+                "time": model_dep._load_time or 0,
+                "memory_increment": model_dep._load_memory_increment or 0,
+            }
+            add_dependencies_load_info(load_info_dict, model_dep)
 
 
 class CallableWithAttribute(Protocol):
