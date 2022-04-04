@@ -12,7 +12,7 @@ python -m spacy download en_core_web_sm
 
 To define a modelkit `Model`, you need to:
 
-- create class inheriting from `modelkit.Model` 
+- create a class inheriting from `modelkit.Model` 
 - implement a `_predict` method
 
 To begin with, let's create a minimal tokenizer:
