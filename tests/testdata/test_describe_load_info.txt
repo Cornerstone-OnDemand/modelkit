@@ -1,10 +1,10 @@
-                                                                                
-├── configuration: top                                                          
-├── signature: str -> str                                                       
-├── load time: a second                                                         
-├── load memory: 1 Byte                                                         
-├── load time including dependencies: 5 seconds                                 
-├── load memory including dependencies: 5 Bytes                                 
-└── dependencies                                                                
-    ├── right                                                                   
-    └── left                                                                    
+
+├── configuration: top
+├── signature: str -> str
+├── load time: a second
+├── load memory: 1 Byte
+├── load time including dependencies: 5 seconds
+├── load memory including dependencies: 5 Bytes
+└── dependencies
+    ├── right
+    └── left
