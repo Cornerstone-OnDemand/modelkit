@@ -14,6 +14,10 @@ google-api-core
 google-cloud-storage
 azure-storage-blob
 tenacity
+types-requests
+types-python-dateutil
+types-cachetools
+types-redis
 # cli
 memory-profiler
 networkx
