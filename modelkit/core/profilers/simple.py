@@ -22,7 +22,7 @@ class SimpleProfiler(BaseProfiler):
     def __init__(self, model: Model) -> None:
         super().__init__(model)
         self.recording_hook: Dict[str, float] = {}
-        self.durations = defaultdict(list)
+        self.durations = defaultdict(list)  # type: ignore
 
     def start(self, model_name: str) -> None:
         if model_name in self.recording_hook:
