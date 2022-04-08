@@ -16,7 +16,7 @@ class SimpleProfiler(BaseProfiler):
         model = modelkit.load_model(...)
         profiler = SimpleProfiler(model)
         res = model(item)
-        profiler.summary() # return DataFrame or str
+        profiler.summary() # return profiling result (Dict) or str
     """
 
     def __init__(self, model: Model) -> None:
