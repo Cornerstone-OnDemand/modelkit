@@ -305,6 +305,20 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
                 f"[deep_sky_blue1]load memory[/deep_sky_blue1]: "
                 f"[orange3]{humanize.naturalsize(self._load_memory_increment)}"
             )
+
+        global_load_time, global_load_memory = self._compute_dependencies_load_info()
+        sub_t = t.add(
+            "[deep_sky_blue1]load time including dependencies[/deep_sky_blue1]:"
+            + " [orange3]"
+            + humanize.naturaldelta(global_load_time, minimum_unit="seconds")
+        )
+
+        sub_t = t.add(
+            "[deep_sky_blue1]load memory including dependencies[/deep_sky_blue1]:"
+            + " [orange3]"
+            + humanize.naturalsize(global_load_memory)
+        )
+
         if self.model_dependencies.models:
             dep_t = t.add("[deep_sky_blue1]dependencies")
             for m in self.model_dependencies.models:
@@ -326,6 +340,17 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
             describe(self.model_settings, t=sub_t)
 
         return t
+
+    def _compute_dependencies_load_info(self):
+        global_load_info = {}
+        add_dependencies_load_info(global_load_info, self)
+        global_load_time = (self._load_memory_increment or 0) + sum(
+            x["memory_increment"] for x in global_load_info.values()
+        )
+        global_load_memory = (self._load_time or 0) + sum(
+            x["time"] for x in global_load_info.values()
+        )
+        return global_load_time, global_load_memory
 
     def _validate(
         self,
@@ -386,6 +411,16 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
             raise NoPredictOverridenError(
                 "_predict or _predict_batch must be overriden"
             )
+
+
+def add_dependencies_load_info(load_info_dict, my_model):
+    for model_name, model_dep in my_model.model_dependencies.models.items():
+        if model_name not in load_info_dict:
+            load_info_dict[model_name] = {
+                "time": model_dep._load_time or 0,
+                "memory_increment": model_dep._load_memory_increment or 0,
+            }
+            add_dependencies_load_info(load_info_dict, model_dep)
 
 
 class CallableWithAttribute(Protocol):
@@ -470,7 +505,7 @@ class Model(AbstractModel[ItemType, ReturnType]):
         self,
         items: List[ItemType],
         _callback: Optional[
-            Callable[[int, List[ItemType], Iterator[ReturnType]], None]
+            Callable[[int, List[ItemType], List[ReturnType]], None]
         ] = None,
         batch_size: Optional[int] = None,
         _force_compute: bool = False,
@@ -494,7 +529,7 @@ class Model(AbstractModel[ItemType, ReturnType]):
         items: Iterator[ItemType],
         batch_size: Optional[int] = None,
         _callback: Optional[
-            Callable[[int, List[ItemType], Iterator[ReturnType]], None]
+            Callable[[int, List[ItemType], List[ReturnType]], None]
         ] = None,
         _force_compute: bool = False,
         **kwargs,
@@ -567,7 +602,7 @@ class Model(AbstractModel[ItemType, ReturnType]):
         _step: int,
         cache_items: List[CacheItem],
         _callback: Optional[
-            Callable[[int, List[ItemType], Iterator[ReturnType]], None]
+            Callable[[int, List[ItemType], List[ReturnType]], None]
         ] = None,
         **kwargs,
     ) -> Iterator[ReturnType]:
@@ -580,29 +615,34 @@ class Model(AbstractModel[ItemType, ReturnType]):
             predictions = iter(self._predict_batch(batch, **kwargs))
         except BaseException as exc:
             raise errors.PredictionError(exc=exc)
-        for cache_item in cache_items:
-            if cache_item.missing:
-                r = next(predictions)
-                if (
-                    cache_item.cache_key
-                    and self.configuration_key
-                    and self.cache
-                    and self.model_settings.get("cache_predictions")
-                ):
-                    self.cache.set(cache_item.cache_key, r)
-                yield self._validate(
-                    r,
-                    self._return_model,
-                    errors.ReturnValueValidationException,
-                )
-            else:
-                yield self._validate(
-                    cache_item.cache_value,
-                    self._return_model,
-                    errors.ReturnValueValidationException,
-                )
+        current_predictions = []
+        try:
+            for cache_item in cache_items:
+                if cache_item.missing:
+                    current_predictions.append(next(predictions))
+                    if (
+                        cache_item.cache_key
+                        and self.configuration_key
+                        and self.cache
+                        and self.model_settings.get("cache_predictions")
+                    ):
+                        self.cache.set(cache_item.cache_key, current_predictions[-1])
+                    yield self._validate(
+                        current_predictions[-1],
+                        self._return_model,
+                        errors.ReturnValueValidationException,
+                    )
+                else:
+                    current_predictions.append(cache_item.cache_value)
+                    yield self._validate(
+                        current_predictions[-1],
+                        self._return_model,
+                        errors.ReturnValueValidationException,
+                    )
+        except GeneratorExit:
+            pass
         if _callback:
-            _callback(_step, batch, predictions)
+            _callback(_step, batch, current_predictions)
 
     def close(self):
         pass
@@ -648,7 +688,7 @@ class AsyncModel(AbstractModel[ItemType, ReturnType]):
         self,
         items: List[ItemType],
         _callback: Optional[
-            Callable[[int, List[ItemType], Iterator[ReturnType]], None]
+            Callable[[int, List[ItemType], List[ReturnType]], None]
         ] = None,
         batch_size: Optional[int] = None,
         _force_compute: bool = False,
@@ -673,7 +713,7 @@ class AsyncModel(AbstractModel[ItemType, ReturnType]):
         items: Iterator[ItemType],
         batch_size: Optional[int] = None,
         _callback: Optional[
-            Callable[[int, List[ItemType], Iterator[ReturnType]], None]
+            Callable[[int, List[ItemType], List[ReturnType]], None]
         ] = None,
         _force_compute: bool = False,
         **kwargs,
@@ -735,7 +775,7 @@ class AsyncModel(AbstractModel[ItemType, ReturnType]):
         _step: int,
         cache_items: List[CacheItem],
         _callback: Optional[
-            Callable[[int, List[ItemType], Iterator[ReturnType]], None]
+            Callable[[int, List[ItemType], List[ReturnType]], None]
         ] = None,
         **kwargs,
     ) -> AsyncIterator[ReturnType]:
@@ -748,29 +788,34 @@ class AsyncModel(AbstractModel[ItemType, ReturnType]):
             predictions = iter(await self._predict_batch(batch, **kwargs))
         except BaseException as exc:
             raise errors.PredictionError(exc=exc)
-        for cache_item in cache_items:
-            if cache_item.missing:
-                r = next(predictions)
-                if (
-                    cache_item.cache_key
-                    and self.configuration_key
-                    and self.cache
-                    and self.model_settings.get("cache_predictions")
-                ):
-                    self.cache.set(cache_item.cache_key, r)
-                yield self._validate(
-                    r,
-                    self._return_model,
-                    errors.ReturnValueValidationException,
-                )
-            else:
-                yield self._validate(
-                    cache_item.cache_value,
-                    self._return_model,
-                    errors.ReturnValueValidationException,
-                )
+        current_predictions = []
+        try:
+            for cache_item in cache_items:
+                if cache_item.missing:
+                    current_predictions.append(next(predictions))
+                    if (
+                        cache_item.cache_key
+                        and self.configuration_key
+                        and self.cache
+                        and self.model_settings.get("cache_predictions")
+                    ):
+                        self.cache.set(cache_item.cache_key, current_predictions[-1])
+                    yield self._validate(
+                        current_predictions[-1],
+                        self._return_model,
+                        errors.ReturnValueValidationException,
+                    )
+                else:
+                    current_predictions.append(cache_item.cache_value)
+                    yield self._validate(
+                        current_predictions[-1],
+                        self._return_model,
+                        errors.ReturnValueValidationException,
+                    )
+        except GeneratorExit:
+            pass
         if _callback:
-            _callback(_step, batch, predictions)
+            _callback(_step, batch, current_predictions)
 
     async def close(self):
         pass

@@ -4,6 +4,7 @@ import os
 import pytest
 
 from modelkit.assets.errors import InvalidAssetSpecError
+from modelkit.core import errors
 from modelkit.core.library import (
     ConfigurationNotFoundException,
     ModelLibrary,
@@ -18,7 +19,7 @@ from modelkit.core.model_configuration import (
     list_assets,
 )
 from modelkit.core.settings import LibrarySettings
-from tests import TEST_DIR
+from tests import TEST_DIR, testmodels
 from tests.assets.test_versioning import test_versioning
 
 
@@ -241,9 +242,32 @@ def test_modellibrary_no_models(monkeypatch):
     assert p.configuration == {}
     assert p.required_models == {}
 
-    with pytest.raises(KeyError):
+    with pytest.raises(errors.ModelsNotFound):
         # model does not exist
         p.get("some_model")
+
+
+@pytest.mark.parametrize("error", [KeyError, ZeroDivisionError])
+def test_modellibrary_error_in_load(error):
+    class SomeModel(Model):
+        CONFIGURATIONS = {"model": {}}
+
+        def _load(self):
+            raise error
+
+        def _predict(self, item):
+            return item
+
+    library = ModelLibrary(
+        models=SomeModel,
+        settings={"lazy_loading": True},
+    )
+
+    try:
+        library.get("model")
+        assert False
+    except error as err:
+        assert "not loaded" not in str(err)
 
 
 def test_lazy_loading_dependencies():
@@ -696,3 +720,29 @@ def test_model_multiple_asset_load(working_dir, monkeypatch):
     lib.preload()
 
     assert fetched == 1
+
+
+def test_model_sub_class(working_dir, monkeypatch):
+    monkeypatch.setenv("MODELKIT_ASSETS_DIR", working_dir)
+    with open(os.path.join(working_dir, "something.txt"), "w") as f:
+        f.write("OK")
+
+    class BaseAsset(Asset):
+        def _load(self):
+            assert self.asset_path
+
+    class DerivedAsset(BaseAsset):
+        CONFIGURATIONS = {"derived": {"asset": "something.txt"}}
+
+        def _predict(self, item):
+            return item
+
+    # Abstract models are not loaded even when explicitly requesting them
+    lib = ModelLibrary(models=[DerivedAsset, BaseAsset])
+    lib.preload()
+    assert ["derived"] == list(lib.models.keys())
+
+    # Abstract models are ignored when walking through modules
+    lib = ModelLibrary(models=testmodels)
+    lib.preload()
+    assert ["derived_asset", "derived_model"] == sorted(list(lib.models.keys()))

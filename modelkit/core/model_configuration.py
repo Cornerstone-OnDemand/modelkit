@@ -61,11 +61,11 @@ def _configurations_from_objects(m) -> Dict[str, ModelConfiguration]:
     elif isinstance(m, (list, tuple)):
         return dict(ChainMap(*(_configurations_from_objects(sub_m) for sub_m in m)))
     elif isinstance(m, ModuleType):
-        return {
-            key: ModelConfiguration(**{**config, "model_type": m})
-            for m in walk_objects(m)
-            for key, config in m.CONFIGURATIONS.items()
-        }
+        return dict(
+            ChainMap(
+                *(_configurations_from_objects(sub_m) for sub_m in walk_objects(m))
+            )
+        )
     elif isinstance(m, str):
         models = [importlib.import_module(modname) for modname in m.split(",")]
         return _configurations_from_objects(models)

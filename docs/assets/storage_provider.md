@@ -80,13 +80,22 @@ The client is created by passing the authentication information to `BlobServiceC
 
 ### `local` mode
 
-Use `MODELKIT_STORAGE_PROVIDER=local` to connect to GCS storage.
+Use `MODELKIT_STORAGE_PROVIDER=local` to treat a local folder as a remote source.
 
-This is mostly used internally for development, but you can also use another folder on your file system as a storage provider
+Assets will be downloaded from this folder to the configured asset dir.
+
+If you would like to run on already downloaded assets please refer to "Pre-downloaded mode" section below.
 
 | Environment variable             | Notes                 |
 | -------------------------------- | --------------------- |
 | `MODELKIT_STORAGE_BUCKET`        | path to the local folder |
+| `MODELKIT_STORAGE_PREFIX`        | sub directory where assets are fetched from |
+
+### Pre-downloaded mode
+
+Use `MODELKIT_STORAGE_PROVIDER=` or unset it to use only assets available in assets dir.
+
+This can be used for local development or for deploying assets in read-only artifacts.
 
 
 ## Other options

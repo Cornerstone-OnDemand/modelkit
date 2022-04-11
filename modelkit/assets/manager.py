@@ -64,113 +64,142 @@ class AssetsManager:
             except NoConfiguredProviderError:
                 logger.info("No remote storage provider configured")
 
-    def _fetch_asset(self, spec: AssetSpec, _force_download=False):
-        with ContextualizedLogging(name=spec.name):
-            local_name = os.path.join(self.assets_dir, *spec.name.split("/"))
-            local_versions = spec.get_local_versions(local_name)
-            logger.debug("Local versions", local_versions=local_versions)
-
-            if spec.is_version_complete():
-                with ContextualizedLogging(version=spec.version):
-                    return self._fetch_asset_version(
-                        spec, local_versions, _force_download
-                    )
-
-            remote_versions = []
-            if self.storage_provider:
-                remote_versions = self.storage_provider.get_versions_info(spec.name)
-                logger.debug("Fetched remote versions", remote_versions=remote_versions)
-
-            all_versions = spec.sort_versions(
-                version_list=set(local_versions + remote_versions)
+        if (
+            self.storage_provider
+            and isinstance(self.storage_provider.driver, LocalStorageDriver)
+            and self.assets_dir
+            == os.path.join(
+                self.storage_provider.driver.bucket,
+                self.storage_provider.prefix,
+            )
+        ):
+            raise errors.StorageDriverError(
+                "Incompatible configuration: LocalStorageDriver and AssetDir are "
+                "pointing to the same folder. If assets are already downloaded,"
+                "consider removing storage provider configuration."
             )
 
-            if not all_versions:
-                if not spec.version:
-                    logger.debug("Asset has no version information")
-                    # no version is specified and none exist
-                    # in this case, the asset spec is likely a relative or absolute
-                    # path to a file/directory
-                    return _fetch_local_version(spec.name, local_name)
+    def _fetch_asset(self, spec: AssetSpec, _force_download=False):
+        with ContextualizedLogging(name=spec.name):
 
-                raise errors.LocalAssetDoesNotExistError(
-                    name=spec.name,
-                    version=spec.version,
-                    local_versions=local_versions,
-                )
-
-            # at least one version info is missing, update to the latest
-            spec.set_latest_version(all_versions)
-
+            self._resolve_version(spec)
             with ContextualizedLogging(version=spec.version):
                 logger.debug("Resolved latest version", version=spec.version)
-                return self._fetch_asset_version(spec, local_versions, _force_download)
+                return self._fetch_asset_version(spec, _force_download)
+
+    def _resolve_version(self, spec: AssetSpec) -> None:
+        local_versions = self._list_local_versions(spec)
+        logger.debug("Local versions", local_versions=local_versions)
+
+        if spec.is_version_complete():
+            return
+
+        remote_versions = []
+        if self.storage_provider:
+            remote_versions = self.storage_provider.get_versions_info(spec.name)
+            logger.debug("Fetched remote versions", remote_versions=remote_versions)
+
+        all_versions = spec.sort_versions(
+            version_list=set(local_versions + remote_versions)
+        )
+
+        if not all_versions:
+            if not spec.version:
+                logger.debug("Asset has no version information")
+                # no version is specified and none exist
+                # in this case, the asset spec is likely a relative or absolute
+                # path to a file/directory
+                return None
+
+            raise errors.LocalAssetDoesNotExistError(
+                name=spec.name,
+                version=spec.version,
+                local_versions=local_versions,
+            )
+
+        # at least one version info is missing, update to the latest
+        spec.set_latest_version(all_versions)
 
     def _fetch_asset_version(
         self,
         spec: AssetSpec,
-        local_versions: List[str],
         _force_download: bool,
     ) -> Dict[str, Any]:
         local_path = os.path.join(
             self.assets_dir, *spec.name.split("/"), spec.version or ""
         )
 
-        if _force_download and not self.storage_provider:
-            raise errors.StorageDriverError(
-                "can not force_download with no storage provider"
+        if not spec.version:
+            return _fetch_local_version(
+                spec.name, os.path.join(self.assets_dir, *spec.name.split("/"))
             )
 
-        if not _has_succeeded(local_path) and self.storage_provider:
-            if isinstance(
-                self.storage_provider.driver, LocalStorageDriver
-            ) and self.assets_dir == os.path.join(
-                self.storage_provider.driver.bucket,
-                self.storage_provider.prefix,
-            ):
-                # prevent modelkit from deleting assets locally
-                # if LocalStorageDriver configured as
-                # MODELKIT_ASSETS_DIR = \
-                #     MODELKIT_STORAGE_BUCKET/MODELKIT_STORAGE_PREFIX
-                _force_download = False
-            else:
-                logger.info("Previous fetching of asset has failed, redownloading.")
-                _force_download = True
+        if not self.storage_provider:
 
-        if _force_download and self.storage_provider:
-            if os.path.exists(local_path):
-                if os.path.isdir(local_path):
-                    shutil.rmtree(local_path)
-                else:
-                    os.unlink(local_path)
-            success_object_path = _success_file_path(local_path)
-            if os.path.exists(success_object_path):
-                os.unlink(success_object_path)
+            if _force_download:
+                raise errors.StorageDriverError(
+                    "can not force_download with no storage provider"
+                )
+            local_versions = self._list_local_versions(spec)
+            if spec.version not in local_versions:
+                raise errors.LocalAssetDoesNotExistError(
+                    name=spec.name,
+                    version=spec.version,
+                    local_versions=local_versions,
+                )
 
-        if not _force_download and (spec.version in local_versions):
             asset_dict = {
                 "from_cache": True,
                 "version": spec.version,
                 "path": local_path,
             }
-        elif self.storage_provider:
-            logger.info("Fetching distant asset", local_versions=local_versions)
-            asset_download_info = self.storage_provider.download(
-                spec.name, spec.version, self.assets_dir
-            )
-            asset_dict = {
-                **asset_download_info,
-                "from_cache": False,
-                "version": spec.version,
-                "path": local_path,
-            }
-            open(_success_file_path(local_path), "w").close()
+
         else:
-            raise errors.LocalAssetDoesNotExistError(
-                name=spec.name,
-                version=spec.version,
-                local_versions=local_versions,
+
+            # Ensure assets are not downloaded concurrently
+            lock_path = (
+                os.path.join(self.assets_dir, ".cache", *spec.name.split("/")) + ".lock"
             )
+            os.makedirs(os.path.dirname(lock_path), exist_ok=True)
+            with filelock.FileLock(lock_path, timeout=self.timeout):
+
+                # Update local versions after lock aquisition to account for concurrent
+                # download
+                local_versions = self._list_local_versions(spec)
+
+                if not _has_succeeded(local_path):
+                    logger.info("Previous fetching of asset has failed, redownloading.")
+                    _force_download = True
+
+                if not _force_download and (spec.version in local_versions):
+                    asset_dict = {
+                        "from_cache": True,
+                        "version": spec.version,
+                        "path": local_path,
+                    }
+                else:
+
+                    if _force_download:
+                        if os.path.exists(local_path):
+                            if os.path.isdir(local_path):
+                                shutil.rmtree(local_path)
+                            else:
+                                os.unlink(local_path)
+                        success_object_path = _success_file_path(local_path)
+                        if os.path.exists(success_object_path):
+                            os.unlink(success_object_path)
+
+                    logger.info("Fetching distant asset", local_versions=local_versions)
+                    asset_download_info = self.storage_provider.download(
+                        spec.name, spec.version, self.assets_dir
+                    )
+                    asset_dict = {
+                        **asset_download_info,
+                        "from_cache": False,
+                        "version": spec.version,
+                        "path": local_path,
+                    }
+                    open(_success_file_path(local_path), "w").close()
 
         if spec.sub_part:
             local_sub_part = os.path.join(
@@ -181,6 +210,10 @@ class AssetsManager:
             )
             asset_dict["path"] = local_sub_part
         return asset_dict
+
+    def _list_local_versions(self, spec: AssetSpec) -> List[str]:
+        local_name = os.path.join(self.assets_dir, *spec.name.split("/"))
+        return spec.get_local_versions(local_name)
 
     def fetch_asset(
         self,
@@ -200,12 +233,7 @@ class AssetsManager:
             force_download=force_download,
         )
 
-        lock_path = (
-            os.path.join(self.assets_dir, ".cache", *spec.name.split("/")) + ".lock"
-        )
-        os.makedirs(os.path.dirname(lock_path), exist_ok=True)
-        with filelock.FileLock(lock_path, timeout=self.timeout):
-            asset_info = self._fetch_asset(spec, _force_download=force_download)
+        asset_info = self._fetch_asset(spec, _force_download=force_download)
         logger.debug("Fetched asset", spec=spec, asset_info=asset_info)
         path = asset_info["path"]
         if not os.path.exists(path):  # pragma: no cover
