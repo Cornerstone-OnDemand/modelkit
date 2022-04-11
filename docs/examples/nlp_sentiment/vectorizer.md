@@ -186,7 +186,7 @@ We use `np.vectorize` to map a tokens list to an indices list, which we store in
 We also add keyword arguments to the `_predict`:  `length` and `drop_oov`. These can be used during prediction as well, and would be passed to `_predict` or `_predict_batch`:
 
 ```python
-vectorizer = Vectorizer()
+vectorizer = modelkit.load_model("imdb_vectorizer", models=Vectorizer)
 vectorizer.predict(item, length=10, drop_oov=False)
 vectorizer.predict_batch(items, length=10, drop_oov=False)
 vectorizer.predict_gen(items, length=10, drop_oov=False)
