@@ -34,7 +34,7 @@ It is meant to bridge the gap between the different uses of your algorithms. Wit
 - **framework agnostic** you bring your own framework to the table, and you can use whatever code or library you want. Similarly, `modelkit` is not opinionated about how you build or train your models.
 - **organized** `modelkit` encourages you to version and share you ML library and artifacts with others, as a Python package or as a service. Let others use and evaluate your models!
 - **fast** `modelkit` add minimal overhead to prediction calls. Model predictions can be batched for speed (you define the batching logic).
-- **fast to code** Models only need to define their prediction logic and that's it. No cumbersome pre or postprocessing logic, branching options, etc... The boilerplate code is minimal and sensible.
+- **fast to code** Models only need to define their prediction logic and that's it. No cumbersome pre or postprocessing logic, branching options, etc... The boilerplate code is minimal and extensible.
 - **fast to deploy** Models can be served in a single CLI call using [fastapi](https://fastapi.tiangolo.com/)
 
 And more:
