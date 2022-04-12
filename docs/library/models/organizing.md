@@ -67,7 +67,7 @@ service = ModelLibrary(
 
 ### Abstract models
 
-It is possible to define models that inherits from an abstract model in order to share common behavior. It only requires to not set CONFIGURATIONS dict for those models to be ignored from the configuration steps.
+It is possible to define models that inherit from an abstract model in order to share common behavior. It only requires to not set CONFIGURATIONS dict for those models to be ignored from the configuration steps.
 
 For instance, it can be usefull to implement common prediction algorithm on different data assets.
 
