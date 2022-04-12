@@ -1,56 +1,59 @@
 # Project information
-site_name: 'modelkit documentation'
-site_description: 'Library for machine learning models'
+site_name: "modelkit documentation"
+site_description: "Library for machine learning models"
 
 nav:
-  - Home: 'index.md'
+  - Home: "index.md"
   - Developer guide:
-    - 'library/overview.md'
-    - Models: 
-      - 'library/models/overview.md'
-      - Getting predictions: 'library/models/using_models.md'
-      - Configuring models: 'library/models/configuring_models.md'
-      - Model loading: 'library/models/model_with_load.md'
-      - Dependencies: 'library/models/models_with_dependencies.md'
-      - Validation: 'library/models/validation.md'
-      - Batching: 'library/models/batching.md'
-      - Testing: 'library/models/testing.md'
-      - Async: 'library/models/asynchronous_models.md'
-      - Organizing models: 'library/models/organizing.md'
-    - Model Library: 
-      - 'library/model_library.md'
-      - Caching: 'library/caching.md'
-      - Lazy loading: 'library/lazy_loading.md'
-    - Assets:
-      - Remote assets: 'assets/remote_assets.md'
-      - Storage provider: 'assets/storage_provider.md'
-      - Managing assets: 'assets/managing_assets.md'
-      - Retrieving assets: 'assets/retrieving_assets.md'
-      - Local assets dir: 'assets/assets_dir.md'
-      - Remote store organization: 'assets/store_organization.md'
-      - Versioning systems: 'assets/versioning.md'
-    - Special models:
-      - Tensorflow models: 'library/special/tensorflow.md'
-      - Distant Models: 'library/special/distant.md'
+      - "library/overview.md"
+      - Models:
+          - "library/models/overview.md"
+          - Getting predictions: "library/models/using_models.md"
+          - Configuring models: "library/models/configuring_models.md"
+          - Model loading: "library/models/model_with_load.md"
+          - Dependencies: "library/models/models_with_dependencies.md"
+          - Validation: "library/models/validation.md"
+          - Batching: "library/models/batching.md"
+          - Testing: "library/models/testing.md"
+          - Async: "library/models/asynchronous_models.md"
+          - Organizing models: "library/models/organizing.md"
+      - Model Library:
+          - "library/model_library.md"
+          - Caching: "library/caching.md"
+          - Lazy loading: "library/lazy_loading.md"
+      - Assets:
+          - Remote assets: "assets/remote_assets.md"
+          - Storage provider: "assets/storage_provider.md"
+          - Managing assets: "assets/managing_assets.md"
+          - Retrieving assets: "assets/retrieving_assets.md"
+          - Local assets dir: "assets/assets_dir.md"
+          - Remote store organization: "assets/store_organization.md"
+          - Versioning systems: "assets/versioning.md"
+      - Special models:
+          - Tensorflow models: "library/special/tensorflow.md"
+          - Distant Models: "library/special/distant.md"
+      - Profilers:
+          - "library/profilers/overview.md"
+          - SimpleProfiler: "library/profilers/simple_profiler.md"
   - Tutorials:
       - NLP x Sentiment Analysis:
-        - 'examples/nlp_sentiment/intro.md'
-        - Tokenizer: 'examples/nlp_sentiment/tokenizer.md'
-        - Vectorizer: 'examples/nlp_sentiment/vectorizer.md'
-        - Classifier: 'examples/nlp_sentiment/classifier.md'
-        - Advanced models: 'examples/nlp_sentiment/advanced_models.md'
-        - "TL;DR": 'examples/nlp_sentiment/tldr.md'
-      - Loading Model from TF Hub: 'examples/tf_hub.md'
-  - Configuration: 'configuration.md'
-  - CLI: 'cli.md'
+          - "examples/nlp_sentiment/intro.md"
+          - Tokenizer: "examples/nlp_sentiment/tokenizer.md"
+          - Vectorizer: "examples/nlp_sentiment/vectorizer.md"
+          - Classifier: "examples/nlp_sentiment/classifier.md"
+          - Advanced models: "examples/nlp_sentiment/advanced_models.md"
+          - "TL;DR": "examples/nlp_sentiment/tldr.md"
+      - Loading Model from TF Hub: "examples/tf_hub.md"
+  - Configuration: "configuration.md"
+  - CLI: "cli.md"
   - Deployment:
-    - Automatic: deployment/deployment.md
-    - Integrate in existing app: deployment/integrate_fastapi.md
-    - Environment: 'assets/environment.md'
+      - Automatic: deployment/deployment.md
+      - Integrate in existing app: deployment/integrate_fastapi.md
+      - Environment: "assets/environment.md"
 
 theme:
-  name: 'material'
-  logo: 'logo_docs.svg'
+  name: "material"
+  logo: "logo_docs.svg"
   features:
     - tabs
     - navigation.indexes
@@ -69,9 +72,8 @@ plugins:
   - search
   # - git-revision-date-localized
 
-repo_name: 'Cornerstone-OnDemand/modelkit'
-repo_url: 'https://github.com/Cornerstone-OnDemand/modelkit'
-edit_uri: 'edit/main/docs/'
+repo_name: "Cornerstone-OnDemand/modelkit"
+repo_url: "https://github.com/Cornerstone-OnDemand/modelkit"
+edit_uri: "edit/main/docs/"
 extra:
-  repo_icon: 'github'
-
+  repo_icon: "github"
