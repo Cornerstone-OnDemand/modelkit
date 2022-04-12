@@ -65,8 +65,8 @@ Let's try it out on the first examples:
 i = 0
 for review, label in process(
     os.path.join("aclImdb", "train"),
-    Tokenizer(),
-    Vectorizer(),
+    modelkit.load_model("imdb_tokenizer", models=Tokenizer),
+    modelkit.load_model("imdb_vectorizer", models=Vectorizer),
     length=64,
     batch_size=64,
 ):
