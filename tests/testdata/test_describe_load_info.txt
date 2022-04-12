@@ -1,3 +1,11 @@
+join_dep describe:
+
+├── configuration: join_dep
+├── signature: str -> str
+├── load time: 100 milliseconds
+└── load memory: 2 Bytes
+
+top describe:
 
 ├── configuration: top
 ├── signature: str -> str

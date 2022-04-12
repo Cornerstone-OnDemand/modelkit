@@ -227,6 +227,10 @@ def test_describe_load_info():
         # and write it
         return
     with console.capture() as capture:
+        console.print("join_dep describe:")
+        console.print(library.get("join_dep").describe())
+        console.print()
+        console.print("top describe:")
         console.print(library.get("top").describe())
     r = ReferenceText(os.path.join(TEST_DIR, "testdata"))
     r.assert_equal("test_describe_load_info.txt", capture.get())
