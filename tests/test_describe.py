@@ -199,22 +199,22 @@ def test_describe_load_info():
     library = ModelLibrary(models=[top, right, left, join_dep, right_dep])
     for m in ["top", "right", "left", "join_dep", "right_dep"]:
         library.get(m)._load_time = 1
-        library.get(m)._load_memory_increment = 1
+        library.get(m)._load_memory_increment = 2
 
     load_info_top = {}
     add_dependencies_load_info(load_info_top, library.get("top"))
     assert load_info_top == {
-        "right": {"time": 1, "memory_increment": 1},
-        "left": {"time": 1, "memory_increment": 1},
-        "join_dep": {"time": 1, "memory_increment": 1},
-        "right_dep": {"time": 1, "memory_increment": 1},
+        "right": {"time": 1, "memory_increment": 2},
+        "left": {"time": 1, "memory_increment": 2},
+        "join_dep": {"time": 1, "memory_increment": 2},
+        "right_dep": {"time": 1, "memory_increment": 2},
     }
 
     load_info_right = {}
     add_dependencies_load_info(load_info_right, library.get("right"))
     assert load_info_right == {
-        "join_dep": {"time": 1, "memory_increment": 1},
-        "right_dep": {"time": 1, "memory_increment": 1},
+        "join_dep": {"time": 1, "memory_increment": 2},
+        "right_dep": {"time": 1, "memory_increment": 2},
     }
 
     load_info_join_dep = {}
