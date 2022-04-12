@@ -25,7 +25,7 @@ class TestableModel(Model[ModelItemType, ModelItemType]):
         return item
 ```
 
-In the above example, 4 test cases will be ran:
+In the above example, 4 test cases will be run:
 
 - 2 for `some_model_a`
 - 2 for `some_model_b`
