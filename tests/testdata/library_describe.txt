@@ -39,8 +39,8 @@ Models
     │           With **a lot** of documentation
     ├── signature: tests.test_describe.test_describe.<locals>.ItemModel -> 
     │   tests.test_describe.test_describe.<locals>.ResultModel
+    ├── batch size: 128
+    ├── model settings
+    │   └── batch_size : int = 128
     ├── dependencies
     │   └── some_model_a
-    ├── batch size: 128
-    └── model settings
-        └── batch_size : int = 128

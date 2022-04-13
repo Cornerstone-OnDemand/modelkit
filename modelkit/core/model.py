@@ -1,4 +1,5 @@
 import copy
+import datetime as dt
 import enum
 import functools
 import typing
@@ -311,7 +312,9 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
         if self._load_time:
             sub_t = t.add(
                 "[deep_sky_blue1]load time[/deep_sky_blue1]: [orange3]"
-                + humanize.naturaldelta(self._load_time, minimum_unit="seconds")
+                + humanize.naturaldelta(
+                    dt.timedelta(seconds=self._load_time), minimum_unit="milliseconds"
+                )
             )
 
         if self._load_memory_increment is not None:
@@ -319,24 +322,6 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
                 f"[deep_sky_blue1]load memory[/deep_sky_blue1]: "
                 f"[orange3]{humanize.naturalsize(self._load_memory_increment)}"
             )
-
-        global_load_time, global_load_memory = self._compute_dependencies_load_info()
-        sub_t = t.add(
-            "[deep_sky_blue1]load time including dependencies[/deep_sky_blue1]:"
-            + " [orange3]"
-            + humanize.naturaldelta(global_load_time, minimum_unit="seconds")
-        )
-
-        sub_t = t.add(
-            "[deep_sky_blue1]load memory including dependencies[/deep_sky_blue1]:"
-            + " [orange3]"
-            + humanize.naturalsize(global_load_memory)
-        )
-
-        if self.model_dependencies.models:
-            dep_t = t.add("[deep_sky_blue1]dependencies")
-            for m in self.model_dependencies.models:
-                dep_t.add("[orange3]" + escape(m))
 
         if self.asset_path:
             sub_t = t.add(
@@ -352,6 +337,28 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
         if self.model_settings:
             sub_t = t.add("[deep_sky_blue1]model settings[/deep_sky_blue1]")
             describe(self.model_settings, t=sub_t)
+
+        if self.model_dependencies.models:
+            dep_t = t.add("[deep_sky_blue1]dependencies")
+            for m in self.model_dependencies.models:
+                dep_t.add("[orange3]" + escape(m))
+
+            (
+                global_load_time,
+                global_load_memory,
+            ) = self._compute_dependencies_load_info()
+            sub_t = t.add(
+                "[deep_sky_blue1]load time including dependencies[/deep_sky_blue1]:"
+                + " [orange3]"
+                + humanize.naturaldelta(
+                    dt.timedelta(seconds=global_load_time), minimum_unit="milliseconds"
+                )
+            )
+            sub_t = t.add(
+                "[deep_sky_blue1]load memory including dependencies[/deep_sky_blue1]:"
+                + " [orange3]"
+                + humanize.naturalsize(global_load_memory)
+            )
 
         return t
 
