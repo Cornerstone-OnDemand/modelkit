@@ -21,12 +21,12 @@ class BaseProfiler(ABC):
     def end(self, model_name: str) -> None:
         """Define how to record the cost when an action is completed."""
 
-    def summary(self, *args, **kwargs) -> str:
+    def summary(self, *args, **kwargs) -> str:  #  type: ignore
         """Summary function to be overwritten"""
         return ""
 
     @contextmanager
-    def profile(self, *args, **kwargs) -> Generator:
+    def profile(self, *args, **kwargs) -> Generator:  # type: ignore
         """Override this function for your custom profiler.
 
         Example:
