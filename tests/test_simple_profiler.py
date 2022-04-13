@@ -99,11 +99,11 @@ def test_simple_profiler():
         ["pipeline", "model_b", "model_a", "model_c", "model_d"]
     )
 
-    rel_tol = 0.1
+    rel_tol = 0.3
     if platform.system() == "Darwin":
         # Issue: perf_counter result does not count system sleep time in Mac OS
         # - https://bugs.python.org/issue41303
-        rel_tol = 0.5
+        rel_tol = 0.7
 
     # test total durations per model
     total_durations = dict(zip(stat["Name"], stat["Total duration (s)"]))
