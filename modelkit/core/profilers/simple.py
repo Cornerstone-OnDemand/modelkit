@@ -40,7 +40,7 @@ class SimpleProfiler(BaseProfiler):
         self.durations[model_name].append(duration)
 
     @contextmanager
-    def profile(self, model_name: str) -> Generator:
+    def profile(self, model_name: str) -> Generator:  # type: ignore
         try:
             if model_name == self.main_model_name:
                 self.start_time = time.perf_counter()
@@ -51,9 +51,9 @@ class SimpleProfiler(BaseProfiler):
             if model_name == self.main_model_name:
                 self.total_duration = time.perf_counter() - self.start_time
 
-    def summary(
-        self, *args, print_table: bool = False, **kwargs
-    ) -> Union[Dict[str, List], str]:
+    def summary(  # type: ignore
+        self, *args, print_table: bool = False, **kwargs  # type: ignore
+    ) -> Union[Dict[str, List], str]:  # type: ignore
         """Usage
 
             stat: Dict[str, List] = profiler.summary()
