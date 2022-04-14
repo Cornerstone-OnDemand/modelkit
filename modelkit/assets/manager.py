@@ -227,14 +227,15 @@ class AssetsManager:
             force_download = self.storage_provider.force_download
 
         logger.info(
-            "Fetching asset",
-            spec=spec,
+            "Fetching asset...",
+            name=spec.name,
+            version=spec.version,
             return_info=return_info,
             force_download=force_download,
         )
 
         asset_info = self._fetch_asset(spec, _force_download=force_download)
-        logger.debug("Fetched asset", spec=spec, asset_info=asset_info)
+
         path = asset_info["path"]
         if not os.path.exists(path):  # pragma: no cover
             logger.error(
@@ -247,6 +248,14 @@ class AssetsManager:
                 f"An unknown error occured when fetching asset {spec}."
                 f"The path {path} does not exist."
             )
+
+        logger.info(
+            "Fetched asset",
+            name=spec.name,
+            version=spec.version,
+            from_cacke=asset_info["from_cache"],
+        )
+
         if not return_info:
             return path
         return asset_info
