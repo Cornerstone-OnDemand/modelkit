@@ -17,6 +17,25 @@ class SimpleProfiler(BaseProfiler):
         profiler = SimpleProfiler(model)
         res = model(item)
         profiler.summary() # return profiling result (Dict) or str
+
+    Attributes:
+        recording_hook (Dict[str, float]): record start/end time of each model call
+        durations (List[float]): record duration of each model call
+        net_durations (List[float]): record net duration of each model call. Net
+            duration is the duration minus all the other sub models' duration.
+        graph (Dict[str, Set]): model dependencies graph, get all direct children names
+            (Set[str])
+        graph_calls (Dict[str, Dict[str, int]]): record all model calls
+            e.g
+            {
+                "pipeline": {
+                    "__main__": 1, # "pipeline" is called once
+                    "model_a": 2,
+                    "model_b": 1,
+                    "model_c": 1,
+                }
+            }
+    See test_simple_profiler.py for more details.
     """
 
     def __init__(self, model: Model) -> None:
@@ -142,6 +161,22 @@ class SimpleProfiler(BaseProfiler):
     def _compute_sub_calls_and_update_graph_calls(
         self, model_name: str, previous_calls: Dict[str, int]
     ) -> Dict[str, int]:
+        """Infer all sub models call (`sub_calls`) using `previous_calls` and update
+        `graph_calls` and the end of context manager.
+
+        P.S With the 'shared' context manager, we can't directly record `sub_calls`,
+            but only the current model call (incremented in
+            self.graph_calls[model_name]["__main__"]).
+            Using the counts in "__main__" of all models, we deduce all sub models
+            calls.
+
+        Args:
+            model_name (str): current model name
+            previous_calls (Dict[str, int]):
+
+        Returns:
+            Dict[str, int]: sub_calls
+        """
         self.graph_calls[model_name]["__main__"] += 1
         sub_calls: Dict[str, int] = {}
         for sub_model in self._get_all_subs(model_name):

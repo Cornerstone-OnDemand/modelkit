@@ -118,6 +118,116 @@ class Pipeline2(Model):
         return item
 
 
+def test_method__get_current_sub_calls():
+    model_library = ModelLibrary(models=[ModelA, ModelB, ModelC, ModelD, Pipeline])
+    pipeline = model_library.get("pipeline")
+    item = {"abc": 123}
+    profiler = SimpleProfiler(pipeline)
+    _ = pipeline.predict(item)
+    assert profiler._get_current_sub_calls("pipeline") == {
+        "model_a": 2,
+        "model_b": 1,
+        "model_d": 1,
+        "model_c": 1,
+    }
+    assert profiler._get_current_sub_calls("model_a") == {}
+    assert profiler._get_current_sub_calls("model_b") == {"model_a": 2}
+    assert profiler._get_current_sub_calls("model_c") == {}
+    assert profiler._get_current_sub_calls("model_d") == {"model_a": 2}
+
+
+def test_method__get_all_subs():
+    model_library = ModelLibrary(models=[ModelA, ModelB, ModelC, ModelD, Pipeline])
+    pipeline = model_library.get("pipeline")
+    item = {"abc": 123}
+    profiler = SimpleProfiler(pipeline)
+    _ = pipeline.predict(item)
+    assert profiler._get_all_subs("pipeline") == {
+        "model_a",
+        "model_b",
+        "model_d",
+        "model_c",
+    }
+    assert profiler._get_all_subs("model_a") == set()
+    assert profiler._get_all_subs("model_b") == {"model_a"}
+    assert profiler._get_all_subs("model_c") == set()
+    assert profiler._get_all_subs("model_d") == {"model_a"}
+
+
+def test_method__compute_sub_calls_and_update_graph_calls():
+    model_library = ModelLibrary(models=[ModelA, ModelB, ModelC, ModelD, Pipeline])
+    pipeline = model_library.get("pipeline")
+    item = {"abc": 123}
+    profiler = SimpleProfiler(pipeline)
+    _ = pipeline.predict(item)
+    assert profiler._compute_sub_calls_and_update_graph_calls("pipeline", {}) == {
+        "model_a": 2,
+        "model_c": 1,
+        "model_b": 1,
+        "model_d": 1,
+    }
+    assert (
+        profiler.graph_calls["pipeline"]["__main__"] == 2
+    )  # _compute_sub_calls_and_update_graph_calls increnment "__main__"
+
+    assert profiler._compute_sub_calls_and_update_graph_calls("model_a", {}) == {}
+    assert (
+        profiler.graph_calls["model_a"]["__main__"] == 3
+    )  # _compute_sub_calls_and_update_graph_calls increnment "__main__"
+
+    assert profiler._compute_sub_calls_and_update_graph_calls(
+        "model_b", {"model_a": 2}
+    ) == {"model_a": 1}
+    assert (
+        profiler.graph_calls["model_b"]["__main__"] == 2
+    )  # _compute_sub_calls_and_update_graph_calls increnment "__main__"
+
+    assert profiler._compute_sub_calls_and_update_graph_calls("model_c", {}) == {}
+    assert (
+        profiler.graph_calls["model_c"]["__main__"] == 2
+    )  # _compute_sub_calls_and_update_graph_calls increnment "__main__"
+
+    assert profiler._compute_sub_calls_and_update_graph_calls(
+        "model_d", {"model_a": 2}
+    ) == {"model_a": 1}
+    assert (
+        profiler.graph_calls["model_d"]["__main__"] == 2
+    )  # _compute_sub_calls_and_update_graph_calls increnment "__main__"
+
+
+def test_method__calculate_net_cost():
+    model_library = ModelLibrary(models=[ModelA, ModelB, ModelC, ModelD, Pipeline])
+    pipeline = model_library.get("pipeline")
+    item = {"abc": 123}
+    profiler = SimpleProfiler(pipeline)
+    _ = pipeline.predict(item)
+    # set artificial net_durations for test purpose only
+    profiler.net_durations = {
+        "model_a": [1.0, 1.01],
+        "model_b": [0.5],
+        "model_c": [0.7],
+        "model_d": [0.1],
+        "pipeline": [0.2],
+    }
+
+    # model_b
+    assert math.isclose(
+        profiler._calculate_net_cost(1.51, {"model_a": 1}), 0.5, abs_tol=1e-5
+    )
+    # model_d
+    assert math.isclose(
+        profiler._calculate_net_cost(1.11, {"model_a": 1}), 0.1, abs_tol=1e-5
+    )
+    # pipeline
+    assert math.isclose(
+        profiler._calculate_net_cost(
+            3.51, {"model_a": 2, "model_b": 1, "model_c": 1, "model_d": 1}
+        ),
+        0.2,
+        abs_tol=1e-5,
+    )
+
+
 def test_simple_profiler():
     """A simple test case for SimpleProfiler
     (See: profiler_example.png for visualization)
