@@ -49,3 +49,7 @@ print(profiler.summary(print_table=True, tablefmt="github"))
 | model_b  | 0.504451                  | 14.3225          | 1        | 1.50864               | 1.50864            | 42.8338            |
 | model_d  | 0.10479                   | 2.97523          | 1        | 1.10898               | 1.10898            | 31.4865            |
 | model_c  | 0.704313                  | 19.997           | 1        | 0.704313              | 0.704313           | 19.997             |
+
+
+!!! Note
+    The definition of "Duration per call (s)" and "Net duration per call (s)" could be tricky when `dynamic model` or `memory caching` are involved. For instance, we might have a huge duration difference for each call of the same model : `[5.0 s, 0.01 s, 0.017 s, ...]` (the first call is longer). In these cases, the "Duration per call (s)" is the **average** duration of all calls. Hence, the "Net duration per call (s)" should take this into account, and be calculated based on the actual function call chain. See [issue #153](https://github.com/Cornerstone-OnDemand/modelkit/issues/153) for more details.
