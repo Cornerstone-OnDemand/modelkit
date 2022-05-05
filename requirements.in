@@ -1,11 +1,8 @@
 aiohttp
 asgiref
-boto3
 cachetools
 click
 filelock
-google-cloud-storage
-azure-storage-blob
 humanize
 pydantic
 python-dateutil

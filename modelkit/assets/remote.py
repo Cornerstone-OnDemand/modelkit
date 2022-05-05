@@ -12,10 +12,27 @@ from structlog import get_logger
 
 from modelkit.assets import errors
 from modelkit.assets.drivers.abc import StorageDriver
-from modelkit.assets.drivers.azure import AzureStorageDriver
-from modelkit.assets.drivers.gcs import GCSStorageDriver
+
+try:
+    from modelkit.assets.drivers.azure import AzureStorageDriver
+
+    has_az = True
+except ModuleNotFoundError:
+    has_az = False
+try:
+    from modelkit.assets.drivers.gcs import GCSStorageDriver
+
+    has_gcs = True
+except ModuleNotFoundError:
+    has_gcs = False
 from modelkit.assets.drivers.local import LocalStorageDriver
-from modelkit.assets.drivers.s3 import S3StorageDriver
+
+try:
+    from modelkit.assets.drivers.s3 import S3StorageDriver
+
+    has_s3 = True
+except ModuleNotFoundError:
+    has_s3 = False
 from modelkit.assets.settings import AssetSpec
 from modelkit.utils.logging import ContextualizedLogging
 
@@ -33,6 +50,10 @@ def get_size(dir_path):
 
 
 class UnknownDriverError(Exception):
+    pass
+
+
+class DriverNotInstalledError(Exception):
     pass
 
 
@@ -69,12 +90,24 @@ class StorageProvider:
             raise NoConfiguredProviderError()
 
         if provider == "gcs":
+            if not has_gcs:
+                raise DriverNotInstalledError(
+                    "GCS driver not installed, install modelkit[assets-gcs]"
+                )
             self.driver = GCSStorageDriver(**driver_settings)
         elif provider == "s3":
+            if not has_s3:
+                raise DriverNotInstalledError(
+                    "S3 driver not installed, install modelkit[assets-s3]"
+                )
             self.driver = S3StorageDriver(**driver_settings)
         elif provider == "local":
             self.driver = LocalStorageDriver(**driver_settings)
         elif provider == "az":
+            if not has_az:
+                raise DriverNotInstalledError(
+                    "Azure driver not installed, install modelkit[assets-az]"
+                )
             self.driver = AzureStorageDriver(**driver_settings)
         else:
             raise UnknownDriverError()
