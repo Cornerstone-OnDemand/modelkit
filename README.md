@@ -69,3 +69,6 @@ Install with `pip`:
 ```
 pip install modelkit
 ```
+
+## Community
+Join our [community](https://discord.gg/ayj5wdAArV) community on Discord to get support and leave feedback
