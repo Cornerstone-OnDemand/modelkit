@@ -131,7 +131,7 @@ lib_serving_grpc = ModelLibrary(
 @pytest.fixture(scope="session")
 def tf_serving():
     lib = ModelLibrary(models=..., settings={"lazy_loading": True})
-    yield tf_serving_fixture(request, lib)
+    yield tf_serving_fixture(request, lib, tf_version="2.8.0")
 ```
 
 This will configure and run TF serving during the test session, provided `docker` is present.
