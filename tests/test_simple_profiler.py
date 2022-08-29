@@ -1,5 +1,4 @@
 import math
-import platform
 import time
 from typing import Any, Dict
 
@@ -243,12 +242,6 @@ def test_simple_profiler():
         ["pipeline", "model_b", "model_a", "model_c", "model_d"]
     )
 
-    rel_tol = 0.3
-    if platform.system() == "Darwin":
-        # Issue: perf_counter result does not count system sleep time in Mac OS
-        # - https://bugs.python.org/issue41303
-        rel_tol = 0.7
-
     # test graph dependencies
     graph = profiler.graph
     assert graph["model_a"] == set()
@@ -270,30 +263,6 @@ def test_simple_profiler():
         "model_c": 1,
         "model_d": 1,
     }
-
-    # test total durations per model
-    total_durations = dict(zip(stat["Name"], stat["Total duration (s)"]))
-    assert math.isclose(total_durations["model_a"], 2.0, rel_tol=rel_tol)
-    assert math.isclose(total_durations["model_b"], 1.5, rel_tol=rel_tol)
-    assert math.isclose(total_durations["model_c"], 0.7, rel_tol=rel_tol)
-    assert math.isclose(total_durations["model_d"], 1.1, rel_tol=rel_tol)
-    assert math.isclose(total_durations["pipeline"], 3.5, rel_tol=rel_tol)
-
-    # test duration per call per model
-    model_durations = dict(zip(stat["Name"], stat["Duration per call (s)"]))
-    assert math.isclose(model_durations["model_a"], 1.0, rel_tol=rel_tol)
-    assert math.isclose(model_durations["model_b"], 1.5, rel_tol=rel_tol)
-    assert math.isclose(model_durations["model_c"], 0.7, rel_tol=rel_tol)
-    assert math.isclose(model_durations["model_d"], 1.1, rel_tol=rel_tol)
-    assert math.isclose(model_durations["pipeline"], 3.5, rel_tol=rel_tol)
-
-    # test net durations per call
-    net_durations = dict(zip(stat["Name"], stat["Net duration per call (s)"]))
-    assert math.isclose(net_durations["model_a"], 1.0, rel_tol=rel_tol)
-    assert math.isclose(net_durations["model_b"], 0.5, rel_tol=rel_tol)
-    assert math.isclose(net_durations["model_c"], 0.7, rel_tol=rel_tol)
-    assert math.isclose(net_durations["model_d"], 0.1, rel_tol=rel_tol)
-    assert math.isclose(net_durations["pipeline"], 0.2, rel_tol=rel_tol)
 
     # test number of call
     num_call = dict(zip(stat["Name"], stat["Num call"]))
@@ -434,12 +403,6 @@ def test_simple_profiler_dynamic_graph():
         ]
     )
 
-    rel_tol = 0.3
-    if platform.system() == "Darwin":
-        # Issue: perf_counter result does not count system sleep time in Mac OS
-        # - https://bugs.python.org/issue41303
-        rel_tol = 0.7
-
     graph = profiler.graph
     assert graph["model_x"] == set()
     assert graph["model_y"] == set(["model_x"])
@@ -465,33 +428,6 @@ def test_simple_profiler_dynamic_graph():
         "model_y": 1,
         "model_z": 2,
     }
-
-    # test total durations per model
-    total_durations = dict(zip(stat["Name"], stat["Total duration (s)"]))
-    assert math.isclose(total_durations["model_x"], 2.0, rel_tol=rel_tol)
-    assert math.isclose(total_durations["model_y"], 1.5, rel_tol=rel_tol)
-    assert math.isclose(total_durations["model_z"], 1.4, rel_tol=rel_tol)
-    assert math.isclose(total_durations["dynamic_model"], 4.1, rel_tol=rel_tol)
-    assert math.isclose(total_durations["dynamic_pipeline"], 4.4, rel_tol=rel_tol)
-
-    # test duration per call per model
-    model_durations = dict(zip(stat["Name"], stat["Duration per call (s)"]))
-    assert math.isclose(model_durations["model_x"], 1.0, rel_tol=rel_tol)
-    assert math.isclose(model_durations["model_y"], 1.5, rel_tol=rel_tol)
-    assert math.isclose(model_durations["model_z"], 0.7, rel_tol=rel_tol)
-    # "dynamic_model" is run twice with different durations
-    assert math.isclose(
-        model_durations["dynamic_model"], (2.3 + 1.8) / 2, rel_tol=rel_tol
-    )  # 2.05
-    assert math.isclose(model_durations["dynamic_pipeline"], 4.4, rel_tol=rel_tol)
-
-    # test net durations per call
-    net_durations = dict(zip(stat["Name"], stat["Net duration per call (s)"]))
-    assert math.isclose(net_durations["model_x"], 1.0, rel_tol=rel_tol)
-    assert math.isclose(net_durations["model_y"], 0.5, rel_tol=rel_tol)
-    assert math.isclose(net_durations["model_z"], 0.7, rel_tol=rel_tol)
-    assert math.isclose(net_durations["dynamic_model"], 0.1, rel_tol=rel_tol)
-    assert math.isclose(net_durations["dynamic_pipeline"], 0.3, rel_tol=rel_tol)
 
     # test number of call
     num_call = dict(zip(stat["Name"], stat["Num call"]))
@@ -527,12 +463,6 @@ def test_simple_profiler_memory_caching():
         ["pipeline2", "model_b", "model_a", "model_c", "model_d"]
     )
 
-    rel_tol = 0.3
-    if platform.system() == "Darwin":
-        # Issue: perf_counter result does not count system sleep time in Mac OS
-        # - https://bugs.python.org/issue41303
-        rel_tol = 0.7
-
     # test graph dependencies
     graph = profiler.graph
     assert graph["model_a"] == set()
@@ -554,30 +484,6 @@ def test_simple_profiler_memory_caching():
         "model_c": 1,
         "model_d": 1,
     }
-
-    # test total durations per model
-    total_durations = dict(zip(stat["Name"], stat["Total duration (s)"]))
-    assert math.isclose(total_durations["model_a"], 4.0, rel_tol=rel_tol)
-    assert math.isclose(total_durations["model_b"], 1.5, rel_tol=rel_tol)
-    assert math.isclose(total_durations["model_c"], 0.7, rel_tol=rel_tol)
-    assert math.isclose(total_durations["model_d"], 1.1, rel_tol=rel_tol)
-    assert math.isclose(total_durations["pipeline2"], 5.5, rel_tol=rel_tol)
-
-    # test duration per call per model
-    model_durations = dict(zip(stat["Name"], stat["Duration per call (s)"]))
-    assert math.isclose(model_durations["model_a"], 1.33, rel_tol=rel_tol)
-    assert math.isclose(model_durations["model_b"], 1.5, rel_tol=rel_tol)
-    assert math.isclose(model_durations["model_c"], 0.7, rel_tol=rel_tol)
-    assert math.isclose(model_durations["model_d"], 1.1, rel_tol=rel_tol)
-    assert math.isclose(model_durations["pipeline2"], 5.5, rel_tol=rel_tol)
-
-    # test net durations per call
-    net_durations = dict(zip(stat["Name"], stat["Net duration per call (s)"]))
-    assert math.isclose(net_durations["model_a"], 1.33, rel_tol=rel_tol)
-    assert math.isclose(net_durations["model_b"], 0.5, rel_tol=rel_tol)
-    assert math.isclose(net_durations["model_c"], 0.7, rel_tol=rel_tol)
-    assert math.isclose(net_durations["model_d"], 0.1, rel_tol=rel_tol)
-    assert math.isclose(net_durations["pipeline2"], 0.2, rel_tol=rel_tol)
 
     # test number of call
     num_call = dict(zip(stat["Name"], stat["Num call"]))
