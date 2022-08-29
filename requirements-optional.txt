@@ -2,8 +2,8 @@
 
 numpy
 grpcio
-tensorflow==2.8.0rc0
-tensorflow-serving-api==2.8.0rc0
+tensorflow==2.8.0
+tensorflow-serving-api==2.8.0
 # assets-s3
 boto3
 # assets-gcs

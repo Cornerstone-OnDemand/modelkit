@@ -1,10 +1,18 @@
+join_dep describe:
+
+├── configuration: join_dep
+├── signature: str -> str
+├── load time: 100 milliseconds
+└── load memory: 2 Bytes
+
+top describe:
 
 ├── configuration: top
 ├── signature: str -> str
-├── load time: a second
-├── load memory: 1 Byte
-├── load time including dependencies: 5 seconds
-├── load memory including dependencies: 5 Bytes
-└── dependencies
-    ├── right
-    └── left
+├── load time: 100 milliseconds
+├── load memory: 2 Bytes
+├── dependencies
+│   ├── right
+│   └── left
+├── load time including dependencies: 500 milliseconds
+└── load memory including dependencies: 10 Bytes

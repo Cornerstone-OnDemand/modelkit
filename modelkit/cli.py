@@ -89,10 +89,10 @@ def memory(models, required_models):
     for k, (m, mc) in enumerate(stats.items()):
         table.add_row(
             m,
-            humanize.naturalsize(mc * 10 ** 6, format="%.2f"),
+            humanize.naturalsize(mc * 10**6, format="%.2f"),
             end_section=k == len(stats) - 1,
         )
-    table.add_row("Total", humanize.naturalsize(grand_total * 10 ** 6, format="%.2f"))
+    table.add_row("Total", humanize.naturalsize(grand_total * 10**6, format="%.2f"))
     console.print(table)
 
 

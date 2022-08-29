@@ -12,3 +12,4 @@ sniffio
 structlog
 tenacity
 typing_extensions
+tabulate

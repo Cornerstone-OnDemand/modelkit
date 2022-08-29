@@ -18,6 +18,7 @@ types-requests
 types-python-dateutil
 types-cachetools
 types-redis
+types-tabulate
 # cli
 memory-profiler
 networkx

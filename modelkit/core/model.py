@@ -1,6 +1,9 @@
 import copy
+import datetime as dt
 import enum
+import functools
 import typing
+from contextlib import ExitStack
 from typing import (
     Any,
     AsyncIterator,
@@ -39,6 +42,18 @@ logger = get_logger(__name__)
 ModelDependency = TypeVar(
     "ModelDependency", bound=Union["Model", "AsyncModel", "WrappedAsyncModel"]
 )
+
+
+def modelkit_predict_profiler(func):
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        with ExitStack() as stack:
+            if hasattr(self, "profiler"):
+                stack.enter_context(self.profiler.profile(self.configuration_key))
+            vals = func(self, *args, **kwargs)
+            yield from vals
+
+    return wrapper
 
 
 class ModelDependenciesMapping:
@@ -297,7 +312,9 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
         if self._load_time:
             sub_t = t.add(
                 "[deep_sky_blue1]load time[/deep_sky_blue1]: [orange3]"
-                + humanize.naturaldelta(self._load_time, minimum_unit="seconds")
+                + humanize.naturaldelta(
+                    dt.timedelta(seconds=self._load_time), minimum_unit="milliseconds"
+                )
             )
 
         if self._load_memory_increment is not None:
@@ -305,24 +322,6 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
                 f"[deep_sky_blue1]load memory[/deep_sky_blue1]: "
                 f"[orange3]{humanize.naturalsize(self._load_memory_increment)}"
             )
-
-        global_load_time, global_load_memory = self._compute_dependencies_load_info()
-        sub_t = t.add(
-            "[deep_sky_blue1]load time including dependencies[/deep_sky_blue1]:"
-            + " [orange3]"
-            + humanize.naturaldelta(global_load_time, minimum_unit="seconds")
-        )
-
-        sub_t = t.add(
-            "[deep_sky_blue1]load memory including dependencies[/deep_sky_blue1]:"
-            + " [orange3]"
-            + humanize.naturalsize(global_load_memory)
-        )
-
-        if self.model_dependencies.models:
-            dep_t = t.add("[deep_sky_blue1]dependencies")
-            for m in self.model_dependencies.models:
-                dep_t.add("[orange3]" + escape(m))
 
         if self.asset_path:
             sub_t = t.add(
@@ -339,15 +338,37 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
             sub_t = t.add("[deep_sky_blue1]model settings[/deep_sky_blue1]")
             describe(self.model_settings, t=sub_t)
 
+        if self.model_dependencies.models:
+            dep_t = t.add("[deep_sky_blue1]dependencies")
+            for m in self.model_dependencies.models:
+                dep_t.add("[orange3]" + escape(m))
+
+            (
+                global_load_time,
+                global_load_memory,
+            ) = self._compute_dependencies_load_info()
+            sub_t = t.add(
+                "[deep_sky_blue1]load time including dependencies[/deep_sky_blue1]:"
+                + " [orange3]"
+                + humanize.naturaldelta(
+                    dt.timedelta(seconds=global_load_time), minimum_unit="milliseconds"
+                )
+            )
+            sub_t = t.add(
+                "[deep_sky_blue1]load memory including dependencies[/deep_sky_blue1]:"
+                + " [orange3]"
+                + humanize.naturalsize(global_load_memory)
+            )
+
         return t
 
     def _compute_dependencies_load_info(self):
         global_load_info = {}
         add_dependencies_load_info(global_load_info, self)
-        global_load_time = (self._load_memory_increment or 0) + sum(
+        global_load_memory = (self._load_memory_increment or 0) + sum(
             x["memory_increment"] for x in global_load_info.values()
         )
-        global_load_memory = (self._load_time or 0) + sum(
+        global_load_time = (self._load_time or 0) + sum(
             x["time"] for x in global_load_info.values()
         )
         return global_load_time, global_load_memory
@@ -523,6 +544,7 @@ class Model(AbstractModel[ItemType, ReturnType]):
             )
         )
 
+    @modelkit_predict_profiler
     @errors.wrap_modelkit_exceptions_gen
     def predict_gen(
         self,
