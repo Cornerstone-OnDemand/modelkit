@@ -70,5 +70,7 @@ Install with `pip`:
 pip install modelkit
 ```
 
+Optional dependencies are available for remote storage providers ([see documentation](https://cornerstone-ondemand.github.io/modelkit/assets/storage_provider/#using-different-providers))
+
 ## Community
 Join our [community](https://discord.gg/ayj5wdAArV) on Discord to get support and leave feedback
