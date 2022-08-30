@@ -10,6 +10,7 @@ black
 flake8<4 # flake8==4.0.1 pins importlib-metadata<4.3 which leads to a conflict
 isort
 nox
+boto3
 google-api-core
 google-cloud-storage
 azure-storage-blob
