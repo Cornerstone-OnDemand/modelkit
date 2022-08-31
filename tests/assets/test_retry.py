@@ -7,20 +7,28 @@ import pytest
 import requests
 from tenacity import retry, stop_after_attempt
 
-from modelkit.assets.drivers.retry import RETRY_POLICY
+from modelkit.assets.drivers.retry import retry_policy
 from modelkit.assets.errors import ObjectDoesNotExistError
 
 
 @pytest.mark.parametrize(
-    "exception, exc_args",
+    "exception, exc_args, policy",
     [
-        (google.api_core.exceptions.GoogleAPIError, ()),
-        (botocore.exceptions.ClientError, ({}, "operation_name")),
-        (requests.exceptions.ChunkedEncodingError, ()),
+        (
+            google.api_core.exceptions.GoogleAPIError,
+            (),
+            retry_policy(google.api_core.exceptions.GoogleAPIError),
+        ),
+        (
+            botocore.exceptions.ClientError,
+            ({}, "operation_name"),
+            retry_policy(botocore.exceptions.ClientError),
+        ),
+        (requests.exceptions.ChunkedEncodingError, (), retry_policy(None)),
     ],
 )
-def test_retry_policy(exception, exc_args):
-    SHORT_RETRY_POLICY = copy.deepcopy(RETRY_POLICY)
+def test_retry_policy(exception, exc_args, policy):
+    SHORT_RETRY_POLICY = copy.deepcopy(policy)
     SHORT_RETRY_POLICY["stop"] = stop_after_attempt(2)
     k = 0
 
@@ -36,7 +44,7 @@ def test_retry_policy(exception, exc_args):
 
 
 def test_retry_policy_asset_error():
-    SHORT_RETRY_POLICY = copy.deepcopy(RETRY_POLICY)
+    SHORT_RETRY_POLICY = copy.deepcopy(retry_policy(None))
     SHORT_RETRY_POLICY["stop"] = stop_after_attempt(2)
     k = 0
 

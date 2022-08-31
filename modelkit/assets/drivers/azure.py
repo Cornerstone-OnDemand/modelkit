@@ -7,9 +7,11 @@ from tenacity import retry
 
 from modelkit.assets import errors
 from modelkit.assets.drivers.abc import StorageDriver
-from modelkit.assets.drivers.retry import RETRY_POLICY
+from modelkit.assets.drivers.retry import retry_policy
 
 logger = get_logger(__name__)
+
+AZURE_RETRY_POLICY = retry_policy()
 
 
 class AzureStorageDriver(StorageDriver):
@@ -34,13 +36,13 @@ class AzureStorageDriver(StorageDriver):
                 os.environ["AZURE_STORAGE_CONNECTION_STRING"]
             )
 
-    @retry(**RETRY_POLICY)
+    @retry(**AZURE_RETRY_POLICY)
     def iterate_objects(self, prefix=None):
         container = self.client.get_container_client(self.bucket)
         for blob in container.list_blobs(prefix=prefix):
             yield blob["name"]
 
-    @retry(**RETRY_POLICY)
+    @retry(**AZURE_RETRY_POLICY)
     def upload_object(self, file_path, object_name):
         blob_client = self.client.get_blob_client(
             container=self.bucket, blob=object_name
@@ -50,7 +52,7 @@ class AzureStorageDriver(StorageDriver):
         with open(file_path, "rb") as f:
             blob_client.upload_blob(f)
 
-    @retry(**RETRY_POLICY)
+    @retry(**AZURE_RETRY_POLICY)
     def download_object(self, object_name, destination_path):
         blob_client = self.client.get_blob_client(
             container=self.bucket, blob=object_name
@@ -67,14 +69,14 @@ class AzureStorageDriver(StorageDriver):
         with open(destination_path, "wb") as f:
             f.write(blob_client.download_blob().readall())
 
-    @retry(**RETRY_POLICY)
+    @retry(**AZURE_RETRY_POLICY)
     def delete_object(self, object_name):
         blob_client = self.client.get_blob_client(
             container=self.bucket, blob=object_name
         )
         blob_client.delete_blob()
 
-    @retry(**RETRY_POLICY)
+    @retry(**AZURE_RETRY_POLICY)
     def exists(self, object_name):
         blob_client = self.client.get_blob_client(
             container=self.bucket, blob=object_name
