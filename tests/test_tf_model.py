@@ -167,7 +167,7 @@ def tf_serving(request, monkeypatch, working_dir, dummy_tf_models):
     monkeypatch.setenv("MODELKIT_STORAGE_PROVIDER", "local")
 
     lib = ModelLibrary(models=DummyTFModel, settings={"lazy_loading": True})
-    yield tf_serving_fixture(request, lib)
+    yield tf_serving_fixture(request, lib, tf_version="2.8.0")
 
 
 @skip_unless("ENABLE_TF_SERVING_TEST", "True")

@@ -5,7 +5,7 @@ from modelkit.core.models.tensorflow_model import TensorflowModel, connect_tf_se
 from modelkit.utils.tensorflow import deploy_tf_models
 
 
-def tf_serving_fixture(request, lib, deployment="docker"):
+def tf_serving_fixture(request, lib, tf_version, deployment="docker"):
     cmd = [
         "--port=8500",
         "--rest_api_port=8501",
@@ -47,7 +47,7 @@ def tf_serving_fixture(request, lib, deployment="docker"):
                 "8500:8500",
                 "-p",
                 "8501:8501",
-                "tensorflow/serving:2.4.0",
+                f"tensorflow/serving:{tf_version}",
                 "--model_config_file=/config/testing.config",
             ]
             + cmd
