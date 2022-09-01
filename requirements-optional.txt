@@ -2,5 +2,11 @@
 
 numpy
 grpcio
-tensorflow==2.8.0
-tensorflow-serving-api==2.8.0
+tensorflow
+tensorflow-serving-api
+# assets-s3
+boto3
+# assets-gcs
+google-cloud-storage
+# assets-az
+azure-storage-blob

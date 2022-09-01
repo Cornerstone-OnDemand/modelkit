@@ -8,9 +8,11 @@ from tenacity import retry
 
 from modelkit.assets import errors
 from modelkit.assets.drivers.abc import StorageDriver
-from modelkit.assets.drivers.retry import RETRY_POLICY
+from modelkit.assets.drivers.retry import retry_policy
 
 logger = get_logger(__name__)
+
+S3_RETRY_POLICY = retry_policy(botocore.exceptions.ClientError)
 
 
 class S3StorageDriver(StorageDriver):
@@ -44,7 +46,7 @@ class S3StorageDriver(StorageDriver):
             region_name=aws_default_region or os.environ.get("AWS_DEFAULT_REGION"),
         )
 
-    @retry(**RETRY_POLICY)
+    @retry(**S3_RETRY_POLICY)
     def iterate_objects(self, prefix=None):
         paginator = self.client.get_paginator("list_objects_v2")
         pages = paginator.paginate(Bucket=self.bucket, Prefix=prefix or "")
@@ -52,7 +54,7 @@ class S3StorageDriver(StorageDriver):
             for obj in page.get("Contents", []):
                 yield obj["Key"]
 
-    @retry(**RETRY_POLICY)
+    @retry(**S3_RETRY_POLICY)
     def upload_object(self, file_path, object_name):
         if self.aws_kms_key_id:
             self.client.upload_file(  # pragma: no cover
@@ -67,7 +69,7 @@ class S3StorageDriver(StorageDriver):
         else:
             self.client.upload_file(file_path, self.bucket, object_name)
 
-    @retry(**RETRY_POLICY)
+    @retry(**S3_RETRY_POLICY)
     def download_object(self, object_name, destination_path):
         try:
             with open(destination_path, "wb") as f:
@@ -81,11 +83,11 @@ class S3StorageDriver(StorageDriver):
                 driver=self, bucket=self.bucket, object_name=object_name
             )
 
-    @retry(**RETRY_POLICY)
+    @retry(**S3_RETRY_POLICY)
     def delete_object(self, object_name):
         self.client.delete_object(Bucket=self.bucket, Key=object_name)
 
-    @retry(**RETRY_POLICY)
+    @retry(**S3_RETRY_POLICY)
     def exists(self, object_name):
         try:
             self.client.head_object(Bucket=self.bucket, Key=object_name)

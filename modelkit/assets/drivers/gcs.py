@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 
-from google.api_core.exceptions import NotFound
+from google.api_core.exceptions import GoogleAPIError, NotFound
 from google.cloud import storage
 from google.cloud.storage import Client
 from structlog import get_logger
@@ -9,9 +9,11 @@ from tenacity import retry
 
 from modelkit.assets import errors
 from modelkit.assets.drivers.abc import StorageDriver
-from modelkit.assets.drivers.retry import RETRY_POLICY
+from modelkit.assets.drivers.retry import retry_policy
 
 logger = get_logger(__name__)
+
+GCS_RETRY_POLICY = retry_policy(GoogleAPIError)
 
 
 class GCSStorageDriver(StorageDriver):
@@ -35,13 +37,13 @@ class GCSStorageDriver(StorageDriver):
         else:
             self.client = Client()
 
-    @retry(**RETRY_POLICY)
+    @retry(**GCS_RETRY_POLICY)
     def iterate_objects(self, prefix=None):
         bucket = self.client.bucket(self.bucket)
         for blob in bucket.list_blobs(prefix=prefix):
             yield blob.name
 
-    @retry(**RETRY_POLICY)
+    @retry(**GCS_RETRY_POLICY)
     def upload_object(self, file_path, object_name):
         bucket = self.client.bucket(self.bucket)
         blob = bucket.blob(object_name)
@@ -50,7 +52,7 @@ class GCSStorageDriver(StorageDriver):
         with open(file_path, "rb") as f:
             blob.upload_from_file(f)
 
-    @retry(**RETRY_POLICY)
+    @retry(**GCS_RETRY_POLICY)
     def download_object(self, object_name, destination_path):
         bucket = self.client.bucket(self.bucket)
         blob = bucket.blob(object_name)
@@ -66,13 +68,13 @@ class GCSStorageDriver(StorageDriver):
                 driver=self, bucket=self.bucket, object_name=object_name
             )
 
-    @retry(**RETRY_POLICY)
+    @retry(**GCS_RETRY_POLICY)
     def delete_object(self, object_name):
         bucket = self.client.bucket(self.bucket)
         blob = bucket.blob(object_name)
         blob.delete()
 
-    @retry(**RETRY_POLICY)
+    @retry(**GCS_RETRY_POLICY)
     def exists(self, object_name):
         bucket = self.client.bucket(self.bucket)
         blob = bucket.blob(object_name)

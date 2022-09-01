@@ -10,11 +10,21 @@ from rich.progress import Progress, SpinnerColumn
 from rich.table import Table
 from rich.tree import Tree
 
-from modelkit.assets.drivers.gcs import GCSStorageDriver
-from modelkit.assets.drivers.s3 import S3StorageDriver
+try:
+    from modelkit.assets.drivers.gcs import GCSStorageDriver
+
+    has_gcs = True
+except ModuleNotFoundError:
+    has_gcs = False
+try:
+    from modelkit.assets.drivers.s3 import S3StorageDriver
+
+    has_s3 = True
+except ModuleNotFoundError:
+    has_s3 = False
 from modelkit.assets.errors import ObjectDoesNotExistError
 from modelkit.assets.manager import AssetsManager
-from modelkit.assets.remote import StorageProvider
+from modelkit.assets.remote import DriverNotInstalledError, StorageProvider
 from modelkit.assets.settings import AssetSpec
 
 
@@ -121,8 +131,16 @@ def new_(asset_path, asset_spec, storage_prefix, dry_run):
             if not os.path.exists(asset_path):
                 parsed_path = parse_remote_url(asset_path)
                 if parsed_path["storage_prefix"] == "gs":
+                    if not has_gcs:
+                        raise DriverNotInstalledError(
+                            "GCS driver not installed, install modelkit[assets-gcs]"
+                        )
                     driver = GCSStorageDriver(bucket=parsed_path["bucket_name"])
                 elif parsed_path["storage_prefix"] == "s3":
+                    if not has_s3:
+                        raise DriverNotInstalledError(
+                            "S3 driver not installed, install modelkit[assets-s3]"
+                        )
                     driver = S3StorageDriver(bucket=parsed_path["bucket_name"])
                 else:
                     raise ValueError(
@@ -212,8 +230,16 @@ def update_(asset_path, asset_spec, storage_prefix, bump_major, dry_run):
             if not os.path.exists(asset_path):
                 parsed_path = parse_remote_url(asset_path)
                 if parsed_path["storage_prefix"] == "gs":
+                    if not has_gcs:
+                        raise DriverNotInstalledError(
+                            "GCS driver not installed, install modelkit[assets-gcs]"
+                        )
                     driver = GCSStorageDriver(bucket=parsed_path["bucket_name"])
                 elif parsed_path["storage_prefix"] == "s3":
+                    if not has_s3:
+                        raise DriverNotInstalledError(
+                            "S3 driver not installed, install modelkit[assets-s3]"
+                        )
                     driver = S3StorageDriver(bucket=parsed_path["bucket_name"])
                 else:
                     raise ValueError(
