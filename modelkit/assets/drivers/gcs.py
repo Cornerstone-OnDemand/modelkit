@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional, Dict
 
 from google.api_core.exceptions import GoogleAPIError, NotFound
 from google.cloud import storage
@@ -18,7 +18,6 @@ GCS_RETRY_POLICY = retry_policy(GoogleAPIError)
 
 class GCSStorageDriver(StorageDriver):
     bucket: str
-    client: Client
 
     def __init__(
         self,
@@ -26,16 +25,17 @@ class GCSStorageDriver(StorageDriver):
         service_account_path: Optional[str] = None,
         client: Optional[Client] = None,
     ):
-        self.bucket = bucket or os.environ.get("MODELKIT_STORAGE_BUCKET") or ""
-        if not self.bucket:
-            raise ValueError("Bucket needs to be set for GCS storage driver")
+        client_configuration = {
+            "service_account_path": service_account_path
+        }
+        super().__init__(bucket=bucket, client=client, client_configuration=client_configuration)
 
-        if client:
-            self.client = client
-        elif service_account_path:  # pragma: no cover
-            self.client = Client.from_service_account_json(service_account_path)
-        else:
-            self.client = Client()
+    @staticmethod
+    def build_client(client_configuration: Optional[Dict[str, str]]) -> Client:
+        sa_path = (client_configuration or {}).get("service_account_path")
+        if sa_path:
+            return Client.from_service_account_json(sa_path)
+        return Client()
 
     @retry(**GCS_RETRY_POLICY)
     def iterate_objects(self, prefix=None):

@@ -1,9 +1,12 @@
 import os
 import tempfile
 
+from modelkit.assets.drivers.abc import StorageDriver
 from modelkit.assets.drivers.local import LocalStorageDriver
 from tests import TEST_DIR
 from tests.conftest import skip_unless
+
+import pickle
 
 
 def _perform_driver_test(driver):
@@ -30,24 +33,45 @@ def _perform_driver_test(driver):
     driver.delete_object("some/object")
     assert not driver.exists("some/object")
 
+def _perform_pickability_test(driver, monkeypatch):
+    # check whether the driver is pickable when
+    # no client is passed at instantation.
+    # Hence the need to set driver's _client property to None 
+    monkeypatch.setattr(driver, "_client", None)
+    assert pickle.dumps(driver)
+
 
 def test_local_driver(local_assetsmanager):
     _perform_driver_test(local_assetsmanager.storage_provider.driver)
 
+def test_local_driver(local_assetsmanager, monkeypatch):
+    _perform_pickability_test(local_assetsmanager.storage_provider.driver, monkeypatch)
 
 @skip_unless("ENABLE_GCS_TEST", "True")
 def test_gcs_driver(gcs_assetsmanager):
     _perform_driver_test(gcs_assetsmanager.storage_provider.driver)
 
+@skip_unless("ENABLE_GCS_TEST", "True")
+def test_gcs_driver_pickable(gcs_assetsmanager, monkeypatch):
+    _perform_pickability_test(gcs_assetsmanager.storage_provider.driver, monkeypatch)
 
 @skip_unless("ENABLE_S3_TEST", "True")
 def test_s3_driver(s3_assetsmanager):
     _perform_driver_test(s3_assetsmanager.storage_provider.driver)
 
 
+@skip_unless("ENABLE_S3_TEST", "True")
+def test_s3_driver_pickable(s3_assetsmanager, monkeypatch):
+    _perform_pickability_test(s3_assetsmanager.storage_provider.driver, monkeypatch)
+
+
 @skip_unless("ENABLE_AZ_TEST", "True")
 def test_az_driver(az_assetsmanager):
     _perform_driver_test(az_assetsmanager.storage_provider.driver)
+
+@skip_unless("ENABLE_AZ_TEST", "True")
+def test_az_driver_pickable(az_assetsmanager, monkeypatch):
+    _perform_pickability_test(az_assetsmanager.storage_provider.driver, monkeypatch)
 
 
 def test_local_driver_overwrite(working_dir):
@@ -71,3 +95,34 @@ def test_local_driver_overwrite(working_dir):
         os.path.join(TEST_DIR, "assets", "testdata", "some_data.json"), "a/b/c"
     )
     assert os.path.isfile(os.path.join(working_dir, "a", "b", "c"))
+
+
+def test_storage_driver_client(monkeypatch):
+    class MockedDriver(StorageDriver):
+        @staticmethod
+        def build_client(_):
+            return {"built": True, "passed": False}
+    
+    # the storage provider should not build the client
+    # since passed at instantiation
+    driver = MockedDriver(bucket="bucket", client={"built": False, "passed": True})
+    assert driver.client == driver._client == {"built": False, "passed": True}
+
+    # the storage provider should build the client
+    driver = MockedDriver(bucket="bucket")
+    assert driver.client == driver._client == {"built": True, "passed": False}
+
+    monkeypatch.setenv("MODELKIT_LAZY_DRIVER", True)
+    # the storage provider should not build the client eagerly nor store it
+    # since MODELKIT_LAZY_DRIVER is set
+    driver = MockedDriver(bucket="bucket")
+    assert driver._client == None
+    # the storage provider builds it on-the-fly when accessed via the `client` property
+    assert driver.client == {"built": True, "passed": False}
+    # but does not store it
+    assert driver._client == None
+
+    # the storage provider should not build any client but use the one passed
+    # at instantiation
+    driver = MockedDriver(bucket="bucket", client={"built": False, "passed": True})
+    assert driver.client == driver._client == {"built": False, "passed": True}

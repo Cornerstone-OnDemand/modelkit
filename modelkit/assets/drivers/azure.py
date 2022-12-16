@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional, Dict
 
 from azure.storage.blob import BlobServiceClient
 from structlog import get_logger
@@ -23,18 +23,15 @@ class AzureStorageDriver(StorageDriver):
         connection_string: Optional[str] = None,
         client: Optional[BlobServiceClient] = None,
     ):
-        self.bucket = bucket or os.environ.get("MODELKIT_STORAGE_BUCKET") or ""
-        if not self.bucket:
-            raise ValueError("Bucket needs to be set for Azure storage driver")
+        client_configuration = {"connection_string": connection_string or os.environ.get("AZURE_STORAGE_CONNECTION_STRING")}
+        if not (client or client_configuration["connection_string"]):
+            raise ValueError("Connection string needs to be set for Azure storage driver")
+        super().__init__(bucket=bucket, client=client, client_configuration=client_configuration)
 
-        if client:
-            self.client = client
-        elif connection_string:  # pragma: no cover
-            self.client = BlobServiceClient.from_connection_string(connection_string)
-        else:
-            self.client = BlobServiceClient.from_connection_string(
-                os.environ["AZURE_STORAGE_CONNECTION_STRING"]
-            )
+    @staticmethod
+    def build_client(client_configuration: Dict[str, str]) -> BlobServiceClient:
+        return BlobServiceClient.from_connection_string(client_configuration["connection_string"])
+
 
     @retry(**AZURE_RETRY_POLICY)
     def iterate_objects(self, prefix=None):
