@@ -23,6 +23,7 @@ class S3StorageDriver(StorageDriver):
     def __init__(
         self,
         bucket: Optional[str] = None,
+        client: Optional[boto3.client] = None,
         aws_access_key_id: Optional[str] = None,
         aws_secret_access_key: Optional[str] = None,
         aws_default_region: Optional[str] = None,
@@ -36,7 +37,7 @@ class S3StorageDriver(StorageDriver):
             raise ValueError("Bucket needs to be set for S3 storage driver")
         self.endpoint_url = s3_endpoint or os.environ.get("S3_ENDPOINT")
         self.aws_kms_key_id = aws_kms_key_id or os.environ.get("AWS_KMS_KEY_ID")
-        self.client = boto3.client(
+        self.client = client or boto3.client(
             "s3",
             endpoint_url=self.endpoint_url,
             aws_access_key_id=aws_access_key_id or os.environ.get("AWS_ACCESS_KEY_ID"),
