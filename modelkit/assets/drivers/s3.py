@@ -23,6 +23,7 @@ class S3StorageDriver(StorageDriver):
     def __init__(
         self,
         bucket: Optional[str] = None,
+        client: Optional[boto3.client] = None,
         aws_access_key_id: Optional[str] = None,
         aws_secret_access_key: Optional[str] = None,
         aws_default_region: Optional[str] = None,
