@@ -114,7 +114,9 @@ class MajorMinorAssetsVersioningSystem(versioning.AssetsVersioningSystem):
 
     @classmethod
     def increment_version(
-        cls, version_list: typing.List[str] = None, params: typing.Dict[str, str] = None
+        cls,
+        version_list: typing.Optional[typing.List[str]] = None,
+        params: typing.Optional[typing.Dict[str, str]] = None,
     ) -> str:
         version_list = version_list or []
         params = params or {}
