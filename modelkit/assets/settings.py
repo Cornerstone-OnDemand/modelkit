@@ -26,9 +26,9 @@ class AssetSpec:
     def __init__(
         self,
         name: str,
-        versioning: str = None,
-        version: str = None,
-        sub_part: str = None,
+        versioning: typing.Optional[str] = None,
+        version: typing.Optional[str] = None,
+        sub_part: typing.Optional[str] = None,
     ) -> None:
 
         versioning = (
@@ -98,7 +98,7 @@ class AssetSpec:
     @staticmethod
     def from_string(
         input_string: str,
-        versioning: str = None,
+        versioning: typing.Optional[str] = None,
     ):
         match = re.match(REMOTE_ASSET_RE, input_string)
         if not match:

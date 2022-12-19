@@ -5,31 +5,38 @@ from modelkit.assets import errors
 
 
 class AssetsVersioningSystem(abc.ABC):
-    @abc.abstractclassmethod
+    @classmethod
+    @abc.abstractmethod
     def get_initial_version(cls) -> str:  # pragma: no cover
         """return an initial version"""
         ...
 
-    @abc.abstractclassmethod
+    @classmethod
+    @abc.abstractmethod
     def check_version_valid(cls, version: str):  # pragma: no cover
         """raises InvalidVersionError if version is not valid"""
         ...
 
-    @abc.abstractclassmethod
+    @classmethod
+    @abc.abstractmethod
     def sort_versions(
         cls, version_list: typing.Iterable[str]
     ) -> typing.List[str]:  # pragma: no cover
         """Sort the version_list according to the versioning system"""
         ...
 
-    @abc.abstractclassmethod
+    @classmethod
+    @abc.abstractmethod
     def increment_version(
-        cls, version_list: typing.List[str] = None, params: typing.Dict[str, str] = None
-    ) -> str:  #  pragma: no cover
+        cls,
+        version_list: typing.Optional[typing.List[str]] = None,
+        params: typing.Optional[typing.Dict[str, str]] = None,
+    ) -> str:  # pragma: no cover
         """Algorithm used to increment your version. Returns new version"""
         ...
 
-    @abc.abstractclassmethod
+    @classmethod
+    @abc.abstractmethod
     def get_update_cli_params(cls, **kwargs) -> typing.Dict[str, typing.Any]:
         """
             returns {

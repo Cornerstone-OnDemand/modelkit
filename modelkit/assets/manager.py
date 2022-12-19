@@ -1,5 +1,6 @@
 import os
 import shutil
+import typing
 from typing import Any, Dict, List, Optional, Union, cast
 
 import filelock
@@ -219,7 +220,7 @@ class AssetsManager:
         self,
         spec: Union[AssetSpec, str],
         return_info=False,
-        force_download: bool = None,
+        force_download: typing.Optional[bool] = None,
     ):
         if isinstance(spec, str):
             spec = cast(AssetSpec, AssetSpec.from_string(spec))

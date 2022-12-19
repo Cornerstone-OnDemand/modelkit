@@ -1,8 +1,9 @@
+import typing
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from typing import Dict, Generator, Set
 
-from modelkit.core.model import Model
+from modelkit.core.model import AsyncModel, Model, WrappedAsyncModel
 
 
 class BaseProfiler(ABC):
@@ -21,7 +22,7 @@ class BaseProfiler(ABC):
     def end(self, model_name: str) -> None:
         """Define how to record the cost when an action is completed."""
 
-    def summary(self, *args, **kwargs) -> str:  #  type: ignore
+    def summary(self, *args, **kwargs) -> str:  # type: ignore
         """Summary function to be overwritten"""
         return ""
 
@@ -41,17 +42,26 @@ class BaseProfiler(ABC):
         """
         raise NotImplementedError
 
-    def _build(self, model: Model):
+    def _build(self, model: typing.Union[Model, AsyncModel, WrappedAsyncModel]):
         """setattr 'profiler' to all sub-models via "model_dependencies" recursively"""
         model.profiler = self  # type: ignore
-        if model.model_dependencies:
-            for key in model.model_dependencies:
-                self._build(model.model_dependencies[key])
+        if isinstance(model, WrappedAsyncModel):
+            # let's work on the wrapped model instead of the wrapper
+            model = model.async_model
+        for model_dependency in model.model_dependencies.values():
+            self._build(model_dependency)
 
-    def _build_graph(self, model: Model, graph: Dict[str, Set]) -> Dict[str, Set]:
+    def _build_graph(
+        self,
+        model: typing.Union[Model, AsyncModel, WrappedAsyncModel],
+        graph: Dict[str, Set],
+    ) -> Dict[str, Set]:
         """Build the model dependency graph in order to compute net cost of all
         sub models. graph[model_name] gives the set of all (direct) sub model names.
         """
+        if isinstance(model, WrappedAsyncModel):
+            # let's work on the wrapped model instead of the wrapper
+            model = model.async_model
         name = model.configuration_key
         children = set()
         for key in model.model_dependencies:

@@ -1,3 +1,4 @@
+import abc
 import copy
 import datetime as dt
 import enum
@@ -60,7 +61,9 @@ class ModelDependenciesMapping:
     def __init__(self, models: Optional[Dict[str, ModelDependency]] = None):
         self.models = models or {}
 
-    def __getitem__(self, key: str) -> ModelDependency:
+    def __getitem__(
+        self, key: str
+    ) -> Union["Model", "AsyncModel", "WrappedAsyncModel"]:
         return self.models[key]
 
     def get(
@@ -227,8 +230,8 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
                     type_name = self.__class__.__name__ + "ItemTypeModel"
                     self._item_model = pydantic.create_model(
                         type_name,
-                        #  The order of the Union arguments matter here, in order
-                        #  to make sure that lists of items and single items
+                        #  The order of the Union arguments matter here, in order
+                        #  to make sure that lists of items and single items
                         # are correctly validated
                         data=(self._item_type, ...),
                         __base__=InternalDataModel,
@@ -490,6 +493,7 @@ class Model(AbstractModel[ItemType, ReturnType]):
             self.model_dependencies = ModelDependenciesMapping(_model_dependencies)
 
     @not_overriden
+    @abc.abstractmethod
     def _predict(self, item: ItemType, **kwargs) -> ReturnType:  # pragma: no cover
         ...
 
@@ -672,6 +676,7 @@ class Model(AbstractModel[ItemType, ReturnType]):
 
 class AsyncModel(AbstractModel[ItemType, ReturnType]):
     @not_overriden
+    @abc.abstractmethod
     async def _predict(
         self, item: ItemType, **kwargs
     ) -> ReturnType:  # pragma: no cover
