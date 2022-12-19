@@ -17,7 +17,7 @@ class StorageDriver(abc.ABC):
         self.client_configuration = client_configuration or {}
         self.bucket = bucket or os.environ.get("MODELKIT_STORAGE_BUCKET") or ""
         if not self.bucket:
-            raise ValueError("Bucket needs to be set for Azure storage driver")
+            raise ValueError("Bucket needs to be set for the storage driver")
         self.lazy_driver = os.environ.get("MODELKIT_LAZY_DRIVER")
         if not (self.lazy_driver or client):
             self._client = self.build_client(self.client_configuration)
