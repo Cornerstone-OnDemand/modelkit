@@ -1,5 +1,5 @@
 import os
-from typing import Any, Optional
+from typing import Any, Dict, Optional, Union
 
 import boto3
 import botocore
@@ -18,7 +18,6 @@ S3_RETRY_POLICY = retry_policy(botocore.exceptions.ClientError)
 class S3StorageDriver(StorageDriver):
     bucket: str
     endpoint_url: Optional[str]
-    client: Any
 
     def __init__(
         self,
@@ -32,20 +31,26 @@ class S3StorageDriver(StorageDriver):
         s3_endpoint: Optional[str] = None,
     ):
 
-        self.bucket = bucket or os.environ.get("MODELKIT_STORAGE_BUCKET") or ""
-        if not self.bucket:
-            raise ValueError("Bucket needs to be set for S3 storage driver")
-        self.endpoint_url = s3_endpoint or os.environ.get("S3_ENDPOINT")
-        self.aws_kms_key_id = aws_kms_key_id or os.environ.get("AWS_KMS_KEY_ID")
-        self.client = boto3.client(
-            "s3",
-            endpoint_url=self.endpoint_url,
-            aws_access_key_id=aws_access_key_id or os.environ.get("AWS_ACCESS_KEY_ID"),
-            aws_secret_access_key=aws_secret_access_key
+        client_configuration = {
+            "endpoint_url": s3_endpoint or os.environ.get("S3_ENDPOINT"),
+            "aws_access_key_id": aws_access_key_id
+            or os.environ.get("AWS_ACCESS_KEY_ID"),
+            "aws_secret_access_key": aws_secret_access_key
             or os.environ.get("AWS_SECRET_ACCESS_KEY"),
-            aws_session_token=aws_session_token or os.environ.get("AWS_SESSION_TOKEN"),
-            region_name=aws_default_region or os.environ.get("AWS_DEFAULT_REGION"),
+            "region_name": aws_default_region or os.environ.get("AWS_DEFAULT_REGION"),
+            "aws_session_token": aws_session_token
+            or os.environ.get("AWS_SESSION_TOKEN"),
+        }
+        super().__init__(
+            bucket=bucket, client=client, client_configuration=client_configuration
         )
+        self.aws_kms_key_id = aws_kms_key_id or os.environ.get("AWS_KMS_KEY_ID")
+
+    @staticmethod
+    def build_client(
+        client_configuration: Union[Dict[str, Any], Optional[Dict[str, Any]]]
+    ) -> boto3.client:
+        return boto3.client("s3", **(client_configuration or {}))
 
     @retry(**S3_RETRY_POLICY)
     def iterate_objects(self, prefix=None):
@@ -97,7 +102,9 @@ class S3StorageDriver(StorageDriver):
             return False
 
     def __repr__(self):
-        return f"<S3StorageDriver endpoint_url={self.endpoint_url}>"
+        return "<S3StorageDriver endpoint_url={}>".format(
+            self.client_configuration["endpoint_url"]
+        )
 
     def get_object_uri(self, object_name, sub_part=None):
         return "s3://" + "/".join(
