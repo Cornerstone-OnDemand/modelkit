@@ -4,7 +4,7 @@
 
 In order to run/deploy `modelkit` endpoints, you need to provide it with the necessary environment variables, most of them required by `modelkit.assets` to retrieve assets from the remote object store:
 
-### General `modelkit` environment variables
+### General `modelkit` environment variables
 
 The assets directory is required to know where to find assets
 
@@ -19,7 +19,12 @@ Lazy loading is useful when you want the models to be loaded only when they are 
 
 - `MODELKIT_LAZY_LOADING` (defaults to `False`) toggles lazy loading mode for the `ModelLibrary`
 
-### Storage related environment variables
+Due to the implementation of cloud drivers, which are not pickable, the lazy driver mode is useful when you want 
+to use the ModelLibrary in conjunction with libraries using pickle: PySpark, multiprocessing etc.
+
+- `MODELKIT_LAZY_DRIVER` (defaults to `False`) toggles lazy mode for the `StorageProvider`'s drivers creation (boto3, gcs, azure)
+
+### Storage related environment variables
 
 These variables are necessary to set a remote storage from which to retrieve assets. Refer to the [storage provider documentation for more information](assets/storage_provider.md) for more information.
 
@@ -33,7 +38,7 @@ These variables are necessary to set a remote storage from which to retrieve ass
     - for `MODELKIT_STORAGE_PROVIDER=s3`, you need to instantiate `AWS_PROFILE`
     - for `MODELKIT_STORAGE_PROVIDER=az`, you need to instantiate `AZURE_STORAGE_CONNECTION_STRING` with a connection string
 
-### Assets versioning related environment variable
+### Assets versioning related environment variable
 
  - `MODELKIT_ASSETS_VERSIONING_SYSTEM` will fix the assets versioning system. It can be `major_minor` or `simple_date`
 
