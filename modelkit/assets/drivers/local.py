@@ -17,8 +17,6 @@ class LocalStorageDriverSettings(StorageDriverSettings):
 
 
 class LocalStorageDriver(StorageDriver):
-    bucket: str
-
     def __init__(self, settings: Union[Dict, LocalStorageDriverSettings]):
         if isinstance(settings, dict):
             settings = LocalStorageDriverSettings(**settings)

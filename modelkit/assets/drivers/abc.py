@@ -13,8 +13,6 @@ class StorageDriverSettings(pydantic.BaseSettings):
 
 
 class StorageDriver(abc.ABC):
-    bucket: str
-
     def __init__(
         self,
         settings: Union[Dict, StorageDriverSettings],

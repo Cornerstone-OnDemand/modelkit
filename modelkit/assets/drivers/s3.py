@@ -31,9 +31,6 @@ class S3StorageDriverSettings(StorageDriverSettings):
 
 
 class S3StorageDriver(StorageDriver):
-    bucket: str
-    endpoint_url: Optional[str]
-
     def __init__(
         self,
         settings: Union[Dict, S3StorageDriverSettings],

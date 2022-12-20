@@ -25,8 +25,6 @@ class AzureStorageDriverSettings(StorageDriverSettings):
 
 
 class AzureStorageDriver(StorageDriver):
-    bucket: str
-
     def __init__(
         self,
         settings: Union[Dict, AzureStorageDriverSettings],

@@ -27,8 +27,6 @@ class GCSStorageDriverSettings(StorageDriverSettings):
 
 
 class GCSStorageDriver(StorageDriver):
-    bucket: str
-
     def __init__(
         self,
         settings: Union[Dict, GCSStorageDriverSettings],
