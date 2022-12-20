@@ -1,9 +1,32 @@
 import abc
-from typing import Iterator, Optional
+from typing import Any, Dict, Iterator, Optional, Union
+
+import pydantic
+
+
+class StorageDriverSettings(pydantic.BaseSettings):
+    bucket: str = pydantic.Field(..., env="MODELKIT_STORAGE_BUCKET")
+    lazy_driver: bool = pydantic.Field(False, env="MODELKIT_LAZY_DRIVER")
+
+    class Config:
+        extra = "allow"
 
 
 class StorageDriver(abc.ABC):
-    bucket: str
+    def __init__(
+        self,
+        settings: Union[Dict, StorageDriverSettings],
+        client: Optional[Any] = None,
+        client_configuration: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        if isinstance(settings, dict):
+            settings = StorageDriverSettings(**settings)
+        self._client = client
+        self.client_configuration = client_configuration or {}
+        self.bucket = settings.bucket
+        self.lazy_driver = settings.lazy_driver
+        if not (self.lazy_driver or client):
+            self._client = self.build_client(self.client_configuration)
 
     @abc.abstractmethod
     def iterate_objects(
@@ -33,4 +56,13 @@ class StorageDriver(abc.ABC):
     def get_object_uri(
         self, object_name: str, sub_part: Optional[str] = None
     ) -> str:  # pragma: no cover
+        ...
+
+    @property
+    def client(self):
+        return self._client or self.build_client(self.client_configuration)
+
+    @staticmethod
+    @abc.abstractmethod
+    def build_client(client_configuration: Dict[str, Any]) -> Any:
         ...

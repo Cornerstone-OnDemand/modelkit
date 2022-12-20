@@ -10,6 +10,8 @@ from rich.progress import Progress, SpinnerColumn
 from rich.table import Table
 from rich.tree import Tree
 
+from modelkit.assets.drivers.abc import StorageDriverSettings
+
 try:
     from modelkit.assets.drivers.gcs import GCSStorageDriver
 
@@ -130,18 +132,21 @@ def new_(asset_path, asset_spec, storage_prefix, dry_run):
         with tempfile.TemporaryDirectory() as tmp_dir:
             if not os.path.exists(asset_path):
                 parsed_path = parse_remote_url(asset_path)
+                driver_settings = StorageDriverSettings(
+                    bucket=parsed_path["bucket_name"]
+                )
                 if parsed_path["storage_prefix"] == "gs":
                     if not has_gcs:
                         raise DriverNotInstalledError(
                             "GCS driver not installed, install modelkit[assets-gcs]"
                         )
-                    driver = GCSStorageDriver(bucket=parsed_path["bucket_name"])
+                    driver = GCSStorageDriver(driver_settings)
                 elif parsed_path["storage_prefix"] == "s3":
                     if not has_s3:
                         raise DriverNotInstalledError(
                             "S3 driver not installed, install modelkit[assets-s3]"
                         )
-                    driver = S3StorageDriver(bucket=parsed_path["bucket_name"])
+                    driver = S3StorageDriver(driver_settings)
                 else:
                     raise ValueError(
                         f"Unmanaged storage prefix `{parsed_path['storage_prefix']}`"
@@ -229,18 +234,21 @@ def update_(asset_path, asset_spec, storage_prefix, bump_major, dry_run):
         with tempfile.TemporaryDirectory() as tmp_dir:
             if not os.path.exists(asset_path):
                 parsed_path = parse_remote_url(asset_path)
+                driver_settings = StorageDriverSettings(
+                    bucket=parsed_path["bucket_name"]
+                )
                 if parsed_path["storage_prefix"] == "gs":
                     if not has_gcs:
                         raise DriverNotInstalledError(
                             "GCS driver not installed, install modelkit[assets-gcs]"
                         )
-                    driver = GCSStorageDriver(bucket=parsed_path["bucket_name"])
+                    driver = GCSStorageDriver(driver_settings)
                 elif parsed_path["storage_prefix"] == "s3":
                     if not has_s3:
                         raise DriverNotInstalledError(
                             "S3 driver not installed, install modelkit[assets-s3]"
                         )
-                    driver = S3StorageDriver(bucket=parsed_path["bucket_name"])
+                    driver = S3StorageDriver(driver_settings)
                 else:
                     raise ValueError(
                         f"Unmanaged storage prefix `{parsed_path['storage_prefix']}`"

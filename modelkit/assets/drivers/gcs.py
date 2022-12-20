@@ -1,6 +1,7 @@
 import os
-from typing import Optional
+from typing import Dict, Optional, Union
 
+import pydantic
 from google.api_core.exceptions import GoogleAPIError, NotFound
 from google.cloud import storage
 from google.cloud.storage import Client
@@ -8,7 +9,7 @@ from structlog import get_logger
 from tenacity import retry
 
 from modelkit.assets import errors
-from modelkit.assets.drivers.abc import StorageDriver
+from modelkit.assets.drivers.abc import StorageDriver, StorageDriverSettings
 from modelkit.assets.drivers.retry import retry_policy
 
 logger = get_logger(__name__)
@@ -16,26 +17,38 @@ logger = get_logger(__name__)
 GCS_RETRY_POLICY = retry_policy(GoogleAPIError)
 
 
-class GCSStorageDriver(StorageDriver):
-    bucket: str
-    client: Client
+class GCSStorageDriverSettings(StorageDriverSettings):
+    service_account_path: Optional[str] = pydantic.Field(
+        None, env="GOOGLE_APPLICATION_CREDENTIALS"
+    )
 
+    class Config:
+        extra = "forbid"
+
+
+class GCSStorageDriver(StorageDriver):
     def __init__(
         self,
-        bucket: Optional[str] = None,
-        service_account_path: Optional[str] = None,
+        settings: Union[Dict, GCSStorageDriverSettings],
         client: Optional[Client] = None,
     ):
-        self.bucket = bucket or os.environ.get("MODELKIT_STORAGE_BUCKET") or ""
-        if not self.bucket:
-            raise ValueError("Bucket needs to be set for GCS storage driver")
+        if isinstance(settings, dict):
+            settings = GCSStorageDriverSettings(**settings)
 
-        if client:
-            self.client = client
-        elif service_account_path:  # pragma: no cover
-            self.client = Client.from_service_account_json(service_account_path)
-        else:
-            self.client = Client()
+        super().__init__(
+            settings=settings,
+            client=client,
+            client_configuration={
+                "service_account_path": settings.service_account_path
+            },
+        )
+
+    @staticmethod
+    def build_client(client_configuration: Dict[str, str]) -> Client:
+        sa_path = client_configuration.get("service_account_path")
+        if sa_path:
+            return Client.from_service_account_json(sa_path)
+        return Client()
 
     @retry(**GCS_RETRY_POLICY)
     def iterate_objects(self, prefix=None):
