@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, Optional, Union
+from typing import Dict, Optional
 
 from azure.storage.blob import BlobServiceClient
 from structlog import get_logger
@@ -36,10 +36,8 @@ class AzureStorageDriver(StorageDriver):
         )
 
     @staticmethod
-    def build_client(
-        client_configuration: Union[Dict[str, Any], Optional[Dict[str, Any]]]
-    ) -> BlobServiceClient:
-        connection_string = (client_configuration or {}).get("connection_string")
+    def build_client(client_configuration: Dict[str, str]) -> BlobServiceClient:
+        connection_string = client_configuration.get("connection_string")
         if not connection_string:
             raise ValueError(
                 "Connection string needs to be set for Azure storage driver"

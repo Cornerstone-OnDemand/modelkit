@@ -1,7 +1,7 @@
 import glob
 import os
 import shutil
-from typing import Any, Optional
+from typing import Dict, Optional
 
 from structlog import get_logger
 
@@ -20,7 +20,7 @@ class LocalStorageDriver(StorageDriver):
             raise FileNotFoundError
 
     @staticmethod
-    def build_client(_: Any) -> None:
+    def build_client(_: Dict[str, str]) -> None:
         return None
 
     def iterate_objects(self, prefix: Optional[str] = None):

@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, Optional, Union
+from typing import Dict, Optional
 
 import boto3
 import botocore
@@ -47,10 +47,8 @@ class S3StorageDriver(StorageDriver):
         self.aws_kms_key_id = aws_kms_key_id or os.environ.get("AWS_KMS_KEY_ID")
 
     @staticmethod
-    def build_client(
-        client_configuration: Union[Dict[str, Any], Optional[Dict[str, Any]]]
-    ) -> boto3.client:
-        return boto3.client("s3", **(client_configuration or {}))
+    def build_client(client_configuration: Dict[str, str]) -> boto3.client:
+        return boto3.client("s3", **client_configuration)
 
     @retry(**S3_RETRY_POLICY)
     def iterate_objects(self, prefix=None):

@@ -31,8 +31,8 @@ class GCSStorageDriver(StorageDriver):
         )
 
     @staticmethod
-    def build_client(client_configuration: Optional[Dict[str, str]]) -> Client:
-        sa_path = (client_configuration or {}).get("service_account_path")
+    def build_client(client_configuration: Dict[str, str]) -> Client:
+        sa_path = client_configuration.get("service_account_path")
         if sa_path:
             return Client.from_service_account_json(sa_path)
         return Client()

@@ -1,6 +1,6 @@
 import abc
 import os
-from typing import Any, Dict, Iterator, Optional, Union
+from typing import Any, Dict, Iterator, Optional
 
 
 class StorageDriver(abc.ABC):
@@ -57,7 +57,6 @@ class StorageDriver(abc.ABC):
         return self._client or self.build_client(self.client_configuration)
 
     @staticmethod
-    def build_client(
-        client_configuration: Union[Dict[str, Any], Optional[Dict[str, Any]]]
-    ) -> Any:
+    @abc.abstractmethod
+    def build_client(client_configuration: Dict[str, Any]) -> Any:
         ...
