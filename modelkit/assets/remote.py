@@ -4,7 +4,7 @@ import json
 import os
 import tempfile
 import time
-from typing import Optional
+from typing import Any, Optional
 
 import humanize
 from dateutil import parser, tz
@@ -14,21 +14,24 @@ from modelkit.assets import errors
 from modelkit.assets.drivers.abc import StorageDriver
 
 try:
-    from modelkit.assets.drivers.azure import AzureStorageDriver
+    from modelkit.assets.drivers.azure import (
+        AzureStorageDriver,
+        AzureStorageDriverSettings,
+    )
 
     has_az = True
 except ModuleNotFoundError:
     has_az = False
 try:
-    from modelkit.assets.drivers.gcs import GCSStorageDriver
+    from modelkit.assets.drivers.gcs import GCSStorageDriver, GCSStorageDriverSettings
 
     has_gcs = True
 except ModuleNotFoundError:
     has_gcs = False
-from modelkit.assets.drivers.local import LocalStorageDriver
+from modelkit.assets.drivers.local import LocalStorageDriver, LocalStorageDriverSettings
 
 try:
-    from modelkit.assets.drivers.s3 import S3StorageDriver
+    from modelkit.assets.drivers.s3 import S3StorageDriver, S3StorageDriverSettings
 
     has_s3 = True
 except ModuleNotFoundError:
@@ -73,6 +76,7 @@ class StorageProvider:
         prefix: Optional[str] = None,
         force_download: Optional[bool] = None,
         provider: Optional[str] = None,
+        client: Optional[Any] = None,
         **driver_settings,
     ):
         self.timeout = timeout_s or int(
@@ -94,21 +98,25 @@ class StorageProvider:
                 raise DriverNotInstalledError(
                     "GCS driver not installed, install modelkit[assets-gcs]"
                 )
-            self.driver = GCSStorageDriver(**driver_settings)
+            gcs_driver_settings = GCSStorageDriverSettings(**driver_settings)
+            self.driver = GCSStorageDriver(gcs_driver_settings, client)
         elif provider == "s3":
             if not has_s3:
                 raise DriverNotInstalledError(
                     "S3 driver not installed, install modelkit[assets-s3]"
                 )
-            self.driver = S3StorageDriver(**driver_settings)
+            s3_driver_settings = S3StorageDriverSettings(**driver_settings)
+            self.driver = S3StorageDriver(s3_driver_settings, client)
         elif provider == "local":
-            self.driver = LocalStorageDriver(**driver_settings)
+            local_driver_settings = LocalStorageDriverSettings(**driver_settings)
+            self.driver = LocalStorageDriver(local_driver_settings)
         elif provider == "az":
             if not has_az:
                 raise DriverNotInstalledError(
                     "Azure driver not installed, install modelkit[assets-az]"
                 )
-            self.driver = AzureStorageDriver(**driver_settings)
+            az_driver_settings = AzureStorageDriverSettings(**driver_settings)
+            self.driver = AzureStorageDriver(az_driver_settings, client)
         else:
             raise UnknownDriverError()
 

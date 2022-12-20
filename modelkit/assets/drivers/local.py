@@ -1,21 +1,28 @@
 import glob
 import os
 import shutil
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 from structlog import get_logger
 
 from modelkit.assets import errors
-from modelkit.assets.drivers.abc import StorageDriver
+from modelkit.assets.drivers.abc import StorageDriver, StorageDriverSettings
 
 logger = get_logger(__name__)
+
+
+class LocalStorageDriverSettings(StorageDriverSettings):
+    class Config:
+        extra = "forbid"
 
 
 class LocalStorageDriver(StorageDriver):
     bucket: str
 
-    def __init__(self, bucket: Optional[str] = None):
-        super().__init__(bucket=bucket)
+    def __init__(self, settings: Union[Dict, LocalStorageDriverSettings]):
+        if isinstance(settings, dict):
+            settings = LocalStorageDriverSettings(**settings)
+        super().__init__(settings)
         if not os.path.isdir(self.bucket):
             raise FileNotFoundError
 

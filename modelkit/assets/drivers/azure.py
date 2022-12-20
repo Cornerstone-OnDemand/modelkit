@@ -1,12 +1,13 @@
 import os
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
+import pydantic
 from azure.storage.blob import BlobServiceClient
 from structlog import get_logger
 from tenacity import retry
 
 from modelkit.assets import errors
-from modelkit.assets.drivers.abc import StorageDriver
+from modelkit.assets.drivers.abc import StorageDriver, StorageDriverSettings
 from modelkit.assets.drivers.retry import retry_policy
 
 logger = get_logger(__name__)
@@ -14,25 +15,33 @@ logger = get_logger(__name__)
 AZURE_RETRY_POLICY = retry_policy()
 
 
+class AzureStorageDriverSettings(StorageDriverSettings):
+    connection_string: Optional[str] = pydantic.Field(
+        None, env="AZURE_STORAGE_CONNECTION_STRING"
+    )
+
+    class Config:
+        extra = "forbid"
+
+
 class AzureStorageDriver(StorageDriver):
     bucket: str
 
     def __init__(
         self,
-        bucket: Optional[str] = None,
-        connection_string: Optional[str] = None,
+        settings: Union[Dict, AzureStorageDriverSettings],
         client: Optional[BlobServiceClient] = None,
     ):
-        client_configuration = {
-            "connection_string": connection_string
-            or os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
-        }
-        if not (client or client_configuration["connection_string"]):
+        if isinstance(settings, dict):
+            settings = AzureStorageDriverSettings(**settings)
+        if not (client or settings.connection_string):
             raise ValueError(
                 "Connection string needs to be set for Azure storage driver"
             )
         super().__init__(
-            bucket=bucket, client=client, client_configuration=client_configuration
+            settings,
+            client,
+            client_configuration={"connection_string": settings.connection_string},
         )
 
     @staticmethod

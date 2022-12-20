@@ -3,7 +3,7 @@ import pickle
 import tempfile
 from typing import Optional
 
-from modelkit.assets.drivers.abc import StorageDriver
+from modelkit.assets.drivers.abc import StorageDriver, StorageDriverSettings
 from modelkit.assets.drivers.local import LocalStorageDriver
 from tests import TEST_DIR
 from tests.conftest import skip_unless
@@ -81,7 +81,7 @@ def test_az_driver_pickable(az_assetsmanager, monkeypatch):
 
 
 def test_local_driver_overwrite(working_dir):
-    driver = LocalStorageDriver(working_dir)
+    driver = LocalStorageDriver(settings={"bucket": working_dir})
     driver.upload_object(
         os.path.join(TEST_DIR, "assets", "testdata", "some_data.json"), "a/b/c"
     )
@@ -129,19 +129,24 @@ def test_storage_driver_client(monkeypatch):
 
     # the storage provider should not build the client
     # since passed at instantiation
-    driver = MockedDriver(bucket="bucket", client={"built": False, "passed": True})
+    settings = StorageDriverSettings(bucket="bucket")
+    driver = MockedDriver(settings, client={"built": False, "passed": True})
+    assert settings.lazy_driver is False
     assert driver._client is not None
     assert driver._client == driver.client == {"built": False, "passed": True}
 
     # the storage provider should build the client at init
-    driver = MockedDriver(bucket="bucket")
+    driver = MockedDriver(settings)
+    assert settings.lazy_driver is False
     assert driver._client is not None
     assert driver._client == driver.client == {"built": True, "passed": False}
 
     monkeypatch.setenv("MODELKIT_LAZY_DRIVER", True)
     # the storage provider should not build the client eagerly nor store it
     # since MODELKIT_LAZY_DRIVER is set
-    driver = MockedDriver(bucket="bucket")
+    settings = StorageDriverSettings(bucket="bucket")
+    driver = MockedDriver(settings)
+    assert settings.lazy_driver is True
     assert driver._client is None
     # the storage provider builds it on-the-fly when accessed via the `client` property
     assert driver.client == {"built": True, "passed": False}
@@ -150,6 +155,6 @@ def test_storage_driver_client(monkeypatch):
 
     # the storage provider should not build any client but use the one passed
     # at instantiation
-    driver = MockedDriver(bucket="bucket", client={"built": False, "passed": True})
+    driver = MockedDriver(settings, client={"built": False, "passed": True})
     assert driver._client is not None
     assert driver._client == driver.client == {"built": False, "passed": True}

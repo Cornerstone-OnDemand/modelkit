@@ -1,6 +1,15 @@
 import abc
-import os
-from typing import Any, Dict, Iterator, Optional
+from typing import Any, Dict, Iterator, Optional, Union
+
+import pydantic
+
+
+class StorageDriverSettings(pydantic.BaseSettings):
+    bucket: str = pydantic.Field(..., env="MODELKIT_STORAGE_BUCKET")
+    lazy_driver: bool = pydantic.Field(False, env="MODELKIT_LAZY_DRIVER")
+
+    class Config:
+        extra = "allow"
 
 
 class StorageDriver(abc.ABC):
@@ -8,17 +17,16 @@ class StorageDriver(abc.ABC):
 
     def __init__(
         self,
-        bucket: Optional[str],
+        settings: Union[Dict, StorageDriverSettings],
         client: Optional[Any] = None,
         client_configuration: Optional[Dict[str, Any]] = None,
     ) -> None:
-        super().__init__()
+        if isinstance(settings, dict):
+            settings = StorageDriverSettings(**settings)
         self._client = client
         self.client_configuration = client_configuration or {}
-        self.bucket = bucket or os.environ.get("MODELKIT_STORAGE_BUCKET") or ""
-        if not self.bucket:
-            raise ValueError("Bucket needs to be set for the storage driver")
-        self.lazy_driver = os.environ.get("MODELKIT_LAZY_DRIVER")
+        self.bucket = settings.bucket
+        self.lazy_driver = settings.lazy_driver
         if not (self.lazy_driver or client):
             self._client = self.build_client(self.client_configuration)
 
