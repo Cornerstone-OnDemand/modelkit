@@ -23,7 +23,8 @@ class ErrorBatchModel(Model):
 
 
 @pytest.mark.parametrize("model", [ErrorModel(), ErrorBatchModel()])
-def test_prediction_error(model):
+def test_prediction_error(monkeypatch, model):
+    monkeypatch.setenv("MODELKIT_ENABLE_SIMPLE_TRACEBACK", True)
     with pytest.raises(CustomError) as excinfo:
         model.predict({})
     assert len(excinfo.traceback) <= 3
@@ -37,8 +38,9 @@ def test_prediction_error(model):
     assert len(excinfo.traceback) <= 3
 
 
-def test_prediction_error_composition():
+def test_prediction_error_composition(monkeypatch):
 
+    monkeypatch.setenv("MODELKIT_ENABLE_SIMPLE_TRACEBACK", True)
     mm = OKModel(model_dependencies={"error_model": ErrorModel()})
     mm.load()
 
@@ -88,7 +90,8 @@ class AsyncErrorBatchModel(AsyncModel):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("model", [AsyncErrorModel(), AsyncErrorBatchModel()])
-async def test_prediction_error_async(model):
+async def test_prediction_error_async(monkeypatch, model):
+    monkeypatch.setenv("MODELKIT_ENABLE_SIMPLE_TRACEBACK", True)
     with pytest.raises(CustomError) as excinfo:
         await model.predict({})
     assert len(excinfo.traceback) <= 3
