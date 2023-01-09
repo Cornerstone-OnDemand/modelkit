@@ -266,6 +266,8 @@ class ModelLibrary:
             configuration_key=model_name,
             cache=self.cache,
         )
+        if not self.models[model_name]._loaded:
+            self.models[model_name].load()
         logger.debug("Done loading Model", model_name=model_name)
 
     def _resolve_assets(self, model_name):
