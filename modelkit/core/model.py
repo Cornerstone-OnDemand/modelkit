@@ -141,6 +141,11 @@ class Asset:
             self.load()
 
     def load(self) -> None:
+        """Load dependencies before loading the asset"""
+        for m in self.model_dependencies.values():
+            if not m._loaded:
+                m.load()
+
         with PerformanceTracker() as m:
             self._load()
 
@@ -206,13 +211,6 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
         super().__init__(**kwargs)
         self.initialize_validation_models()
         self._check_is_overriden()
-
-    def load(self):
-        """For Model instances, there may be a need to also load the dependencies"""
-        for m in self.model_dependencies.values():
-            if not m._loaded:
-                m.load()
-        Asset.load(self)
 
     def initialize_validation_models(self):
         try:
