@@ -206,7 +206,6 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
         self._return_model: Optional[Type[InternalDataModel]] = None
         self._item_type: Optional[Type] = None
         self._return_type: Optional[Type] = None
-        self._loaded: bool = False
         self._predict_mode: Optional[PredictMode] = None
         super().__init__(**kwargs)
         self.initialize_validation_models()
