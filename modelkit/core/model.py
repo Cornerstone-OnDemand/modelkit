@@ -66,6 +66,9 @@ class ModelDependenciesMapping:
     ) -> Union["Model", "AsyncModel", "WrappedAsyncModel"]:
         return self.models[key]
 
+    def __setitem__(self, key: str, value: ModelDependency) -> None:
+        self.models[key] = value
+
     def get(
         self, key: str, model_type: Optional[Type[ModelDependency]] = None
     ) -> ModelDependency:
