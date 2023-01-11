@@ -6,7 +6,7 @@ In addition `modelkit` helps with the versioning of these files, and the managem
 
 For `modelkit` remote assets are **immutable**, and their source of truth has to be a single remote object store. These have the following advantages:
 
-- **auditing** it is possible to know which asset was used when by a production service, and push by whom
+- **auditing** it is possible to know which asset was used when by a production service, and pushed by whom
 - **reverting** it is always possible to revert to an older version of a `Model` because assets will be present and cannot be modified.
 - **loss of data** local machines can lose all of their data, assets will always be available from the remote store
 - **reproducibility** the code running on your local machine is guaranteed to use the same artifacts and code as the one running in production

@@ -28,7 +28,7 @@ async for res in m.predict_gen(...):
 
 ## Async and sync composition
 
-To make it easy to have both synchronous and asynchronous models in the same prediction call stack, `modelkit` atttempts to detect which context it is in and tries to make asynchronous models available even in synchronous contexts.
+To make it easy to have both synchronous and asynchronous models in the same prediction call stack, `modelkit` attempts to detect which context it is in and tries to make asynchronous models available even in synchronous contexts.
 
 
 ### Sync in async
