@@ -145,9 +145,17 @@ class Asset:
 
     def load(self) -> None:
         """Load dependencies before loading the asset"""
-        for m in self.model_dependencies.values():
+        try:
+            sniffio.current_async_library()
+            async_context = True
+        except sniffio.AsyncLibraryNotFoundError:
+            async_context = False
+
+        for model_name, m in self.model_dependencies.items():
             if not m._loaded:
                 m.load()
+            if not async_context and isinstance(m, AsyncModel):
+                self.model_dependencies[model_name] = WrappedAsyncModel(m)
 
         with PerformanceTracker() as m:
             self._load()
@@ -476,22 +484,6 @@ class NoPredictOverridenError(Exception):
 
 
 class Model(AbstractModel[ItemType, ReturnType]):
-    def load(self):
-        super().load()
-        try:
-            sniffio.current_async_library()
-        except sniffio.AsyncLibraryNotFoundError:
-            # In a synchronous context, we wrap asynchronous models
-            # such that we can evaluate `.predict`
-            # Otherwise, they will have to be awaited
-            _model_dependencies = {}
-            for model_name, m in self.model_dependencies.items():
-                if isinstance(m, AsyncModel):
-                    _model_dependencies[model_name] = WrappedAsyncModel(m)
-                else:
-                    _model_dependencies[model_name] = m
-            self.model_dependencies = ModelDependenciesMapping(_model_dependencies)
-
     @not_overriden
     @abc.abstractmethod
     def _predict(self, item: ItemType, **kwargs) -> ReturnType:  # pragma: no cover
