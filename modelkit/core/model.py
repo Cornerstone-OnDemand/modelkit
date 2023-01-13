@@ -66,6 +66,9 @@ class ModelDependenciesMapping:
     ) -> Union["Model", "AsyncModel", "WrappedAsyncModel"]:
         return self.models[key]
 
+    def __setitem__(self, key: str, value: ModelDependency) -> None:
+        self.models[key] = value
+
     def get(
         self, key: str, model_type: Optional[Type[ModelDependency]] = None
     ) -> ModelDependency:
@@ -141,9 +144,19 @@ class Asset:
             self.load()
 
     def load(self) -> None:
-        """Implement this method in order for the model to load and
-        deserialize its asset, whose path is kept int the `asset_path`
-        attribute"""
+        """Load dependencies before loading the asset"""
+        try:
+            sniffio.current_async_library()
+            async_context = True
+        except sniffio.AsyncLibraryNotFoundError:
+            async_context = False
+
+        for model_name, m in self.model_dependencies.items():
+            if not m._loaded:
+                m.load()
+            if not async_context and isinstance(m, AsyncModel):
+                self.model_dependencies[model_name] = WrappedAsyncModel(m)
+
         with PerformanceTracker() as m:
             self._load()
 
@@ -162,6 +175,9 @@ class Asset:
         self._load_memory_increment = m.increment
 
     def _load(self) -> None:
+        """Implement this method in order for the model to load and
+        deserialize its asset, whose path is kept int the `asset_path`
+        attribute"""
         pass
 
 
@@ -201,18 +217,10 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
         self._return_model: Optional[Type[InternalDataModel]] = None
         self._item_type: Optional[Type] = None
         self._return_type: Optional[Type] = None
-        self._loaded: bool = False
         self._predict_mode: Optional[PredictMode] = None
         super().__init__(**kwargs)
         self.initialize_validation_models()
         self._check_is_overriden()
-
-    def load(self):
-        """For Model instances, there may be a need to also load the dependencies"""
-        for m in self.model_dependencies.values():
-            if not m._loaded:
-                m.load()
-        Asset.load(self)
 
     def initialize_validation_models(self):
         try:
@@ -476,22 +484,6 @@ class NoPredictOverridenError(Exception):
 
 
 class Model(AbstractModel[ItemType, ReturnType]):
-    def load(self):
-        super().load()
-        try:
-            sniffio.current_async_library()
-        except sniffio.AsyncLibraryNotFoundError:
-            # In a synchronous context, we wrap asynchronous models
-            # such that we can evaluate `.predict`
-            # Otherwise, they will have to be awaited
-            _model_dependencies = {}
-            for model_name, m in self.model_dependencies.items():
-                if isinstance(m, AsyncModel):
-                    _model_dependencies[model_name] = WrappedAsyncModel(m)
-                else:
-                    _model_dependencies[model_name] = m
-            self.model_dependencies = ModelDependenciesMapping(_model_dependencies)
-
     @not_overriden
     @abc.abstractmethod
     def _predict(self, item: ItemType, **kwargs) -> ReturnType:  # pragma: no cover
