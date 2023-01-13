@@ -1,5 +1,5 @@
 import setuptools
 
 setuptools.setup(
-    version="0.0.26"
+    version="0.0.27"
 )
