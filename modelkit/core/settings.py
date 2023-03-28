@@ -7,7 +7,7 @@ class TFServingSettings(pydantic.BaseSettings):
     enable: bool = pydantic.Field(False, env="MODELKIT_TF_SERVING_ENABLE")
     mode: str = pydantic.Field("rest", env="MODELKIT_TF_SERVING_MODE")
     host: str = pydantic.Field("localhost", env="MODELKIT_TF_SERVING_HOST")
-    port: int = pydantic.Field(None, env="MODELKIT_TF_SERVING_PORT")
+    port: int = pydantic.Field(8501, env="MODELKIT_TF_SERVING_PORT")
 
     @pydantic.validator("port")
     @classmethod
