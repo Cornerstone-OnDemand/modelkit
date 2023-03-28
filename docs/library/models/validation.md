@@ -82,4 +82,4 @@ This occurs generally when:
 - a `Model`'s payload is large (contains long lists of objects to validate)
 - a `Model`'s prediction is very simple
 
-To avoid the validation overhead, especially in production scenarios, it is possible to ask `modelkit` to [create models without validation](https://pydantic-docs.helpmanual.io/usage/models/#creating-models-without-validation), which will be faster in general. This also still creates `pydantic` structure and therefore will now break the natural naming inside the `predict` function.
+To avoid the validation overhead, especially in production scenarios, it is possible to ask `modelkit` to [create models without validation](https://pydantic-docs.helpmanual.io/usage/models/#creating-models-without-validation), which will be faster in general. This also still creates `pydantic` structure and therefore will not break the natural naming inside the `predict` function.
