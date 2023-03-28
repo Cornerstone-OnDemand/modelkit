@@ -31,7 +31,14 @@
         "properties": {
           "loc": {
             "items": {
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
             },
             "title": "Location",
             "type": "array"
@@ -63,7 +70,7 @@
   "paths": {
     "/predict/async_model": {
       "post": {
-        "description": "\n\n```\n├── configuration: async_model\n├── signature: tests.test_api.ItemModel -> tests.test_api.ResultModel\n```",
+        "description": "```\n├── configuration: async_model\n├── signature: tests.test_api.ItemModel -> tests.test_api.ResultModel\n```",
         "operationId": "_aendpoint_predict_async_model_post",
         "requestBody": {
           "content": {
@@ -103,7 +110,7 @@
     },
     "/predict/batch/async_model": {
       "post": {
-        "description": "\n\n```\n├── configuration: async_model\n├── signature: tests.test_api.ItemModel -> tests.test_api.ResultModel\n```",
+        "description": "```\n├── configuration: async_model\n├── signature: tests.test_api.ItemModel -> tests.test_api.ResultModel\n```",
         "operationId": "_aendpoint_predict_batch_async_model_post",
         "requestBody": {
           "content": {
@@ -147,7 +154,7 @@
     },
     "/predict/batch/no_supported_model": {
       "post": {
-        "description": "\n\n```\n├── configuration: no_supported_model\n├── signature: numpy.ndarray -> numpy.ndarray\n```",
+        "description": "```\n├── configuration: no_supported_model\n├── signature: numpy.ndarray -> numpy.ndarray\n```",
         "operationId": "_endpoint_predict_batch_no_supported_model_post",
         "requestBody": {
           "content": {
@@ -189,7 +196,7 @@
     },
     "/predict/batch/some_complex_model": {
       "post": {
-        "description": "    With **a lot** of documentation\n\n```\n├── configuration: some_complex_model\n├── doc: More complex\n│   \n│       With **a lot** of documentation\n├── signature: tests.test_api.ItemModel -> tests.test_api.ResultModel\n```",
+        "description": "With **a lot** of documentation\n\n```\n├── configuration: some_complex_model\n├── doc: More complex\n│   \n│       With **a lot** of documentation\n├── signature: tests.test_api.ItemModel -> tests.test_api.ResultModel\n```",
         "operationId": "_endpoint_predict_batch_some_complex_model_post",
         "requestBody": {
           "content": {
@@ -233,7 +240,7 @@
     },
     "/predict/batch/some_model": {
       "post": {
-        "description": "    that also has plenty more text\n\n```\n├── configuration: some_model\n├── doc: This is a summary\n│   \n│       that also has plenty more text\n├── signature: str -> str\n```",
+        "description": "that also has plenty more text\n\n```\n├── configuration: some_model\n├── doc: This is a summary\n│   \n│       that also has plenty more text\n├── signature: str -> str\n```",
         "operationId": "_endpoint_predict_batch_some_model_post",
         "requestBody": {
           "content": {
@@ -275,7 +282,7 @@
     },
     "/predict/batch/unvalidated_model": {
       "post": {
-        "description": "\n\n```\n├── configuration: unvalidated_model\n```",
+        "description": "```\n├── configuration: unvalidated_model\n```",
         "operationId": "_endpoint_predict_batch_unvalidated_model_post",
         "requestBody": {
           "content": {
@@ -317,7 +324,7 @@
     },
     "/predict/no_supported_model": {
       "post": {
-        "description": "\n\n```\n├── configuration: no_supported_model\n├── signature: numpy.ndarray -> numpy.ndarray\n```",
+        "description": "```\n├── configuration: no_supported_model\n├── signature: numpy.ndarray -> numpy.ndarray\n```",
         "operationId": "_endpoint_predict_no_supported_model_post",
         "requestBody": {
           "content": {
@@ -357,7 +364,7 @@
     },
     "/predict/some_complex_model": {
       "post": {
-        "description": "    With **a lot** of documentation\n\n```\n├── configuration: some_complex_model\n├── doc: More complex\n│   \n│       With **a lot** of documentation\n├── signature: tests.test_api.ItemModel -> tests.test_api.ResultModel\n```",
+        "description": "With **a lot** of documentation\n\n```\n├── configuration: some_complex_model\n├── doc: More complex\n│   \n│       With **a lot** of documentation\n├── signature: tests.test_api.ItemModel -> tests.test_api.ResultModel\n```",
         "operationId": "_endpoint_predict_some_complex_model_post",
         "requestBody": {
           "content": {
@@ -397,7 +404,7 @@
     },
     "/predict/some_model": {
       "post": {
-        "description": "    that also has plenty more text\n\n```\n├── configuration: some_model\n├── doc: This is a summary\n│   \n│       that also has plenty more text\n├── signature: str -> str\n```",
+        "description": "that also has plenty more text\n\n```\n├── configuration: some_model\n├── doc: This is a summary\n│   \n│       that also has plenty more text\n├── signature: str -> str\n```",
         "operationId": "_endpoint_predict_some_model_post",
         "requestBody": {
           "content": {
@@ -437,7 +444,7 @@
     },
     "/predict/unvalidated_model": {
       "post": {
-        "description": "\n\n```\n├── configuration: unvalidated_model\n```",
+        "description": "```\n├── configuration: unvalidated_model\n```",
         "operationId": "_endpoint_predict_unvalidated_model_post",
         "requestBody": {
           "content": {
