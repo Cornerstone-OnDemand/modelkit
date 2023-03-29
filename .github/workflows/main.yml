@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
         os: [macos-latest, windows-latest, ubuntu-latest]
 
     runs-on: ${{ matrix.os }}
@@ -35,7 +35,7 @@ jobs:
           PYTHON_VERSION: "${{ matrix.python-version }}"
 
       - name: Add & Commit Badges
-        if: ${{matrix.os == 'ubuntu-latest' && matrix.python-version == '3.7' && github.ref == 'refs/heads/main'}}
+        if: ${{matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8' && github.ref == 'refs/heads/main'}}
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
@@ -44,7 +44,7 @@ jobs:
           git push
 
       - name: 'Upload coverage report'
-        if: ${{matrix.os == 'ubuntu-latest' && matrix.python-version == '3.7' && github.ref == 'refs/heads/main'}}
+        if: ${{matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8' && github.ref == 'refs/heads/main'}}
         uses: actions/upload-artifact@v3
         with:
           name: coverage

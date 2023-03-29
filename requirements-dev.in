@@ -26,6 +26,7 @@ networkx
 # api
 uvicorn
 fastapi
+httpx
 # releases
 bump2version
 # docs
