@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import fastapi
 from starlette.responses import JSONResponse
@@ -17,3 +17,17 @@ async def some_endpoint(
     if skip:
         item["skip"] = skip
     return JSONResponse(item)
+
+
+@app.post("/api/path/endpoint/batch")
+async def some_endpoint_batch(
+    items: List[Dict[str, str]],
+    limit: Optional[int] = None,
+    skip: Optional[int] = None,
+):
+    for item in items:
+        if limit:
+            item["limit"] = limit
+        if skip:
+            item["skip"] = skip
+    return JSONResponse(items)
