@@ -26,6 +26,10 @@ In addition, it is possible to set this behavior at the level of the `ModelLibra
 The `AsyncDistantHTTPModel` provides a base class with the same interface as `DistantHTTPModel` but supports distant requests with `aiohttp`.
 
 
+## batch support
+
+The `DistantHTTPBatchModel` provides a base class with a similair interface as `DistantHTTPModel` except that it implements the `predict_batch` method enabling you to make optimized requests to a batch endpoint. Note that the endpoint must accept a list of items as input.
+
 ## Closing connections
 
 To close connections, you can do it at the level of the `ModelLibrary` either calling:
