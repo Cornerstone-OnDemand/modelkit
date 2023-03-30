@@ -142,3 +142,36 @@ class DistantHTTPBatchModel(Model[ItemType, ReturnType]):
     def close(self):
         if self.requests_session:
             return self.requests_session.close()
+
+
+class AsyncDistantHTTPBatchModel(AsyncModel[ItemType, ReturnType]):
+    """
+    Async batch model to extend to be able to call a batch endpoint
+    expecting a list of ItemType as input.
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.endpoint = self.model_settings["endpoint"]
+        self.endpoint_params = self.model_settings.get("endpoint_params", {})
+        self.aiohttp_session: Optional[aiohttp.ClientSession] = None
+
+    @retry(**SERVICE_MODEL_RETRY_POLICY)
+    async def _predict_batch(self, items, **kwargs):
+        if self.aiohttp_session is None:
+            self.aiohttp_session = aiohttp.ClientSession()
+        async with self.aiohttp_session.post(
+            self.endpoint,
+            params=kwargs.get("endpoint_params", self.endpoint_params),
+            data=json.dumps(items),
+            headers={"content-type": "application/json"},
+        ) as response:
+            if response.status != 200:
+                raise DistantHTTPModelError(
+                    response.status, response.reason, await response.text()
+                )
+            return await response.json()
+
+    async def close(self):
+        if self.aiohttp_session:
+            return self.aiohttp_session.close()

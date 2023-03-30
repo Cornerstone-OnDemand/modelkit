@@ -29,7 +29,9 @@ The `AsyncDistantHTTPModel` provides a base class with the same interface as `Di
 
 ## batch support
 
-The `DistantHTTPBatchModel` provides a base class with a similair interface as `DistantHTTPModel` except that it implements the `predict_batch` method enabling you to make optimized requests to a batch endpoint. Note that the endpoint must accept a list of items as input.
+The `DistantHTTPBatchModel` provides a base class with a similar interface as `DistantHTTPModel` except that it implements the `predict_batch` method enabling you to make optimized requests to a batch endpoint. Note that the endpoint must accept a list of items as input.
+
+`AsyncDistantHTTPBatchModel` also provides the very same interface as `AsyncDistantHTTPModel`, with batch support.
 
 ## Closing connections
 
