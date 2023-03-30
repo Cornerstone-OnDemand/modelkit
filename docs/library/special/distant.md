@@ -16,6 +16,7 @@ class SomeDistantHTTPModel(DistantHTTPModel):
     }
 ```
 
+Note that the params of your endpoint should be specified under `endpoint_params` in your `model_settings`.
 When `predict` is called, a request is made to the `http://127.0.0.1:8000/api/path/endpoint` with the complete input item serialized in the body and the response of the server is returned.
 
 
