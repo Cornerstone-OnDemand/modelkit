@@ -9,7 +9,6 @@ from tests import TEST_DIR
 from tests.conftest import skip_unless
 
 try:
-
     from modelkit.core.models.tensorflow_model import (
         AsyncTensorflowModel,
         TensorflowModel,

@@ -30,7 +30,6 @@ class AssetSpec:
         version: typing.Optional[str] = None,
         sub_part: typing.Optional[str] = None,
     ) -> None:
-
         versioning = (
             versioning
             or os.environ.get("MODELKIT_ASSETS_VERSIONING_SYSTEM")

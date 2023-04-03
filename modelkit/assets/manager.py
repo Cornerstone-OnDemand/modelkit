@@ -82,7 +82,6 @@ class AssetsManager:
 
     def _fetch_asset(self, spec: AssetSpec, _force_download=False):
         with ContextualizedLogging(name=spec.name):
-
             self._resolve_version(spec)
             with ContextualizedLogging(version=spec.version):
                 logger.debug("Resolved latest version", version=spec.version)
@@ -136,7 +135,6 @@ class AssetsManager:
             )
 
         if not self.storage_provider:
-
             if _force_download:
                 raise errors.StorageDriverError(
                     "can not force_download with no storage provider"
@@ -156,14 +154,12 @@ class AssetsManager:
             }
 
         else:
-
             # Ensure assets are not downloaded concurrently
             lock_path = (
                 os.path.join(self.assets_dir, ".cache", *spec.name.split("/")) + ".lock"
             )
             os.makedirs(os.path.dirname(lock_path), exist_ok=True)
             with filelock.FileLock(lock_path, timeout=self.timeout):
-
                 # Update local versions after lock aquisition to account for concurrent
                 # download
                 local_versions = self._list_local_versions(spec)
@@ -179,7 +175,6 @@ class AssetsManager:
                         "path": local_path,
                     }
                 else:
-
                     if _force_download:
                         if os.path.exists(local_path):
                             if os.path.isdir(local_path):

@@ -366,7 +366,6 @@ def tf_serving_retry_policy(name):
 def connect_tf_serving_grpc(
     model_name, host, port
 ) -> "prediction_service_pb2_grpc.PredictionServiceStub":
-
     try:
         for attempt in Retrying(**tf_serving_retry_policy("tf-serving-grpc")):
             with attempt:

@@ -22,6 +22,7 @@ Configuration
     ├── model_settings : typing.Dict[str, typing.Any] = {}
     └── model_dependencies : typing.Dict[str, str] = {}
 Assets
+    ├── path : str = 
     └── version : str = None
 Models
 ├── some_model_a : SomeSimpleValidatedModelA = SomeSimpleValidatedModelA 

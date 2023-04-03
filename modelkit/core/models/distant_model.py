@@ -56,7 +56,7 @@ class AsyncDistantHTTPModel(AsyncModel[ItemType, ReturnType]):
     def _load(self):
         pass
 
-    @retry(**SERVICE_MODEL_RETRY_POLICY)
+    @retry(**SERVICE_MODEL_RETRY_POLICY)  # type: ignore[call-overload]
     async def _predict(self, item, **kwargs):
         if self.aiohttp_session is None:
             self.aiohttp_session = aiohttp.ClientSession()
@@ -87,7 +87,7 @@ class DistantHTTPModel(Model[ItemType, ReturnType]):
     def _load(self):
         pass
 
-    @retry(**SERVICE_MODEL_RETRY_POLICY)
+    @retry(**SERVICE_MODEL_RETRY_POLICY)  # type: ignore[call-overload]
     def _predict(self, item, **kwargs):
         if not self.requests_session:
             self.requests_session = requests.Session()
@@ -123,7 +123,7 @@ class DistantHTTPBatchModel(Model[ItemType, ReturnType]):
     def _load(self):
         pass
 
-    @retry(**SERVICE_MODEL_RETRY_POLICY)
+    @retry(**SERVICE_MODEL_RETRY_POLICY)  # type: ignore[call-overload]
     def _predict_batch(self, items, **kwargs):
         if not self.requests_session:
             self.requests_session = requests.Session()
@@ -156,7 +156,7 @@ class AsyncDistantHTTPBatchModel(AsyncModel[ItemType, ReturnType]):
         self.endpoint_params = self.model_settings.get("endpoint_params", {})
         self.aiohttp_session: Optional[aiohttp.ClientSession] = None
 
-    @retry(**SERVICE_MODEL_RETRY_POLICY)
+    @retry(**SERVICE_MODEL_RETRY_POLICY)  # type: ignore[call-overload]
     async def _predict_batch(self, items, **kwargs):
         if self.aiohttp_session is None:
             self.aiohttp_session = aiohttp.ClientSession()

@@ -39,7 +39,7 @@ REDIS_RETRY_POLICY = {
 }
 
 
-@retry(**REDIS_RETRY_POLICY)
+@retry(**REDIS_RETRY_POLICY)  # type: ignore[call-overload]
 def connect_redis(host, port):
     redis_cache = redis.Redis(host=host, port=port)
     if not redis_cache.ping():
