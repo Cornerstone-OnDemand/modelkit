@@ -54,6 +54,10 @@ def _generate_empty_prediction(self) -> Dict[str, Any]:
 
 ```
 
+### Keras model
+
+The `TensorflowModel` class allows you to build an instance of keras.Model from the underlying saved tensorflow model via the method `get_keras_model()`. 
+
 ## TF Serving
 
 `modelkit` provides an easy way to query Tensorflow models served via TF Serving. When TF serving is configured, the TF models are not run in the main process, but queried.
