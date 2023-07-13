@@ -124,6 +124,7 @@ class Asset:
         :param args:
         :param kwargs:
         """
+        super().__init__()
         self.configuration_key: Optional[str] = configuration_key
         self.service_settings: LibrarySettings = service_settings or LibrarySettings()
         self.asset_path: str = asset_path

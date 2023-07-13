@@ -807,3 +807,22 @@ def test_model_sub_class(working_dir, monkeypatch):
     lib = ModelLibrary(models=testmodels)
     lib.preload()
     assert ["derived_asset", "derived_model"] == sorted(list(lib.models.keys()))
+
+
+def test_asset_mro():
+    """Make sure the class `Asset` respect Method-Resolution-Order (MRO)"""
+
+    class MyClass(Asset):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+    class MyMixin:
+        def __init__(self) -> None:
+            raise NotImplementedError
+
+    class MyModel(MyClass, MyMixin):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+    with pytest.raises(NotImplementedError):
+        MyModel()
