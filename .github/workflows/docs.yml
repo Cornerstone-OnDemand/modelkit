@@ -39,6 +39,7 @@ jobs:
           workflow: main.yml
           name: coverage
           path: coverage
+          search_artifacts: true
 
       - name: Push Coverage Report
         run: |
