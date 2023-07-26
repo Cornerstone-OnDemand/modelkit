@@ -65,7 +65,6 @@ def test_get_update_cli_params():
 
 
 def test_increment_version():
-
     v1 = SimpleDateAssetsVersioningSystem.get_initial_version()
     time.sleep(2)
     v2 = SimpleDateAssetsVersioningSystem.increment_version()
