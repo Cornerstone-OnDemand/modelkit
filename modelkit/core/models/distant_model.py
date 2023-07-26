@@ -1,5 +1,6 @@
 import json
-from typing import Optional
+from dataclasses import dataclass
+from typing import Callable, Optional
 
 import aiohttp
 import requests
@@ -37,13 +38,13 @@ def retriable_error(exception):
     ) or isinstance(exception, requests.exceptions.ConnectionError)
 
 
-SERVICE_MODEL_RETRY_POLICY = {
-    "wait": wait_random_exponential(multiplier=1, min=4, max=10),
-    "stop": stop_after_attempt(5),
-    "retry": retry_if_exception(retriable_error),
-    "after": log_after_retry,
-    "reraise": True,
-}
+@dataclass
+class SERVICE_MODEL_RETRY_POLICY:
+    wait: wait_random_exponential = wait_random_exponential(multiplier=1, min=4, max=10)
+    stop: stop_after_attempt = stop_after_attempt(5)
+    retry: retry_if_exception = retry_if_exception(retriable_error)
+    after: Callable = log_after_retry
+    reraise: bool = True
 
 
 class AsyncDistantHTTPModel(AsyncModel[ItemType, ReturnType]):
@@ -56,7 +57,13 @@ class AsyncDistantHTTPModel(AsyncModel[ItemType, ReturnType]):
     def _load(self):
         pass
 
-    @retry(**SERVICE_MODEL_RETRY_POLICY)
+    @retry(
+        wait=SERVICE_MODEL_RETRY_POLICY.wait,
+        stop=SERVICE_MODEL_RETRY_POLICY.stop,
+        retry=SERVICE_MODEL_RETRY_POLICY.retry,
+        after=SERVICE_MODEL_RETRY_POLICY.after,
+        reraise=SERVICE_MODEL_RETRY_POLICY.reraise,
+    )
     async def _predict(self, item, **kwargs):
         if self.aiohttp_session is None:
             self.aiohttp_session = aiohttp.ClientSession()
@@ -87,7 +94,13 @@ class DistantHTTPModel(Model[ItemType, ReturnType]):
     def _load(self):
         pass
 
-    @retry(**SERVICE_MODEL_RETRY_POLICY)
+    @retry(
+        wait=SERVICE_MODEL_RETRY_POLICY.wait,
+        stop=SERVICE_MODEL_RETRY_POLICY.stop,
+        retry=SERVICE_MODEL_RETRY_POLICY.retry,
+        after=SERVICE_MODEL_RETRY_POLICY.after,
+        reraise=SERVICE_MODEL_RETRY_POLICY.reraise,
+    )
     def _predict(self, item, **kwargs):
         if not self.requests_session:
             self.requests_session = requests.Session()
@@ -123,7 +136,13 @@ class DistantHTTPBatchModel(Model[ItemType, ReturnType]):
     def _load(self):
         pass
 
-    @retry(**SERVICE_MODEL_RETRY_POLICY)
+    @retry(
+        wait=SERVICE_MODEL_RETRY_POLICY.wait,
+        stop=SERVICE_MODEL_RETRY_POLICY.stop,
+        retry=SERVICE_MODEL_RETRY_POLICY.retry,
+        after=SERVICE_MODEL_RETRY_POLICY.after,
+        reraise=SERVICE_MODEL_RETRY_POLICY.reraise,
+    )
     def _predict_batch(self, items, **kwargs):
         if not self.requests_session:
             self.requests_session = requests.Session()
@@ -156,7 +175,13 @@ class AsyncDistantHTTPBatchModel(AsyncModel[ItemType, ReturnType]):
         self.endpoint_params = self.model_settings.get("endpoint_params", {})
         self.aiohttp_session: Optional[aiohttp.ClientSession] = None
 
-    @retry(**SERVICE_MODEL_RETRY_POLICY)
+    @retry(
+        wait=SERVICE_MODEL_RETRY_POLICY.wait,
+        stop=SERVICE_MODEL_RETRY_POLICY.stop,
+        retry=SERVICE_MODEL_RETRY_POLICY.retry,
+        after=SERVICE_MODEL_RETRY_POLICY.after,
+        reraise=SERVICE_MODEL_RETRY_POLICY.reraise,
+    )
     async def _predict_batch(self, items, **kwargs):
         if self.aiohttp_session is None:
             self.aiohttp_session = aiohttp.ClientSession()

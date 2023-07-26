@@ -176,7 +176,6 @@ def test_local_manager_with_fetch(
 
 
 def test_local_manager_invalid_configuration(working_dir):
-
     modelkit_storage_bucket = working_dir
     modelkit_storage_prefix = "assets-prefix"
     modelkit_assets_dir = os.path.join(modelkit_storage_bucket, modelkit_storage_prefix)
@@ -274,7 +273,6 @@ def test_fetch_asset_version_no_storage_provider(
 def test_fetch_asset_version_with_storage_provider(
     version_asset_name, version, versioning, working_dir
 ):
-
     manager = AssetsManager(
         assets_dir=working_dir,
         storage_provider=StorageProvider(

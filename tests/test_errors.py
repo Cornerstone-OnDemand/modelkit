@@ -39,7 +39,6 @@ def test_prediction_error(monkeypatch, model):
 
 
 def test_prediction_error_composition(monkeypatch):
-
     monkeypatch.setenv("MODELKIT_ENABLE_SIMPLE_TRACEBACK", True)
     mm = OKModel(model_dependencies={"error_model": ErrorModel()})
     mm.load()
