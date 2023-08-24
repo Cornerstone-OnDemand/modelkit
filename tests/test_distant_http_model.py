@@ -3,6 +3,7 @@ import os
 import subprocess
 import time
 
+import pydantic
 import pytest
 import requests
 
@@ -39,13 +40,27 @@ def run_mocked_service():
     proc.terminate()
 
 
+class SomeContentModel(pydantic.BaseModel):
+    some_content: str
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "item,params,expected",
     [
         ({"some_content": "something"}, {}, {"some_content": "something"}),
         (
+            SomeContentModel(**{"some_content": "something"}),
+            {},
             {"some_content": "something"},
+        ),
+        (
+            {"some_content": "something"},
+            {"limit": 10},
+            {"some_content": "something", "limit": 10},
+        ),
+        (
+            SomeContentModel(**{"some_content": "something"}),
             {"limit": 10},
             {"some_content": "something", "limit": 10},
         ),
@@ -55,7 +70,17 @@ def run_mocked_service():
             {"some_content": "something", "skip": 5},
         ),
         (
+            SomeContentModel(**{"some_content": "something"}),
+            {"skip": 5},
+            {"some_content": "something", "skip": 5},
+        ),
+        (
             {"some_content": "something"},
+            {"limit": 10, "skip": 5},
+            {"some_content": "something", "limit": 10, "skip": 5},
+        ),
+        (
+            SomeContentModel(**{"some_content": "something"}),
             {"limit": 10, "skip": 5},
             {"some_content": "something", "limit": 10, "skip": 5},
         ),
@@ -108,6 +133,10 @@ async def test_distant_http_model(
         assert expected == m(item, endpoint_params=params)
 
 
+class SomeOtherContentModel(pydantic.BaseModel):
+    some_other_content: str
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "items, params, expected",
@@ -118,7 +147,26 @@ async def test_distant_http_model(
             [{"some_content": "something"}, {"some_other_content": "something_else"}],
         ),
         (
+            [
+                SomeContentModel(**{"some_content": "something"}),
+                SomeOtherContentModel(**{"some_other_content": "something_else"}),
+            ],
+            {},
             [{"some_content": "something"}, {"some_other_content": "something_else"}],
+        ),
+        (
+            [{"some_content": "something"}, {"some_other_content": "something_else"}],
+            {"limit": 10},
+            [
+                {"some_content": "something", "limit": 10},
+                {"some_other_content": "something_else", "limit": 10},
+            ],
+        ),
+        (
+            [
+                SomeContentModel(**{"some_content": "something"}),
+                SomeOtherContentModel(**{"some_other_content": "something_else"}),
+            ],
             {"limit": 10},
             [
                 {"some_content": "something", "limit": 10},
@@ -134,7 +182,29 @@ async def test_distant_http_model(
             ],
         ),
         (
+            [
+                SomeContentModel(**{"some_content": "something"}),
+                SomeOtherContentModel(**{"some_other_content": "something_else"}),
+            ],
+            {"skip": 5},
+            [
+                {"some_content": "something", "skip": 5},
+                {"some_other_content": "something_else", "skip": 5},
+            ],
+        ),
+        (
             [{"some_content": "something"}, {"some_other_content": "something_else"}],
+            {"limit": 10, "skip": 5},
+            [
+                {"some_content": "something", "limit": 10, "skip": 5},
+                {"some_other_content": "something_else", "limit": 10, "skip": 5},
+            ],
+        ),
+        (
+            [
+                SomeContentModel(**{"some_content": "something"}),
+                SomeOtherContentModel(**{"some_other_content": "something_else"}),
+            ],
             {"limit": 10, "skip": 5},
             [
                 {"some_content": "something", "limit": 10, "skip": 5},

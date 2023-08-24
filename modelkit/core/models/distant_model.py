@@ -67,10 +67,16 @@ class AsyncDistantHTTPModel(AsyncModel[ItemType, ReturnType]):
     async def _predict(self, item, **kwargs):
         if self.aiohttp_session is None:
             self.aiohttp_session = aiohttp.ClientSession()
+        try:
+            item = json.dumps(item)
+        except TypeError:
+            # TypeError: Object of type {ItemType} is not JSON serializable
+            # Try converting the pydantic model to json directly
+            item = item.json()
         async with self.aiohttp_session.post(
             self.endpoint,
             params=kwargs.get("endpoint_params", self.endpoint_params),
-            data=json.dumps(item),
+            data=item,
             headers={"content-type": "application/json"},
         ) as response:
             if response.status != 200:
@@ -104,10 +110,16 @@ class DistantHTTPModel(Model[ItemType, ReturnType]):
     def _predict(self, item, **kwargs):
         if not self.requests_session:
             self.requests_session = requests.Session()
+        try:
+            item = json.dumps(item)
+        except TypeError:
+            # TypeError: Object of type {ItemType} is not JSON serializable
+            # Try converting the pydantic model to json directly
+            item = item.json()
         response = self.requests_session.post(
             self.endpoint,
             params=kwargs.get("endpoint_params", self.endpoint_params),
-            data=json.dumps(item),
+            data=item,
             headers={"content-type": "application/json"},
         )
         if response.status_code != 200:
@@ -146,10 +158,16 @@ class DistantHTTPBatchModel(Model[ItemType, ReturnType]):
     def _predict_batch(self, items, **kwargs):
         if not self.requests_session:
             self.requests_session = requests.Session()
+        try:
+            items = json.dumps(items)
+        except TypeError:
+            # TypeError: Object of type {ItemType} is not JSON serializable
+            # Try converting a list of pydantic models to dict
+            items = json.dumps([item.dict() for item in items])
         response = self.requests_session.post(
             self.endpoint,
             params=kwargs.get("endpoint_params", self.endpoint_params),
-            data=json.dumps(items),
+            data=items,
             headers={"content-type": "application/json"},
         )
         if response.status_code != 200:
@@ -185,10 +203,17 @@ class AsyncDistantHTTPBatchModel(AsyncModel[ItemType, ReturnType]):
     async def _predict_batch(self, items, **kwargs):
         if self.aiohttp_session is None:
             self.aiohttp_session = aiohttp.ClientSession()
+        try:
+            items = json.dumps(items)
+        except TypeError:
+            # TypeError: Object of type {ItemType} is not JSON serializable
+            # Try converting a list of pydantic models to dict
+            items = json.dumps([item.dict() for item in items])
+
         async with self.aiohttp_session.post(
             self.endpoint,
             params=kwargs.get("endpoint_params", self.endpoint_params),
-            data=json.dumps(items),
+            data=items,
             headers={"content-type": "application/json"},
         ) as response:
             if response.status != 200:
