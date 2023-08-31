@@ -51,8 +51,10 @@ class AsyncDistantHTTPModel(AsyncModel[ItemType, ReturnType]):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.endpoint = self.model_settings["endpoint"]
+        self.endpoint_headers = self.model_settings.get("endpoint_headers", {})
         self.endpoint_params = self.model_settings.get("endpoint_params", {})
         self.aiohttp_session: Optional[aiohttp.ClientSession] = None
+        self.timeout = self.model_settings.get("timeout", 60)
 
     def _load(self):
         pass
@@ -77,7 +79,11 @@ class AsyncDistantHTTPModel(AsyncModel[ItemType, ReturnType]):
             self.endpoint,
             params=kwargs.get("endpoint_params", self.endpoint_params),
             data=item,
-            headers={"content-type": "application/json"},
+            headers={
+                "content-type": "application/json",
+                **kwargs.get("endpoint_headers", self.endpoint_headers),
+            },
+            timeout=self.timeout,
         ) as response:
             if response.status != 200:
                 raise DistantHTTPModelError(
@@ -94,8 +100,10 @@ class DistantHTTPModel(Model[ItemType, ReturnType]):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.endpoint = self.model_settings["endpoint"]
+        self.endpoint_headers = self.model_settings.get("endpoint_headers", {})
         self.endpoint_params = self.model_settings.get("endpoint_params", {})
         self.requests_session: Optional[requests.Session] = None
+        self.timeout = self.model_settings.get("timeout", 60)
 
     def _load(self):
         pass
@@ -120,7 +128,11 @@ class DistantHTTPModel(Model[ItemType, ReturnType]):
             self.endpoint,
             params=kwargs.get("endpoint_params", self.endpoint_params),
             data=item,
-            headers={"content-type": "application/json"},
+            headers={
+                "content-type": "application/json",
+                **kwargs.get("endpoint_headers", self.endpoint_headers),
+            },
+            timeout=self.timeout,
         )
         if response.status_code != 200:
             raise DistantHTTPModelError(
@@ -142,8 +154,10 @@ class DistantHTTPBatchModel(Model[ItemType, ReturnType]):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.endpoint = self.model_settings["endpoint"]
+        self.endpoint_headers = self.model_settings.get("endpoint_headers", {})
         self.endpoint_params = self.model_settings.get("endpoint_params", {})
         self.requests_session: Optional[requests.Session] = None
+        self.timeout = self.model_settings.get("timeout", 60)
 
     def _load(self):
         pass
@@ -168,7 +182,11 @@ class DistantHTTPBatchModel(Model[ItemType, ReturnType]):
             self.endpoint,
             params=kwargs.get("endpoint_params", self.endpoint_params),
             data=items,
-            headers={"content-type": "application/json"},
+            headers={
+                "content-type": "application/json",
+                **kwargs.get("endpoint_headers", self.endpoint_headers),
+            },
+            timeout=self.timeout,
         )
         if response.status_code != 200:
             raise DistantHTTPModelError(
@@ -190,8 +208,10 @@ class AsyncDistantHTTPBatchModel(AsyncModel[ItemType, ReturnType]):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.endpoint = self.model_settings["endpoint"]
+        self.endpoint_headers = self.model_settings.get("endpoint_headers", {})
         self.endpoint_params = self.model_settings.get("endpoint_params", {})
         self.aiohttp_session: Optional[aiohttp.ClientSession] = None
+        self.timeout = self.model_settings.get("timeout", 60)
 
     @retry(
         wait=SERVICE_MODEL_RETRY_POLICY.wait,
@@ -214,7 +234,11 @@ class AsyncDistantHTTPBatchModel(AsyncModel[ItemType, ReturnType]):
             self.endpoint,
             params=kwargs.get("endpoint_params", self.endpoint_params),
             data=items,
-            headers={"content-type": "application/json"},
+            headers={
+                "content-type": "application/json",
+                **kwargs.get("endpoint_headers", self.endpoint_headers),
+            },
+            timeout=self.timeout,
         ) as response:
             if response.status != 200:
                 raise DistantHTTPModelError(

@@ -89,6 +89,7 @@ dev = [
     "coverage",
     "pytest",
     "pytest-asyncio",
+    "pytest-timeout",
     "nox",
     # releases
     "bump-my-version",
