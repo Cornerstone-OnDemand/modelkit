@@ -72,3 +72,4 @@ class LibrarySettings(pydantic.BaseSettings):
 
     class Config:
         env_prefix = ""
+        extra = "allow"
