@@ -46,7 +46,7 @@ def test_compose_sync_async_generator_fail():
         def _predict(self, item, **kwargs):
             # The following does not currently work, because AsyncToSync does not
             # seem to correctly wrap asynchronous generators
-            for r in AsyncToSync(
+            for r in AsyncToSync(  # noqa: B007
                 self.model_dependencies["async_model"].async_model.predict_gen
             )(iter((item,))):
                 break

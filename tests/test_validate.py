@@ -258,11 +258,15 @@ def test_pydantic_error_truncation():
         try:
             ListModel(values=["ok"] * 100)
         except pydantic.error_wrappers.ValidationError as exc:
-            raise ModelkitDataValidationException("test error", pydantic_exc=exc)
+            raise ModelkitDataValidationException(
+                "test error", pydantic_exc=exc
+            ) from exc
 
     # This will not
     with pytest.raises(ModelkitDataValidationException):
         try:
             ListModel(values=["ok"])
         except pydantic.error_wrappers.ValidationError as exc:
-            raise ModelkitDataValidationException("test error", pydantic_exc=exc)
+            raise ModelkitDataValidationException(
+                "test error", pydantic_exc=exc
+            ) from exc

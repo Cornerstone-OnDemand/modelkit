@@ -107,7 +107,7 @@ class ModelLibrary:
                     self.cache = RedisCache(
                         self.settings.cache.host, self.settings.cache.port
                     )
-                except (ConnectionError, redis.ConnectionError):
+                except (ConnectionError, redis.ConnectionError) as e:
                     logger.error(
                         "Cannot ping redis instance",
                         cache_host=self.settings.cache.host,
@@ -117,7 +117,7 @@ class ModelLibrary:
                         "Cannot ping redis instance"
                         f"[cache_host={self.settings.cache.host}, "
                         f"port={self.settings.cache.port}]"
-                    )
+                    ) from e
             if isinstance(self.settings.cache, NativeCacheSettings):
                 self.cache = NativeCache(
                     self.settings.cache.implementation, self.settings.cache.maxsize
@@ -354,7 +354,7 @@ class ModelLibrary:
 
     def preload(self):
         # make sure the assets_manager is instantiated
-        self.assets_manager
+        _ = self.assets_manager
         for model_name in self.required_models:
             self._load(model_name)
 

@@ -128,3 +128,38 @@ message = "Bump version: {current_version} → {new_version}"
 
 [[tool.bumpversion.files]]
 filename = "modelkit/__init__.py"
+
+[tool.ruff]
+select = [
+    "B",  # flake8-bug-bear
+    "E",  # pycodestyle
+    "W",  # pycodestyle
+    "F",  # pyflakes
+]
+extend-select = [
+    "I",  # isort
+    "RUF100",  # ruff: drop unnecessary noqa comments
+    "UP",  # pyupgrade
+]
+ignore = [
+    "B011",
+    "E741",
+    "W605",
+]
+line-length = 88
+target-version = "py38"
+show-source = false
+src = ["modelkit", "tests", "bin"]
+
+[tool.ruff.isort]
+known-first-party = ["modelkit", "tests", "bin"]
+known-third-party = []
+
+[tool.ruff.flake8-bugbear]
+extend-immutable-calls = [
+    "fastapi.Body",
+    "fastapi.Header",
+    "fastapi.Path",
+    "fastapi.Query",
+    "fastapi.Depends"
+]

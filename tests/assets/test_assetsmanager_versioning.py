@@ -13,7 +13,7 @@ def _perform_mng_test(mng):
     # test dry run for new asset
     data_path = os.path.join(test_path, "testdata", "some_data.json")
     mng.storage_provider.new(data_path, "category-test/some-data", "0.0", dry_run=True)
-    with pytest.raises(Exception):
+    with pytest.raises(errors.ObjectDoesNotExistError):
         mng.fetch_asset("category-test/some-data")
 
     # test updating an inexistant asset
@@ -30,7 +30,7 @@ def _perform_mng_test(mng):
     mng.storage_provider.update(
         data_path, "category-test/some-data", version="0.1", dry_run=True
     )
-    with pytest.raises(Exception):
+    with pytest.raises(errors.ObjectDoesNotExistError):
         mng.fetch_asset("category-test/some-data:0.1")
 
     # update the asset

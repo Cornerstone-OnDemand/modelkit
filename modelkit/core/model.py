@@ -255,7 +255,7 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
         except Exception as exc:  # pragma: no cover
             raise errors.ValidationInitializationException(
                 f"{self.__class__.__name__}[{self.configuration_key}]", pydantic_exc=exc
-            )
+            ) from exc
 
     def __getstate__(self):
         state = copy.deepcopy(self.__dict__)
@@ -400,7 +400,7 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
                 raise exception(
                     f"{self.__class__.__name__}[{self.configuration_key}]",
                     pydantic_exc=exc,
-                )
+                ) from exc
         return item
 
     def test(self):
@@ -632,7 +632,7 @@ class Model(AbstractModel[ItemType, ReturnType]):
         try:
             predictions = iter(self._predict_batch(batch, **kwargs))
         except BaseException as exc:
-            raise errors.PredictionError(exc=exc)
+            raise errors.PredictionError(exc=exc) from exc
         current_predictions = []
         try:
             for cache_item in cache_items:
@@ -696,7 +696,7 @@ class AsyncModel(AbstractModel[ItemType, ReturnType]):
         _force_compute: bool = False,
         **kwargs,
     ) -> ReturnType:
-        async for r in self.predict_gen(
+        async for r in self.predict_gen(  # noqa: B007
             iter((item,)), _force_compute=_force_compute, __internal=True, **kwargs
         ):
             break
@@ -806,7 +806,7 @@ class AsyncModel(AbstractModel[ItemType, ReturnType]):
         try:
             predictions = iter(await self._predict_batch(batch, **kwargs))
         except BaseException as exc:
-            raise errors.PredictionError(exc=exc)
+            raise errors.PredictionError(exc=exc) from exc
         current_predictions = []
         try:
             for cache_item in cache_items:

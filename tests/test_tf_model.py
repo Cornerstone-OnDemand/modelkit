@@ -280,7 +280,7 @@ def _compare_models(model0, model1, items_and_results, tolerance=1e-2):
             assert compare_result(res_model0, result, tolerance)
             assert compare_result(res_model0, res_model1, tolerance)
     except AssertionError as e:
-        raise AssertionError(f"Models differ on single items\n{e.args[0]}")
+        raise AssertionError(f"Models differ on single items\n{e.args[0]}") from e
 
     items = [item for item, _ in items_and_results]
     try:
@@ -292,7 +292,7 @@ def _compare_models(model0, model1, items_and_results, tolerance=1e-2):
             res_model1 = res_model1_items[k]
             assert compare_result(res_model0, res_model1, tolerance)
     except AssertionError as e:
-        raise AssertionError(f"Models differ on item batches\n{e.args[0]}")
+        raise AssertionError(f"Models differ on item batches\n{e.args[0]}") from e
 
     try:
         # Compare batched vs. computed with one item
@@ -303,7 +303,7 @@ def _compare_models(model0, model1, items_and_results, tolerance=1e-2):
     except AssertionError as e:
         raise AssertionError(
             f"Models predictions on single and batches differ\n{e.args[0]}"
-        )
+        ) from e
 
 
 @pytest.mark.asyncio
@@ -350,7 +350,7 @@ async def _compare_models_async(model, model_async, items_and_results, tolerance
             assert compare_result(res_model0, result, tolerance)
             assert compare_result(res_model0, res_model1, tolerance)
     except AssertionError as e:
-        raise AssertionError(f"Models differ on single items\n{e.args[0]}")
+        raise AssertionError(f"Models differ on single items\n{e.args[0]}") from e
 
     items = [item for item, _ in items_and_results]
     try:
@@ -362,7 +362,7 @@ async def _compare_models_async(model, model_async, items_and_results, tolerance
             res_model1 = res_model1_items[k]
             assert compare_result(res_model0, res_model1, tolerance)
     except AssertionError as e:
-        raise AssertionError(f"Models differ on item batches\n{e.args[0]}")
+        raise AssertionError(f"Models differ on item batches\n{e.args[0]}") from e
 
     try:
         # Compare batched vs. computed with one item
@@ -373,7 +373,7 @@ async def _compare_models_async(model, model_async, items_and_results, tolerance
     except AssertionError as e:
         raise AssertionError(
             f"Models predictions on single and batches differ\n{e.args[0]}"
-        )
+        ) from e
 
 
 @skip_unless("ENABLE_TF_TEST", "True")

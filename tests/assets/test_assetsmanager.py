@@ -5,6 +5,7 @@ import tempfile
 import pytest
 
 import modelkit.assets.cli
+from modelkit.assets import errors
 from modelkit.assets.manager import AssetsManager, _success_file_path
 from modelkit.assets.remote import StorageProvider
 from tests.conftest import skip_unless
@@ -67,7 +68,7 @@ def _perform_mng_test(mng):
     assert d["from_cache"]
 
     # attempt to overwrite the asset
-    with pytest.raises(Exception):
+    with pytest.raises(errors.AssetAlreadyExistsError):
         mng.storage_provider.push(
             os.path.join(data_path, "some_data_in_folder.json"),
             "category-test/some-data.ext",

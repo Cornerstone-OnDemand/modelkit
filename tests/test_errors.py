@@ -100,7 +100,7 @@ async def test_prediction_error_async(monkeypatch, model):
     assert len(excinfo.traceback) <= 3
 
     with pytest.raises(CustomError) as excinfo:
-        async for x in model.predict_gen(iter(({},))):
+        async for _x in model.predict_gen(iter(({},))):
             pass
     assert len(excinfo.traceback) <= 3
 
@@ -118,7 +118,7 @@ async def test_prediction_error_complex_tb_async(monkeypatch, model):
     assert len(excinfo.traceback) > 3
 
     with pytest.raises(CustomError) as excinfo:
-        async for x in model.predict_gen(iter(({},))):
+        async for _x in model.predict_gen(iter(({},))):
             pass
     assert len(excinfo.traceback) > 3
 

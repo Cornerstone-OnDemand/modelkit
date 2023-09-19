@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import fastapi
 from starlette.responses import JSONResponse
@@ -8,7 +8,7 @@ app = fastapi.FastAPI(title="Mock service")
 
 @app.post("/api/path/endpoint")
 async def some_endpoint(
-    item: Dict[str, str],
+    item: Dict[str, Union[str, int]],
     limit: Optional[int] = None,
     skip: Optional[int] = None,
 ):
@@ -21,7 +21,7 @@ async def some_endpoint(
 
 @app.post("/api/path/endpoint/batch")
 async def some_endpoint_batch(
-    items: List[Dict[str, str]],
+    items: List[Dict[str, Union[str, int]]],
     limit: Optional[int] = None,
     skip: Optional[int] = None,
 ):

@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from modelkit.assets.errors import InvalidAssetSpecError
+from modelkit.assets.errors import AssetDoesNotExistError, InvalidAssetSpecError
 from modelkit.core import errors
 from modelkit.core.library import (
     ConfigurationNotFoundException,
@@ -79,7 +79,7 @@ def test_override_asset():
         "dep_model": ModelConfiguration(model_type=TestDepModel),
     }
     # The asset does not exist
-    with pytest.raises(Exception):
+    with pytest.raises(AssetDoesNotExistError):
         model_library = ModelLibrary(
             required_models=["some_asset"], configuration=config
         )
@@ -652,7 +652,9 @@ def test_model_dependencies_bad_get():
             ).some_attribute
 
             with pytest.raises(ValueError):
-                self.model_dependencies.get("some_model", SomeModelDep).some_attribute
+                _ = self.model_dependencies.get(
+                    "some_model", SomeModelDep
+                ).some_attribute
 
         def _predict(self, item):
             return item

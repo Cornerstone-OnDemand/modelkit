@@ -1,14 +1,14 @@
 -c requirements.txt
 -r requirements.in
 
+# lint
+pre-commit
 # tests
 mypy
 coverage
 pytest
 pytest-asyncio
-black
 flake8<4 # flake8==4.0.1 pins importlib-metadata<4.3 which leads to a conflict
-isort
 nox
 boto3
 google-api-core

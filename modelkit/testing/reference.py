@@ -114,7 +114,7 @@ def click_invoke(runner, cmd_fn, args, env=None):
 
 def deep_format_floats(obj, depth=5):
     # case str, is container but should be returned as is
-    if type(obj) is str:
+    if isinstance(obj, str):
         return obj
     # deep recursive call for any container
     elif isinstance(obj, dict):
