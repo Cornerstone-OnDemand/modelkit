@@ -10,9 +10,13 @@ git switch -C releasing central/main
 
 ## Bump version
 
-We use `bump2version` to create the commit and tag required for the release
+We use `bump-my-version` to create the commit and tag required for the release
 ```bash
-bump2version patch
+bump-my-version bump patch
+```
+or via its alias:
+```bash
+bumpversion bump patch
 ```
 
 ## Push commit and tag to central
@@ -21,7 +25,7 @@ bump2version patch
 git push --follow-tags central releasing:main
 
 # Or more concisely if you have configured git with push.default = upstream
-git push --follow-tags 
+git push --follow-tags
 ```
 
 ## Package and publish new artifact to pypi

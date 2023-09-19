@@ -45,7 +45,7 @@ botocore==1.31.10
     #   s3transfer
 build==0.10.0
     # via pip-tools
-bump2version==1.0.1
+bump-my-version==0.10.0
     # via -r requirements-dev.in
 cachetools==5.3.1
     # via
@@ -70,8 +70,10 @@ click==8.1.6
     #   -c requirements.txt
     #   -r requirements.in
     #   black
+    #   bump-my-version
     #   mkdocs
     #   pip-tools
+    #   rich-click
     #   uvicorn
 colorama==0.4.6
     # via mkdocs-material
@@ -235,6 +237,7 @@ pydantic==1.10.12
     # via
     #   -c requirements.txt
     #   -r requirements.in
+    #   bump-my-version
     #   fastapi
 pyflakes==2.3.1
     # via flake8
@@ -286,6 +289,10 @@ rich==13.4.2
     # via
     #   -c requirements.txt
     #   -r requirements.in
+    #   bump-my-version
+    #   rich-click
+rich-click==1.6.1
+    # via bump-my-version
 rsa==4.9
     # via google-auth
 s3transfer==0.6.1
@@ -319,6 +326,8 @@ tenacity==8.2.2
     #   -c requirements.txt
     #   -r requirements-dev.in
     #   -r requirements.in
+tomlkit==0.12.1
+    # via bump-my-version
 types-cachetools==5.3.0.6
     # via -r requirements-dev.in
 types-pyopenssl==23.2.0.2

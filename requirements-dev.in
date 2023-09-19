@@ -28,7 +28,7 @@ uvicorn
 fastapi
 httpx
 # releases
-bump2version
+bump-my-version
 # docs
 mkdocs-material
 pymdown-extensions>=10.0  # resolve CVE-2023-32309
