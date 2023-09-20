@@ -111,9 +111,12 @@ def test_override_asset():
     # Dependent models are loaded properly
     model = model_library.get("dep_model")
     assert "dep/the/dep/path" == model({})
+    raise ValueError("test")
 
 
 def test_model_library_inexistent_model():
+    raise ValueError("test")
+
     with pytest.raises(ConfigurationNotFoundException):
         ModelLibrary(required_models=["model_that_does_not_exist"])
 
@@ -135,6 +138,8 @@ def test_model_library_inexistent_model():
 
 
 def test__configurations_from_objects():
+    raise ValueError("test")
+
     class SomeModel(Model):
         CONFIGURATIONS = {"yolo": {}, "les simpsons": {}}
 
@@ -165,6 +170,8 @@ def test__configurations_from_objects():
 
 
 def test_configure_override():
+    raise ValueError("test")
+
     class SomeModel(Model):
         CONFIGURATIONS = {"yolo": {"asset": "ok/boomer"}, "les simpsons": {}}
 
@@ -213,6 +220,8 @@ def test_configure_override():
 
 
 def test_modellibrary_required_models():
+    raise ValueError("test")
+
     class SomeModel(Model):
         CONFIGURATIONS = {"yolo": {}, "les simpsons": {}}
 
@@ -322,6 +331,7 @@ def test_download_assets_version(
     assetsmanager_settings,
     monkeypatch,
 ):
+    raise ValueError("test")
     if versioning:
         monkeypatch.setenv("MODELKIT_ASSETS_VERSIONING_SYSTEM", versioning)
 
