@@ -179,7 +179,6 @@ select = [
 ]
 extend-select = [
     "I",  # isort
-    "RUF100",  # ruff: drop unnecessary noqa comments
     "UP",  # pyupgrade
 ]
 ignore = [

@@ -1,4 +1,11 @@
 repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      # - id: trailing-whitespace # TODO: enable this
+      # - id: end-of-file-fixer  # TODO: enable this
+      - id: debug-statements
+
   - repo: https://github.com/psf/black
     rev: 23.7.0
     hooks:
@@ -17,7 +24,12 @@ repos:
       - id: mypy
         types: [python]
         args: []  # TODO: enable this: "--check-untyped-defs"
-        exclude: ^tests  # TODO: narrow it down to: ^tests/testdata/typing
+        # TODO: narrow tests exclusion down to: ^tests/testdata/typing/*$
+        exclude: |
+          (?x)^(
+              .vulture.py|
+              tests/.*
+          )$
         additional_dependencies: [
           pydantic==1.*,
           types-python-dateutil,
@@ -27,3 +39,9 @@ repos:
           types-cachetools,
           types-tabulate
         ]
+
+  - repo: https://github.com/jendrikseipp/vulture
+    rev: v2.9.1
+    hooks:
+      - id: vulture
+        args: ["--min-confidence", "90", "modelkit", "bin", ".vulture.py"]
