@@ -1,13 +1,13 @@
-name: CI
-
-on: [push, pull_request]
+name: tests
 
 defaults:
   run:
     shell: bash
 
+on: [pull_request]
+
 jobs:
-  test:
+  tests:
     strategy:
       fail-fast: false
       matrix:
@@ -25,11 +25,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install Dependencies
-        run: python -m pip install --upgrade nox
-
       - name: Run Tests
-        run: scripts/ci_tests.sh
+        run: make ci-tests
         env:
           OS_NAME: "${{ matrix.os }}"
           PYTHON_VERSION: "${{ matrix.python-version }}"

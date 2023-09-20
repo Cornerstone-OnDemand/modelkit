@@ -1,6 +1,6 @@
 name: lint
 
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   lint:
@@ -9,13 +9,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Set up Python 3.11
+      - name: Set up Python 3.8
         uses: actions/setup-python@v3
         with:
-          python-version: "3.11"
-      - name: Install dependencies
-        run: python3.11 -m pip install -r requirements-dev.txt
-      - name: Install mypy types
-        run: mypy --install-types --non-interactive -p modelkit
+          python-version: "3.8"
       - name: Run lint
-        run: scripts/lint.sh
+        run: make lint
