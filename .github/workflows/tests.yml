@@ -4,7 +4,11 @@ defaults:
   run:
     shell: bash
 
-on: [pull_request]
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
 
 jobs:
   tests:
