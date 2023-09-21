@@ -62,32 +62,29 @@ api = [
 assets-s3 = ["boto3"]
 assets-gcs = ["google-cloud-storage"]
 assets-az = ["azure-storage-blob", "cryptography>=41.0.2"]
-dev = [
-    # modelkit[assets-s3]
-    "boto3",
-    # modelkit[assets-gcs]
-    "google-cloud-storage",
-    # modelkit[assets-az]
-    "azure-storage-blob",
-    "cryptography>=41.0.2",
-    # modelkit[cli]
-    "networkx",
-    "memory-profiler",
-    # modelkit[api] + modelkit[cli]
-    "fastapi",
-    "uvicorn",
-    "httpx",  # for test client
-    # FIXME: cannot pin model[tensorflow] deps because of conflicts
-    # "modelkit[tensorflow]",
-    # lint
-    "pre-commit",
+lint = [
+    "black",
+    "flake8",
+    "ruff",
     "mypy",
     "types-requests",
     "types-python-dateutil",
     "types-cachetools",
     "types-redis",
     "types-tabulate",
-    "flake8<4", # flake8==4.0.1 pins importlib-metadata<4.3 which leads to a conflict
+]
+dev = [
+    # tests,
+    "httpx",  # for starlette TestClient
+    # needed for test_typing.py
+    "mypy",
+    "types-requests",
+    "types-python-dateutil",
+    "types-cachetools",
+    "types-redis",
+    "types-tabulate",
+    # lint
+    "pre-commit",
     # tests
     "coverage",
     "pytest",

@@ -1,27 +1,42 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -e -x -c -o pipefail
-.PHONY: setup_lint lint setup_tests tests ci-tests setup_ci_tests requirements upgrade
+.PHONY: setup setup_lint lint tests coverage ci_tests requirements upgrade
 
 setup_lint:
 	pip install --upgrade pip pre-commit
 	pre-commit install
 
-lint: setup_lint
+lint:
 	pre-commit run --all-files
 
-setup_tests:
-	pip install --upgrade pip
-	pip install -r requirements-dev.txt
+tests:
+	export ENABLE_TF_SERVING_TEST=True; \
+	export ENABLE_TF_TEST=True; \
+	export ENABLE_REDIS_TEST=True; \
+	export ENABLE_S3_TEST=True; \
+	export ENABLE_GCS_TEST=True; \
+	export ENABLE_AZ_TEST=True; \
+	pytest
 
-tests: setup_tests
-	coverage run -m pytest
-	coverage report -m
+coverage:
+	export ENABLE_TF_SERVING_TEST=True; \
+	export ENABLE_TF_TEST=True; \
+	export ENABLE_REDIS_TEST=True; \
+	export ENABLE_S3_TEST=True; \
+	export ENABLE_GCS_TEST=True; \
+	export ENABLE_AZ_TEST=True; \
+	coverage run -m pytest; \
+	coverage report -m; \
 	coverage xml
 
-setup_ci_tests:
-	pip install --upgrade pip nox
+setup:
+	pip install --upgrade pip
+	pip install -r requirements-dev.txt
+	pip install -e .[lint,tensorflow,cli,api,assets-s3,assets-gcs,assets-az]
+	pre-commit install
 
-ci-tests: setup_ci_tests
+ci_tests:
+	pip install --upgrade pip nox
 	@if [ "$(OS_NAME)" = "ubuntu-latest" ]; then \
 		export ENABLE_TF_SERVING_TEST=True; \
 		export ENABLE_TF_TEST=True; \
@@ -38,6 +53,8 @@ requirements:
 	pip install --upgrade pip pip-compile
 	pip-compile --extra=dev --output-file=requirements-dev.txt
 
-upgrade: setup_lint
+upgrade:
+	pip install --upgrade pip pip-tools pre-commit
 	pre-commit autoupdate
 	pip-compile --upgrade --extra=dev --output-file=requirements-dev.txt
+	pip install -r requirements-dev.txt

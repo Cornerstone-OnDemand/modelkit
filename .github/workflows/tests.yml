@@ -30,7 +30,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Run Tests
-        run: make ci-tests
+        run: make ci_tests
         env:
           OS_NAME: "${{ matrix.os }}"
           PYTHON_VERSION: "${{ matrix.python-version }}"
