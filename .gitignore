@@ -76,6 +76,9 @@ output/*/index.html
 # pytest
 .pytest_cache
 
+# ruff
+.ruff_cache
+
 # tmp files
 /tmp/
 /*.json

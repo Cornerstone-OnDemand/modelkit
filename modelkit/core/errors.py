@@ -114,8 +114,8 @@ def wrap_modelkit_exceptions(func: T) -> T:
                 return func(*args, **kwargs)
             except PredictionError as exc:
                 if os.environ.get("MODELKIT_ENABLE_SIMPLE_TRACEBACK", "True") == "True":
-                    raise strip_modelkit_traceback_frames(exc.exc)
-                raise exc.exc
+                    raise strip_modelkit_traceback_frames(exc.exc) from exc
+                raise exc.exc from exc
             except BaseException:
                 raise
 
@@ -132,8 +132,8 @@ def wrap_modelkit_exceptions_gen(func: T) -> T:
                 yield from func(*args, **kwargs)
             except PredictionError as exc:
                 if os.environ.get("MODELKIT_ENABLE_SIMPLE_TRACEBACK", "True") == "True":
-                    raise strip_modelkit_traceback_frames(exc.exc)
-                raise exc.exc
+                    raise strip_modelkit_traceback_frames(exc.exc) from exc
+                raise exc.exc from exc
             except BaseException:
                 raise
 
@@ -150,8 +150,8 @@ def wrap_modelkit_exceptions_async(func: T) -> T:
                 return await func(*args, **kwargs)
             except PredictionError as exc:
                 if os.environ.get("MODELKIT_ENABLE_SIMPLE_TRACEBACK", "True") == "True":
-                    raise strip_modelkit_traceback_frames(exc.exc)
-                raise exc.exc
+                    raise strip_modelkit_traceback_frames(exc.exc) from exc
+                raise exc.exc from exc
             except BaseException:
                 raise
 
@@ -170,8 +170,8 @@ def wrap_modelkit_exceptions_gen_async(func: T) -> T:
                     yield x
             except PredictionError as exc:
                 if os.environ.get("MODELKIT_ENABLE_SIMPLE_TRACEBACK", "True") == "True":
-                    raise strip_modelkit_traceback_frames(exc.exc)
-                raise exc.exc
+                    raise strip_modelkit_traceback_frames(exc.exc) from exc
+                raise exc.exc from exc
             except BaseException:
                 raise
 

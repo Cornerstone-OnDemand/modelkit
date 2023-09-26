@@ -1,23 +1,202 @@
 [build-system]
-requires = ["setuptools >= 40.6.0", "wheel"]
+requires = ["setuptools >= 40.6.0", "wheel >=0.38.1"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "modelkit"
+description = "Minimalistic MLOps library for python"
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+requires-python = ">=3.8"
+dynamic = ["version"]
+dependencies = [
+    "aiohttp",
+    "asgiref",
+    "cachetools",
+    "click",
+    "filelock",
+    "humanize",
+    "pydantic<2.0",
+    "python-dateutil",
+    "redis",
+    "requests",
+    "rich",
+    "sniffio",
+    "structlog",
+    "tenacity",
+    "typing_extensions",
+    "tabulate",
+]
+[tool.setuptools.dynamic]
+version = {attr = "modelkit.__version__"}
+
+[project.urls]
+Homepage = "https://github.com/Cornerstone-OnDemand/modelkit"
+"Bug Tracker" = "https://github.com/Cornerstone-OnDemand/modelkit/issues"
+Documentation = "https://Cornerstone-OnDemand.github.io/modelkit/"
+"Source Code" = "https://github.com/Cornerstone-OnDemand/modelkit"
+
+[project.optional-dependencies]
+tensorflow = [
+    "numpy",
+    "grpcio",
+    "tensorflow",
+    "tensorflow-serving-api",
+]
+cli = [
+    "networkx",
+    "memory-profiler",
+    "fastapi",
+    "uvicorn",
+]
+api = [
+    "fastapi",
+    "uvicorn",
+]
+assets-s3 = ["boto3"]
+assets-gcs = ["google-cloud-storage"]
+assets-az = ["azure-storage-blob", "cryptography>=41.0.2"]
+lint = [
+    "black",
+    "flake8",
+    "ruff",
+    "mypy",
+    "types-requests",
+    "types-python-dateutil",
+    "types-cachetools",
+    "types-redis",
+    "types-tabulate",
+]
+dev = [
+    # tests,
+    "httpx",  # for starlette TestClient
+    # needed for test_typing.py
+    "mypy",
+    "types-requests",
+    "types-python-dateutil",
+    "types-cachetools",
+    "types-redis",
+    "types-tabulate",
+    # lint
+    "pre-commit",
+    # tests
+    "coverage",
+    "pytest",
+    "pytest-asyncio",
+    "nox",
+    # releases
+    "bump-my-version",
+    # docs
+    "mkdocs-material",
+    "pymdown-extensions>=10.0",  # resolve CVE-2023-32309
+    # build
+    "wheel>=0.38.1",  # resolve CVE-2022-40898
+    # requirements
+    "pip-tools",
+]
+
+[project.scripts]
+modelkit = "modelkit.cli:modelkit_cli"
+
+[tool.setuptools]
+zip-safe = false
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["modelkit*"]
+exclude = ["tests*", "docs*", "bin*", "scripts*"]
+namespaces = false
+
+[tool.setuptools.package-data]
+modelkit = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = """
+--strict
+--verbose
+--tb=native
+-vv
+--failed-first
+--disable-warnings
+--durations 10
+--color=yes
+tests"""
 
 [tool.black]
 target-version = ['py38']
 
-[tool.towncrier]
-package = "modelkit"
-filename = "HISTORY.md"
-directory = "newsfragments"
-underlines = ["", "", ""]
-title_format = "# {version} ({project_date})"
-start_string = "<!-- towncrier release notes start -->"
-template = "towncrier-template.md"
+[tool.isort]
+profile = "black"
 
-# Hack towncrier to output md using a single type named "md" because we don't
-# want categories but we want a .md extension. The section/type won't be
-# displayed, as configured in towncrier-template.md.
-[[tool.towncrier.type]]
-directory = "md"
-name = ""
-showcontent = true
+[tool.flake8]
+max-line-length = "88"
+extend-ignore = "E203"
+
+[tool.coverage.run]
+source = ["modelkit"]
+omit = [
+    "modelkit/assets/cli.py",
+    "modelkit/cli.py",
+]
+
+[tool.coverage.report]
+fail_under = 90
+precision = 2
+
+[tool.mypy]
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["azure.storage.blob.*"]
+ignore_errors = true
+
+[tool.bumpversion]
+commit = true
+tag = true
+tag_name = "{new_version}"
+allow_dirty = true
+message = "Bump version: {current_version} → {new_version}"
+
+[[tool.bumpversion.files]]
+filename = "modelkit/__init__.py"
+
+[tool.ruff]
+select = [
+    "B",  # flake8-bug-bear
+    "E",  # pycodestyle
+    "W",  # pycodestyle
+    "F",  # pyflakes
+]
+extend-select = [
+    "I",  # isort
+    "UP",  # pyupgrade
+]
+ignore = [
+    "B011",
+    "E741",
+    "W605",
+]
+line-length = 88
+target-version = "py38"
+show-source = false
+src = ["modelkit", "tests", "bin"]
+
+[tool.ruff.isort]
+known-first-party = ["modelkit", "tests", "bin"]
+known-third-party = []
+
+[tool.ruff.flake8-bugbear]
+extend-immutable-calls = [
+    "fastapi.Body",
+    "fastapi.Header",
+    "fastapi.Path",
+    "fastapi.Query",
+    "fastapi.Depends"
+]

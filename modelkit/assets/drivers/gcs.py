@@ -72,14 +72,14 @@ class GCSStorageDriver(StorageDriver):
         try:
             with open(destination_path, "wb") as f:
                 blob.download_to_file(f)
-        except NotFound:
+        except NotFound as e:
             logger.error(
                 "Object not found.", bucket=self.bucket, object_name=object_name
             )
             os.remove(destination_path)
             raise errors.ObjectDoesNotExistError(
                 driver=self, bucket=self.bucket, object_name=object_name
-            )
+            ) from e
 
     @retry(**GCS_RETRY_POLICY)
     def delete_object(self, object_name):

@@ -138,8 +138,7 @@ async def test_callback_batch_process_async(
 
 def _do_gen_test(m, batch_size, n_items):
     def item_iterator():
-        for x in range(n_items):
-            yield x
+        yield from range(n_items)
 
     for value, position_in_batch, batch_len in m.predict_gen(
         item_iterator(), batch_size=batch_size
@@ -169,8 +168,7 @@ def test_predict_gen():
 
 async def _do_gen_test_async(m, batch_size, n_items):
     def item_iterator():
-        for x in range(n_items):
-            yield x
+        yield from range(n_items)
 
     async for value, position_in_batch, batch_len in m.predict_gen(
         item_iterator(), batch_size=batch_size
@@ -218,7 +216,7 @@ def test_generator_exit_callback():
         steps += 1
 
     m = SomeModel()
-    for i, prediction in enumerate(
+    for i, _prediction in enumerate(
         m.predict_gen(range(100), _callback=_callback, batch_size=batch_size)
     ):
         if i + 1 == batch_break:

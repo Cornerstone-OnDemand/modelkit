@@ -2,10 +2,10 @@ import nox
 
 
 @nox.session(python=["3.8", "3.9", "3.10", "3.11"])
-def test(session):
+def tests(session):
     # Install deps and the package itself.
+    session.install(".[cli,api,assets-gcs,assets-s3,assets-az]")
     session.install("-r", "requirements-dev.txt")
-    session.run("mypy", "--install-types", "--non-interactive", "-p", "modelkit")
 
     session.run("pytest", "--junitxml=junit.xml")
 
@@ -13,8 +13,8 @@ def test(session):
 @nox.session(python=["3.8", "3.9", "3.10", "3.11"])
 def coverage(session):
     # Install deps and the package itself.
-    session.install("-r", "requirements-optional.txt")
-    session.run("mypy", "--install-types", "--non-interactive", "-p", "modelkit")
+    session.install(".[cli,api,tensorflow,assets-s3,assets-gcs,assets-az]")
+    session.install("-r", "requirements-dev.txt")
 
     session.run("coverage", "run", "-m", "pytest", "--junitxml=junit.xml")
     session.run("coverage", "report", "-m")

@@ -2,7 +2,7 @@ name: docs
 
 on:
   workflow_run:
-    workflows: ["CI"]
+    workflows: ["tests"]
     types:
       - completed
 
@@ -14,12 +14,12 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-    
+
       - name: Setup Python
         uses: actions/setup-python@v3
         with:
           python-version: 3.x
-          
+
       - name: Install dependencies
         run: pip install mkdocs-material mkdocs-git-revision-date-localized-plugin
 
@@ -36,7 +36,7 @@ jobs:
       - name: Download Coverage Report
         uses: dawidd6/action-download-artifact@v2
         with:
-          workflow: main.yml
+          workflow: tests.yml
           name: coverage
           path: coverage
           search_artifacts: true

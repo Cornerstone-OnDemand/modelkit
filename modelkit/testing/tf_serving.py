@@ -60,11 +60,9 @@ def tf_serving_fixture(request, lib, tf_version, deployment="docker"):
     request.addfinalizer(finalize)
     connect_tf_serving(
         next(
-            (
-                x
-                for x in lib.required_models
-                if issubclass(lib.configuration[x].model_type, TensorflowModel)
-            )
+            x
+            for x in lib.required_models
+            if issubclass(lib.configuration[x].model_type, TensorflowModel)
         ),
         "localhost",
         8500,

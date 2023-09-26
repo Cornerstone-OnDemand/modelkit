@@ -129,7 +129,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
             async def _aendpoint(
                 item: item_type = fastapi.Body(...),
                 model=fastapi.Depends(lambda: self.lib.get(model.configuration_key)),
-            ):  # noqa: B008
+            ):
                 return await model.predict(item)
 
             return _aendpoint
@@ -137,7 +137,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
         def _endpoint(
             item: item_type = fastapi.Body(...),
             model=fastapi.Depends(lambda: self.lib.get(model.configuration_key)),
-        ):  # noqa: B008
+        ):
             return model.predict(item)
 
         return _endpoint
@@ -148,7 +148,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
             async def _aendpoint(
                 item: List[item_type] = fastapi.Body(...),
                 model=fastapi.Depends(lambda: self.lib.get(model.configuration_key)),
-            ):  # noqa: B008
+            ):
                 return await model.predict_batch(item)
 
             return _aendpoint
@@ -156,7 +156,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
         def _endpoint(
             item: List[item_type] = fastapi.Body(...),
             model=fastapi.Depends(lambda: self.lib.get(model.configuration_key)),
-        ):  # noqa: B008
+        ):
             return model.predict_batch(item)
 
         return _endpoint
