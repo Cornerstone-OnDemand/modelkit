@@ -74,3 +74,15 @@ Optional dependencies are available for remote storage providers ([see documenta
 
 ## Community
 Join our [community](https://discord.gg/ayj5wdAArV) on Discord to get support and leave feedback
+
+### Local install
+
+Contributors, if you want to install and test locally:
+
+```
+# install
+make setup
+
+# lint & test
+make tests
+```
