@@ -4,6 +4,7 @@
 #
 #    pip-compile --extra=dev --output-file=requirements-dev.txt
 #
+
 aiohttp==3.8.5
     # via modelkit (pyproject.toml)
 aiosignal==1.3.1
@@ -15,9 +16,7 @@ argcomplete==3.1.2
 asgiref==3.7.2
     # via modelkit (pyproject.toml)
 async-timeout==4.0.3
-    # via
-    #   aiohttp
-    #   redis
+    # via aiohttp
 attrs==23.1.0
     # via aiohttp
 babel==2.12.1
@@ -60,10 +59,6 @@ cryptography==41.0.4
     #   types-redis
 distlib==0.3.7
     # via virtualenv
-exceptiongroup==1.1.3
-    # via
-    #   anyio
-    #   pytest
 filelock==3.12.4
     # via
     #   modelkit (pyproject.toml)
@@ -169,7 +164,10 @@ pytest==7.4.2
     # via
     #   modelkit (pyproject.toml)
     #   pytest-asyncio
+    #   pytest-timeout
 pytest-asyncio==0.21.1
+    # via modelkit (pyproject.toml)
+pytest-timeout==2.1.0
     # via modelkit (pyproject.toml)
 python-dateutil==2.8.2
     # via
@@ -212,13 +210,6 @@ tabulate==0.9.0
     # via modelkit (pyproject.toml)
 tenacity==8.2.3
     # via modelkit (pyproject.toml)
-tomli==2.0.1
-    # via
-    #   build
-    #   mypy
-    #   pip-tools
-    #   pyproject-hooks
-    #   pytest
 tomlkit==0.12.1
     # via bump-my-version
 types-cachetools==5.3.0.6
@@ -237,7 +228,6 @@ types-urllib3==1.26.25.14
     # via types-requests
 typing-extensions==4.8.0
     # via
-    #   asgiref
     #   modelkit (pyproject.toml)
     #   mypy
     #   pydantic

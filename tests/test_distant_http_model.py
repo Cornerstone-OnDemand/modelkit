@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import sys
 import time
 
 import pydantic
@@ -20,7 +21,10 @@ from tests import TEST_DIR
 @pytest.fixture(scope="module")
 def run_mocked_service():
     proc = subprocess.Popen(
-        ["uvicorn", "mocked_service:app"], cwd=os.path.join(TEST_DIR, "testdata")
+        ["uvicorn", "mocked_service:app"],
+        cwd=os.path.join(TEST_DIR, "testdata"),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
 
     done = False
@@ -34,117 +38,255 @@ def run_mocked_service():
         except requests.ConnectionError:
             time.sleep(0.01)
     if not done:
-        raise Exception("Could not start mocked service")
+        _stop_mocked_service_and_print_stderr(proc)
+        raise Exception("Could not start mocked service.")
 
-    yield
+    yield proc
     proc.terminate()
+
+
+def _stop_mocked_service_and_print_stderr(proc):
+    proc.terminate()
+    stderr = proc.stderr.read().decode()
+    print(stderr, file=sys.stderr)
+
+
+@pytest.fixture(scope="module")
+def distant_http_model_lib():
+    yield from _distant_http_model_lib()
+
+
+def _distant_http_model_lib(**settings):
+    class TestModel(DistantHTTPModel):
+        CONFIGURATIONS = {
+            "test_distant_http_model": {
+                "model_settings": {
+                    "endpoint": "http://127.0.0.1:8000/api/path/endpoint",
+                    "async_mode": False,
+                    **settings,
+                }
+            }
+        }
+
+    lib = ModelLibrary(models=[TestModel])
+    yield lib
+    lib.close()
+
+
+@pytest.fixture(scope="module")
+def async_distant_http_model_lib(event_loop):
+    yield from _async_distant_http_model_lib(event_loop)
+
+
+def _async_distant_http_model_lib(event_loop, **settings):
+    class TestModel(AsyncDistantHTTPModel):
+        CONFIGURATIONS = {
+            "test_async_distant_http_model": {
+                "model_settings": {
+                    "endpoint": "http://127.0.0.1:8000/api/path/endpoint",
+                    "async_mode": True,
+                    **settings,
+                }
+            }
+        }
+
+    lib = ModelLibrary(models=[TestModel])
+    yield lib
+    event_loop.run_until_complete(lib.aclose())
+
+
+@pytest.fixture(scope="module")
+def distant_http_batch_model_lib():
+    yield from _distant_http_batch_model_lib()
+
+
+def _distant_http_batch_model_lib(**settings):
+    class TestModel(DistantHTTPBatchModel):
+        CONFIGURATIONS = {
+            "test_distant_http_batch_model": {
+                "model_settings": {
+                    "endpoint": "http://127.0.0.1:8000/api/path/endpoint/batch",
+                    "async_mode": False,
+                    **settings,
+                }
+            }
+        }
+
+    lib = ModelLibrary(models=[TestModel])
+    yield lib
+    lib.close()
+
+
+@pytest.fixture(scope="module")
+def async_distant_http_batch_model_lib(event_loop):
+    yield from _async_distant_http_batch_model_lib(event_loop)
+
+
+def _async_distant_http_batch_model_lib(event_loop, **settings):
+    class TestModel(AsyncDistantHTTPBatchModel):
+        CONFIGURATIONS = {
+            "test_async_distant_http_batch_model": {
+                "model_settings": {
+                    "endpoint": "http://127.0.0.1:8000/api/path/endpoint/batch",
+                    "async_mode": True,
+                    **settings,
+                }
+            }
+        }
+
+    lib = ModelLibrary(models=[TestModel])
+    yield lib
+    event_loop.run_until_complete(lib.aclose())
 
 
 class SomeContentModel(pydantic.BaseModel):
     some_content: str
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "item,params,expected",
+test_distant_http_model_args = (
+    "item,headers,params,expected",
     [
-        ({"some_content": "something"}, {}, {"some_content": "something"}),
+        ({"some_content": "something"}, {}, {}, {"some_content": "something"}),
         (
             SomeContentModel(**{"some_content": "something"}),
+            {},
             {},
             {"some_content": "something"},
         ),
         (
             {"some_content": "something"},
+            {"X-Correlation-Id": "123-456-789"},
             {"limit": 10},
-            {"some_content": "something", "limit": 10},
+            {
+                "some_content": "something",
+                "limit": 10,
+                "x_correlation_id": "123-456-789",
+            },
         ),
         (
             SomeContentModel(**{"some_content": "something"}),
+            {},
             {"limit": 10},
             {"some_content": "something", "limit": 10},
         ),
         (
             {"some_content": "something"},
+            {},
             {"skip": 5},
             {"some_content": "something", "skip": 5},
         ),
         (
             SomeContentModel(**{"some_content": "something"}),
+            {},
             {"skip": 5},
             {"some_content": "something", "skip": 5},
         ),
         (
             {"some_content": "something"},
+            {},
             {"limit": 10, "skip": 5},
             {"some_content": "something", "limit": 10, "skip": 5},
         ),
         (
             SomeContentModel(**{"some_content": "something"}),
+            {},
             {"limit": 10, "skip": 5},
             {"some_content": "something", "limit": 10, "skip": 5},
         ),
     ],
 )
-async def test_distant_http_model(
-    item, params, expected, run_mocked_service, event_loop
+
+
+@pytest.mark.parametrize(*test_distant_http_model_args)
+def test_sync_distant_http_model(
+    item, headers, params, expected, distant_http_model_lib, run_mocked_service
 ):
-    async_model_settings = {
-        "endpoint": "http://127.0.0.1:8000/api/path/endpoint",
-        "async_mode": True,
-    }
-    sync_model_settings = {
-        "endpoint": "http://127.0.0.1:8000/api/path/endpoint",
-        "async_mode": False,
-    }
+    try:
+        m = distant_http_model_lib.get("test_distant_http_model")
+        assert expected == m(item, endpoint_headers=headers, endpoint_params=params)
+    except Exception:
+        _stop_mocked_service_and_print_stderr(run_mocked_service)
+        raise
 
-    class SomeDistantHTTPModel(DistantHTTPModel):
-        CONFIGURATIONS = {
-            "some_model_sync": {"model_settings": sync_model_settings},
-        }
 
-    class SomeAsyncDistantHTTPModel(AsyncDistantHTTPModel):
-        CONFIGURATIONS = {"some_model_async": {"model_settings": async_model_settings}}
+def test_sync_distant_http_model_with_params(run_mocked_service):
+    try:
+        for lib in _distant_http_model_lib(
+            endpoint_headers={"X-Correlation-Id": "123-456-789"},
+            endpoint_params={"limit": 10},
+        ):
+            m = lib.get("test_distant_http_model")
+            assert m({"some_content": "something"}) == {
+                "some_content": "something",
+                "limit": 10,
+                "x_correlation_id": "123-456-789",
+            }
+    except Exception:
+        _stop_mocked_service_and_print_stderr(run_mocked_service)
+        raise
 
-    lib_without_params = ModelLibrary(
-        models=[SomeDistantHTTPModel, SomeAsyncDistantHTTPModel]
-    )
-    lib_with_params = ModelLibrary(
-        models=[SomeDistantHTTPModel, SomeAsyncDistantHTTPModel],
-        configuration={
-            "some_model_sync": {
-                "model_settings": {**params, **sync_model_settings},
-            },
-            "some_model_async": {"model_settings": {**params, **async_model_settings}},
-        },
-    )
-    for lib in [lib_without_params, lib_with_params]:
-        # Test with asynchronous mode
-        m = lib.get("some_model_async")
-        with pytest.raises(AssertionError):
-            assert expected == m(item, endpoint_params=params)
 
-        res = await m.predict(item, endpoint_params=params)
+@pytest.mark.asyncio
+@pytest.mark.parametrize(*test_distant_http_model_args)
+async def test_async_distant_http_model(
+    item,
+    headers,
+    params,
+    expected,
+    async_distant_http_model_lib,
+    run_mocked_service,
+    event_loop,
+):
+    try:
+        m = async_distant_http_model_lib.get("test_async_distant_http_model")
+
+        res = await m.predict(item, endpoint_headers=headers, endpoint_params=params)
         assert expected == res
-        await lib.aclose()
 
-        # Test with synchronous mode
-        m = lib.get("some_model_sync")
-        assert expected == m(item, endpoint_params=params)
+        with pytest.raises(AssertionError):
+            assert expected == m(item, endpoint_headers=headers, endpoint_params=params)
+
+    except Exception:
+        _stop_mocked_service_and_print_stderr(run_mocked_service)
+        raise
+
+
+async def test_async_distant_http_model_with_params(run_mocked_service, event_loop):
+    try:
+        for lib in _async_distant_http_model_lib(
+            event_loop,
+            endpoint_headers={"X-Correlation-Id": "123-456-789"},
+            endpoint_params={"limit": 10},
+        ):
+            m = lib.get("test_async_distant_http_model")
+            assert await m({"some_content": "something"}) == {
+                "some_content": "something",
+                "limit": 10,
+                "x_correlation_id": "123-456-789",
+            }
+    except Exception:
+        _stop_mocked_service_and_print_stderr(run_mocked_service)
+        raise
 
 
 class SomeOtherContentModel(pydantic.BaseModel):
     some_other_content: str
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "items, params, expected",
+test_distant_http_batch_model_args = (
+    "items,headers,params,expected",
     [
         (
-            [{"some_content": "something"}, {"some_other_content": "something_else"}],
+            [
+                {"some_content": "something"},
+                {"some_other_content": "something_else"},
+            ],
             {},
-            [{"some_content": "something"}, {"some_other_content": "something_else"}],
+            {},
+            [
+                {"some_content": "something"},
+                {"some_other_content": "something_else"},
+            ],
         ),
         (
             [
@@ -152,10 +294,38 @@ class SomeOtherContentModel(pydantic.BaseModel):
                 SomeOtherContentModel(**{"some_other_content": "something_else"}),
             ],
             {},
-            [{"some_content": "something"}, {"some_other_content": "something_else"}],
+            {},
+            [
+                {"some_content": "something"},
+                {"some_other_content": "something_else"},
+            ],
         ),
         (
-            [{"some_content": "something"}, {"some_other_content": "something_else"}],
+            [
+                {"some_content": "something"},
+                {"some_other_content": "something_else"},
+            ],
+            {"X-Correlation-Id": "123-456-789"},
+            {"limit": 10},
+            [
+                {
+                    "some_content": "something",
+                    "limit": 10,
+                    "x_correlation_id": "123-456-789",
+                },
+                {
+                    "some_other_content": "something_else",
+                    "limit": 10,
+                    "x_correlation_id": "123-456-789",
+                },
+            ],
+        ),
+        (
+            [
+                SomeContentModel(**{"some_content": "something"}),
+                SomeOtherContentModel(**{"some_other_content": "something_else"}),
+            ],
+            {},
             {"limit": 10},
             [
                 {"some_content": "something", "limit": 10},
@@ -164,17 +334,10 @@ class SomeOtherContentModel(pydantic.BaseModel):
         ),
         (
             [
-                SomeContentModel(**{"some_content": "something"}),
-                SomeOtherContentModel(**{"some_other_content": "something_else"}),
+                {"some_content": "something"},
+                {"some_other_content": "something_else"},
             ],
-            {"limit": 10},
-            [
-                {"some_content": "something", "limit": 10},
-                {"some_other_content": "something_else", "limit": 10},
-            ],
-        ),
-        (
-            [{"some_content": "something"}, {"some_other_content": "something_else"}],
+            {},
             {"skip": 5},
             [
                 {"some_content": "something", "skip": 5},
@@ -186,6 +349,7 @@ class SomeOtherContentModel(pydantic.BaseModel):
                 SomeContentModel(**{"some_content": "something"}),
                 SomeOtherContentModel(**{"some_other_content": "something_else"}),
             ],
+            {},
             {"skip": 5},
             [
                 {"some_content": "something", "skip": 5},
@@ -193,7 +357,11 @@ class SomeOtherContentModel(pydantic.BaseModel):
             ],
         ),
         (
-            [{"some_content": "something"}, {"some_other_content": "something_else"}],
+            [
+                {"some_content": "something"},
+                {"some_other_content": "something_else"},
+            ],
+            {},
             {"limit": 10, "skip": 5},
             [
                 {"some_content": "something", "limit": 10, "skip": 5},
@@ -205,6 +373,7 @@ class SomeOtherContentModel(pydantic.BaseModel):
                 SomeContentModel(**{"some_content": "something"}),
                 SomeOtherContentModel(**{"some_other_content": "something_else"}),
             ],
+            {},
             {"limit": 10, "skip": 5},
             [
                 {"some_content": "something", "limit": 10, "skip": 5},
@@ -213,52 +382,93 @@ class SomeOtherContentModel(pydantic.BaseModel):
         ),
     ],
 )
-async def test_distant_http_batch_model(
-    items, params, expected, run_mocked_service, event_loop
+
+
+@pytest.mark.parametrize(*test_distant_http_batch_model_args)
+def test_sync_distant_http_batch_model(
+    items, headers, params, expected, distant_http_batch_model_lib, run_mocked_service
 ):
-    sync_model_settings = {
-        "endpoint": "http://127.0.0.1:8000/api/path/endpoint/batch",
-        "async_mode": False,
-    }
-    async_model_settings = {
-        "endpoint": "http://127.0.0.1:8000/api/path/endpoint/batch",
-        "async_mode": True,
-    }
+    try:
+        m = distant_http_batch_model_lib.get("test_distant_http_batch_model")
 
-    class SomeSyncDistantHTTPBatchModel(DistantHTTPBatchModel):
-        CONFIGURATIONS = {
-            "some_model_sync_batch": {"model_settings": sync_model_settings},
-        }
+        assert expected == m.predict_batch(
+            items, endpoint_headers=headers, endpoint_params=params
+        )
 
-    class SomeAsyncDistantHTTPModel(AsyncDistantHTTPBatchModel):
-        CONFIGURATIONS = {
-            "some_model_async_batch": {"model_settings": async_model_settings}
-        }
+    except Exception:
+        _stop_mocked_service_and_print_stderr(run_mocked_service)
+        raise
 
-    lib_without_params = ModelLibrary(
-        models=[SomeSyncDistantHTTPBatchModel, SomeAsyncDistantHTTPModel]
-    )
-    lib_with_params = ModelLibrary(
-        models=[SomeSyncDistantHTTPBatchModel, SomeAsyncDistantHTTPModel],
-        configuration={
-            "some_model_sync_batch": {
-                "model_settings": {**params, **sync_model_settings},
-            },
-            "some_model_async_batch": {
-                "model_settings": {**params, **async_model_settings}
-            },
-        },
-    )
-    for lib in [lib_without_params, lib_with_params]:
-        # Test with asynchronous mode
-        m = lib.get("some_model_async_batch")
+
+def test_sync_distant_http_batch_model_with_params(run_mocked_service):
+    try:
+        for lib in _distant_http_batch_model_lib(
+            endpoint_headers={"X-Correlation-Id": "123-456-789"},
+            endpoint_params={"limit": 10},
+        ):
+            m = lib.get("test_distant_http_batch_model")
+            assert m.predict_batch([{"some_content": "something"}]) == [
+                {
+                    "some_content": "something",
+                    "limit": 10,
+                    "x_correlation_id": "123-456-789",
+                }
+            ]
+    except Exception:
+        _stop_mocked_service_and_print_stderr(run_mocked_service)
+        raise
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(*test_distant_http_batch_model_args)
+async def test_async_distant_http_batch_model(
+    items,
+    headers,
+    params,
+    expected,
+    async_distant_http_batch_model_lib,
+    run_mocked_service,
+    event_loop,
+):
+    try:
+        m = async_distant_http_batch_model_lib.get(
+            "test_async_distant_http_batch_model"
+        )
+
         with pytest.raises(AssertionError):
-            assert expected == m.predict_batch(items, endpoint_params=params)
+            assert expected == m.predict_batch(
+                items, endpoint_headers=headers, endpoint_params=params
+            )
 
-        res = await m.predict_batch(items, endpoint_params=params)
+        res = await m.predict_batch(
+            items, endpoint_headers=headers, endpoint_params=params
+        )
         assert expected == res
-        await lib.aclose()
 
-        # Test with synchronous mode
-        m = lib.get("some_model_sync_batch")
-        assert expected == m.predict_batch(items, endpoint_params=params)
+    except Exception:
+        run_mocked_service.terminate()
+        svc_stderr = run_mocked_service.stderr.read().decode()
+        print(svc_stderr, file=sys.stderr)
+        raise
+
+
+async def test_async_distant_http_batch_model_with_params(
+    run_mocked_service, event_loop
+):
+    try:
+        for lib in _async_distant_http_batch_model_lib(
+            event_loop,
+            endpoint_headers={"X-Correlation-Id": "123-456-789"},
+            endpoint_params={"limit": 10},
+        ):
+            m = lib.get("test_async_distant_http_batch_model")
+            assert await m.predict_batch([{"some_content": "something"}]) == [
+                {
+                    "some_content": "something",
+                    "limit": 10,
+                    "x_correlation_id": "123-456-789",
+                }
+            ]
+    except Exception:
+        _stop_mocked_service_and_print_stderr(run_mocked_service)
+        raise
