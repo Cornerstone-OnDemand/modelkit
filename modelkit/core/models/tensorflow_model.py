@@ -57,8 +57,6 @@ class TensorflowModelMixin(abc.ABC):
             raise ImportError(
                 "Tensorflow is not installed, instal modelkit[tensorflow]."
             )
-        # this mixing implementing __init__
-        # we need to call super().__init__ to call the Model.__init__
         super().__init__(*args, **kwargs)
 
     def _is_empty(self, item) -> bool:
