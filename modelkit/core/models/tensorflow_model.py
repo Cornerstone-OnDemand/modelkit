@@ -19,32 +19,38 @@ from modelkit.utils.serialization import safe_np_dump
 
 logger = get_logger(__name__)
 
-try:
-    import tensorflow as tf
-    from tensorflow.python.saved_model.signature_constants import (
-        DEFAULT_SERVING_SIGNATURE_DEF_KEY,
-    )
+has_tensorflow, has_grpc, has_numpy = False, False, False
 
-    has_tensorflow = True
-except ModuleNotFoundError:  # pragma: no cover
-    has_tensorflow = False
-    logger.info("tensorflow is not installed")
+if not os.getenv("MODELKIT_NO_TF_IMPORT"):
+    try:
+        import tensorflow as tf
+        from tensorflow.python.saved_model.signature_constants import (
+            DEFAULT_SERVING_SIGNATURE_DEF_KEY,
+        )
 
-try:
-    import grpc
-    from tensorflow_serving.apis import prediction_service_pb2_grpc
-    from tensorflow_serving.apis.get_model_metadata_pb2 import GetModelMetadataRequest
-    from tensorflow_serving.apis.predict_pb2 import PredictRequest
+        has_tensorflow = True
+    except ModuleNotFoundError:  # pragma: no cover
+        pass
 
-except ModuleNotFoundError:  # pragma: no cover
-    logger.info("Tensorflow serving is not installed")
+    try:
+        import grpc
+        from tensorflow_serving.apis import prediction_service_pb2_grpc
+        from tensorflow_serving.apis.get_model_metadata_pb2 import (
+            GetModelMetadataRequest,
+        )
+        from tensorflow_serving.apis.predict_pb2 import PredictRequest
+
+        has_grpc = True
+    except ModuleNotFoundError:  # pragma: no cover
+        pass
 
 
 try:
     import numpy as np
 
+    has_numpy = True
 except ModuleNotFoundError:  # pragma: no cover
-    logger.info("numpy is not installed")
+    pass
 
 
 class TensorflowModelMixin(abc.ABC):
@@ -55,8 +61,12 @@ class TensorflowModelMixin(abc.ABC):
     def __init__(self, *args, **kwargs):
         if not has_tensorflow:
             raise ImportError(
-                "Tensorflow is not installed, instal modelkit[tensorflow]."
+                "Tensorflow is not installed, install modelkit[tensorflow]."
             )
+        if not has_grpc:
+            raise ImportError("grpc is not installed.")
+        if not has_numpy:
+            raise ImportError("numpy is not installed.")
 
     def _is_empty(self, item) -> bool:
         return False

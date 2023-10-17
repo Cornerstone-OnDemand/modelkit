@@ -57,6 +57,7 @@ def clean_env():
         "MODELKIT_TF_SERVING_ENABLE",
         "MODELKIT_TF_SERVING_MODE",
         "MODELKIT_TF_SERVING_PORT",
+        "MODELKIT_NO_TF_IMPORT",
     ]:
         os.environ.pop(env_var, None)
 
