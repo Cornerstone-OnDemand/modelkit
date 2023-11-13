@@ -57,6 +57,7 @@ class TensorflowModelMixin(abc.ABC):
             raise ImportError(
                 "Tensorflow is not installed, instal modelkit[tensorflow]."
             )
+        super().__init__(*args, **kwargs)
 
     def _is_empty(self, item) -> bool:
         return False
@@ -87,7 +88,7 @@ class TensorflowModelMixin(abc.ABC):
         return results
 
 
-class TensorflowModel(Model[ItemType, ReturnType], TensorflowModelMixin):
+class TensorflowModel(TensorflowModelMixin, Model[ItemType, ReturnType]):
     def __init__(
         self,
         output_tensor_mapping: Optional[Dict[str, str]] = None,
@@ -278,7 +279,7 @@ class TensorflowModel(Model[ItemType, ReturnType], TensorflowModelMixin):
             return self.requests_session.close()
 
 
-class AsyncTensorflowModel(AsyncModel[ItemType, ReturnType], TensorflowModelMixin):
+class AsyncTensorflowModel(TensorflowModelMixin, AsyncModel[ItemType, ReturnType]):
     def __init__(
         self,
         output_tensor_mapping: Optional[Dict[str, str]] = None,

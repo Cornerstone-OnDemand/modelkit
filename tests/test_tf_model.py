@@ -4,23 +4,16 @@ import pytest
 import requests
 
 from modelkit import ModelLibrary, testing
+from modelkit.core.models.tensorflow_model import (
+    AsyncTensorflowModel,
+    TensorflowModel,
+    has_tensorflow,
+)
 from modelkit.core.settings import LibrarySettings
+from modelkit.testing import tf_serving_fixture
+from modelkit.utils.tensorflow import write_config
 from tests import TEST_DIR
 from tests.conftest import skip_unless
-
-try:
-    from modelkit.core.models.tensorflow_model import (
-        AsyncTensorflowModel,
-        TensorflowModel,
-    )
-    from modelkit.testing import tf_serving_fixture
-    from modelkit.utils.tensorflow import write_config
-except NameError:
-    # This occurs because type annotations in
-    # modelkit.core.models.tensorflow_model will raise
-    # `NameError: name 'prediction_service_pb2_grpc' is not defined`
-    # when tensorflow-serving-api is not installed
-    pass
 
 np = pytest.importorskip("numpy")
 grpc = pytest.importorskip("grpc")
@@ -434,3 +427,15 @@ def test_iso_serving_mode_no_serving(dummy_tf_models, monkeypatch, working_dir):
             ),
             models=dummy_tf_models,
         )
+
+
+@pytest.mark.skipif(
+    has_tensorflow,
+    reason="This test needs not Tensorflow to be run",
+)
+@pytest.mark.parametrize("ModelType", [AsyncTensorflowModel, TensorflowModel])
+def test_tf_model_with_mixin_mro(ModelType):
+    # TensorflowModelMixin raises an ImportError when inherited the right way
+    # if tensorflow is not installed
+    with pytest.raises(ImportError):
+        ModelType()
