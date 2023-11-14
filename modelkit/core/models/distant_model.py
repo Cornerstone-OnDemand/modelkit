@@ -78,6 +78,7 @@ class AsyncDistantHTTPModel(AsyncModel[ItemType, ReturnType]):
             params=kwargs.get("endpoint_params", self.endpoint_params),
             data=item,
             headers={"content-type": "application/json"},
+            timeout=kwargs.get("timeout", 60),
         ) as response:
             if response.status != 200:
                 raise DistantHTTPModelError(
@@ -121,6 +122,7 @@ class DistantHTTPModel(Model[ItemType, ReturnType]):
             params=kwargs.get("endpoint_params", self.endpoint_params),
             data=item,
             headers={"content-type": "application/json"},
+            timeout=kwargs.get("timeout", 60),
         )
         if response.status_code != 200:
             raise DistantHTTPModelError(
@@ -169,6 +171,7 @@ class DistantHTTPBatchModel(Model[ItemType, ReturnType]):
             params=kwargs.get("endpoint_params", self.endpoint_params),
             data=items,
             headers={"content-type": "application/json"},
+            timeout=kwargs.get("timeout", 60),
         )
         if response.status_code != 200:
             raise DistantHTTPModelError(
@@ -215,6 +218,7 @@ class AsyncDistantHTTPBatchModel(AsyncModel[ItemType, ReturnType]):
             params=kwargs.get("endpoint_params", self.endpoint_params),
             data=items,
             headers={"content-type": "application/json"},
+            timeout=kwargs.get("timeout", 60),
         ) as response:
             if response.status != 200:
                 raise DistantHTTPModelError(
