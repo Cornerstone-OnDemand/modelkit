@@ -101,13 +101,19 @@ def redis_service(request):
 def _do_model_test(model, ITEMS):
     for i in ITEMS:
         res = model(i, _force_compute=True)
+        if isinstance(res, pydantic.BaseModel):
+            res = res.model_dump()
         assert i == res
 
-    assert model.predict_batch(ITEMS) == ITEMS
+    batch_results = model.predict_batch(ITEMS)
+    if isinstance(batch_results[0], pydantic.BaseModel):
+        batch_results = [res.model_dump() for res in batch_results]
+    assert batch_results == ITEMS
 
-    assert ITEMS + [{"ok": {"boomer": [-1]}}] == model.predict_batch(
-        ITEMS + [{"ok": {"boomer": [-1]}}]
-    )
+    batch_results = model.predict_batch(ITEMS + [{"ok": {"boomer": [-1]}}])
+    if isinstance(batch_results[0], pydantic.BaseModel):
+        batch_results = [res.model_dump() for res in batch_results]
+    assert batch_results == ITEMS + [{"ok": {"boomer": [-1]}}]
 
 
 @skip_unless("ENABLE_REDIS_TEST", "True")
@@ -162,12 +168,18 @@ def test_redis_cache(redis_service):
 async def _do_model_test_async(model, ITEMS):
     for i in ITEMS:
         res = await model(i, _force_compute=True)
+        if isinstance(res, pydantic.BaseModel):
+            res = res.model_dump()
         assert i == res
 
     res = await model.predict_batch(ITEMS)
+    if isinstance(res[0], pydantic.BaseModel):
+        res = [item.model_dump() for item in res]
     assert res == ITEMS
 
     res = await model.predict_batch(ITEMS + [{"ok": {"boomer": [-1]}}])
+    if isinstance(res[0], pydantic.BaseModel):
+        res = [item.model_dump() for item in res]
     assert ITEMS + [{"ok": {"boomer": [-1]}}] == res
 
 

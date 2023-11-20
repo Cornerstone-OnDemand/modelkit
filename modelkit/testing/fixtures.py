@@ -27,7 +27,7 @@ def modellibrary_auto_test(
     configuration=None,
     models=None,
     required_models=None,
-    #  fixture name
+    #  fixture name
     fixture_name="testing_model_library",
     test_name="testing_model_library",
     necessary_fixtures=None,
@@ -60,11 +60,13 @@ def modellibrary_auto_test(
         if isinstance(result, JSONTestResult):
             ref = ReferenceJson(os.path.join(test_dir, os.path.dirname(result.fn)))
             if isinstance(pred, pydantic.BaseModel):
-                pred = pred.dict()
+                pred = pred.model_dump()
             ref.assert_equal(os.path.basename(result.fn), pred)
         elif has_numpy and isinstance(result, np.ndarray):
             assert np.array_equal(pred, result), f"{pred} != {result}"
         else:
+            if isinstance(pred, pydantic.BaseModel) and isinstance(result, dict):
+                pred = pred.model_dump()
             assert pred == result, f"{pred} != {result}"
 
     # in order for the above functions to be collected by pytest, add them
@@ -80,14 +82,14 @@ def modellibrary_fixture(
     configuration=None,
     models=None,
     required_models=None,
-    #  fixture name
+    #  fixture name
     fixture_name="testing_model_library",
     necessary_fixtures=None,
     fixture_scope="session",
 ):
     import pytest
 
-    #  create a named fixture with the ModelLibrary
+    #  create a named fixture with the ModelLibrary
     @pytest.fixture(name=fixture_name, scope=fixture_scope)
     def fixture_function(request):
         if necessary_fixtures:

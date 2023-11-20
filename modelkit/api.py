@@ -98,7 +98,7 @@ class ModelkitAutoAPIRouter(ModelkitAPIRouter):
             logger.info("Adding model", name=model_name)
             item_type = m._item_type or Any
             try:
-                item_type.schema()  # type: ignore
+                item_type.model_json_schema()  # type: ignore
             except (ValueError, AttributeError):
                 logger.info(
                     "Discarding item type info for model", name=model_name, path=path

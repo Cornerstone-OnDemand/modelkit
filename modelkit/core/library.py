@@ -53,7 +53,7 @@ T = TypeVar("T", bound=Model)
 
 class AssetInfo(pydantic.BaseModel):
     path: str
-    version: Optional[str]
+    version: Optional[str] = None
 
 
 class ModelLibrary:
@@ -68,7 +68,7 @@ class ModelLibrary:
         required_models: Optional[Union[List[str], Dict[str, Any]]] = None,
     ):
         """
-        Create a prediction service
+        Create a model library
 
         :param models: a `Model` class, a module, or a list of either in which the
         ModelLibrary will look for configurations.

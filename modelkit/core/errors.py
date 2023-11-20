@@ -23,7 +23,7 @@ class ModelkitDataValidationException(Exception):
     def __init__(
         self,
         model_identifier: str,
-        pydantic_exc: Optional[pydantic.error_wrappers.ValidationError] = None,
+        pydantic_exc: Optional[pydantic.ValidationError] = None,
         error_str: str = "Data validation error in model",
     ):
         pydantic_exc_output = ""

@@ -31,7 +31,7 @@ repos:
               tests/.*
           )$
         additional_dependencies: [
-          pydantic==1.*,
+          pydantic==2.*,
           types-python-dateutil,
           types-requests,
           types-urllib3,

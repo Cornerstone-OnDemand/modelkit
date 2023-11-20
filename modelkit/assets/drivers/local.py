@@ -3,6 +3,7 @@ import os
 import shutil
 from typing import Dict, Optional, Union
 
+import pydantic
 from structlog import get_logger
 
 from modelkit.assets import errors
@@ -12,8 +13,7 @@ logger = get_logger(__name__)
 
 
 class LocalStorageDriverSettings(StorageDriverSettings):
-    class Config:
-        extra = "forbid"
+    model_config = pydantic.ConfigDict(extra="forbid")
 
 
 class LocalStorageDriver(StorageDriver):

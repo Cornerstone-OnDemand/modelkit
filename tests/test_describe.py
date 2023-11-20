@@ -101,30 +101,38 @@ def test_describe(monkeypatch):
     library = ModelLibrary(
         models=[SomeSimpleValidatedModelA, SomeComplexValidatedModelA]
     )
-    console = Console()
+    console = Console(no_color=True, force_terminal=False, width=130)
 
     with console.capture() as capture:
         library.describe(console=console)
 
-    if platform.system() != "Windows":
+    if platform.system() == "Windows" or platform.python_version().split(".")[:2] != [
+        "3",
+        "11",
+    ]:
         # Output is different on Windows platforms since
         # modelkit.utils.memory cannot track memory increment
         # and write it
-        r = ReferenceText(os.path.join(TEST_DIR, "testdata"))
-        captured = capture.get()
-        EXCLUDED = ["load time", "load memory", "asset", "category/asset", os.path.sep]
-        captured = "\n".join(
-            line
-            for line in captured.split("\n")
-            if not any(x in line for x in EXCLUDED)
-        )
-        r.assert_equal("library_describe.txt", captured)
+        # It also has a few minor typing differences depending on
+        # the python version
+        return
+    r = ReferenceText(os.path.join(TEST_DIR, "testdata"))
+    captured = capture.get()
+    EXCLUDED = ["load time", "load memory", "asset", "category/asset", os.path.sep]
+    captured = "\n".join(
+        line for line in captured.split("\n") if not any(x in line for x in EXCLUDED)
+    )
+    r.assert_equal("library_describe.txt", captured)
 
 
 class SomeObject:
     def __init__(self) -> None:
         self._x = 1
         self.y = 2
+
+
+class SomePydanticModel(pydantic.BaseModel):
+    ...
 
 
 @pytest.mark.parametrize(
@@ -138,7 +146,7 @@ class SomeObject:
         [1, 2, 3],
         [1, 2, 3, [4]],
         object(),
-        pydantic.BaseModel(),
+        SomePydanticModel(),
         int,
         SomeObject(),
         float,
@@ -195,7 +203,8 @@ def test_describe_load_info():
         def _predict(self, item):
             return item
 
-    console = Console()
+    console = Console(no_color=True, force_terminal=False, width=130)
+
     library = ModelLibrary(models=[top, right, left, join_dep, right_dep])
     for m in ["top", "right", "left", "join_dep", "right_dep"]:
         library.get(m)._load_time = 0.1
@@ -221,10 +230,15 @@ def test_describe_load_info():
     add_dependencies_load_info(load_info_join_dep, library.get("join_dep"))
     assert load_info_join_dep == {}
 
-    if platform.system() == "Windows":
+    if platform.system() == "Windows" or platform.python_version().split(".")[:2] != [
+        "3",
+        "11",
+    ]:
         # Output is different on Windows platforms since
         # modelkit.utils.memory cannot track memory increment
         # and write it
+        # It also has a few minor typing differences depending on
+        # the python version
         return
     with console.capture() as capture:
         console.print("join_dep describe:")

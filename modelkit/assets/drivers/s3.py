@@ -17,17 +17,37 @@ S3_RETRY_POLICY = retry_policy(botocore.exceptions.ClientError)
 
 
 class S3StorageDriverSettings(StorageDriverSettings):
-    aws_access_key_id: Optional[str] = pydantic.Field(None, env="AWS_ACCESS_KEY_ID")
-    aws_secret_access_key: Optional[str] = pydantic.Field(
-        None, env="AWS_SECRET_ACCESS_KEY"
+    aws_access_key_id: Optional[str] = pydantic.Field(
+        None,
+        validation_alias=pydantic.AliasChoices(
+            "aws_access_key_id", "AWS_ACCESS_KEY_ID"
+        ),
     )
-    aws_default_region: Optional[str] = pydantic.Field(None, env="AWS_DEFAULT_REGION")
-    aws_session_token: Optional[str] = pydantic.Field(None, env="AWS_SESSION_TOKEN")
-    s3_endpoint: Optional[str] = pydantic.Field(None, env="S3_ENDPOINT")
-    aws_kms_key_id: Optional[str] = pydantic.Field(None, env="AWS_KMS_KEY_ID")
-
-    class Config:
-        extra = "forbid"
+    aws_secret_access_key: Optional[str] = pydantic.Field(
+        None,
+        validation_alias=pydantic.AliasChoices(
+            "aws_secret_access_key", "AWS_SECRET_ACCESS_KEY"
+        ),
+    )
+    aws_default_region: Optional[str] = pydantic.Field(
+        None,
+        validation_alias=pydantic.AliasChoices(
+            "aws_default_region", "AWS_DEFAULT_REGION"
+        ),
+    )
+    aws_session_token: Optional[str] = pydantic.Field(
+        None,
+        validation_alias=pydantic.AliasChoices(
+            "aws_session_token", "AWS_SESSION_TOKEN"
+        ),
+    )
+    s3_endpoint: Optional[str] = pydantic.Field(
+        None, validation_alias=pydantic.AliasChoices("s3_endpoint", "S3_ENDPOINT")
+    )
+    aws_kms_key_id: Optional[str] = pydantic.Field(
+        None, validation_alias=pydantic.AliasChoices("aws_kms_key_id", "AWS_KMS_KEY_ID")
+    )
+    model_config = pydantic.ConfigDict(extra="forbid")
 
 
 class S3StorageDriver(StorageDriver):

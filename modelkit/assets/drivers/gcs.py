@@ -19,11 +19,12 @@ GCS_RETRY_POLICY = retry_policy(GoogleAPIError)
 
 class GCSStorageDriverSettings(StorageDriverSettings):
     service_account_path: Optional[str] = pydantic.Field(
-        None, env="GOOGLE_APPLICATION_CREDENTIALS"
+        None,
+        validation_alias=pydantic.AliasChoices(
+            "service_account_path", "GOOGLE_APPLICATION_CREDENTIALS"
+        ),
     )
-
-    class Config:
-        extra = "forbid"
+    model_config = pydantic.ConfigDict(extra="forbid")
 
 
 class GCSStorageDriver(StorageDriver):
