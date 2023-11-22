@@ -119,12 +119,10 @@ modelkit = ["py.typed"]
 
 [tool.pytest.ini_options]
 addopts = """
---strict
+--strict-markers
 --verbose
---tb=native
 -vv
 --failed-first
---disable-warnings
 --durations 10
 --color=yes
 tests"""
