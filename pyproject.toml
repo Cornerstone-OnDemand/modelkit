@@ -92,7 +92,7 @@ dev = [
     "pytest-timeout",
     "nox",
     # releases
-    "bump-my-version",
+    "bump-my-version<0.11.0",  # remove upper bound once migrated to pydantic 2
     # docs
     "mkdocs-material",
     "pymdown-extensions>=10.0",  # resolve CVE-2023-32309
