@@ -1,5 +1,6 @@
 import os
 import platform
+import sys
 from typing import Any
 
 import pydantic
@@ -106,10 +107,7 @@ def test_describe(monkeypatch):
     with console.capture() as capture:
         library.describe(console=console)
 
-    if platform.system() == "Windows" or platform.python_version().split(".")[:2] != [
-        "3",
-        "11",
-    ]:
+    if platform.system() == "Windows" or sys.version_info[:2] < (3, 11):
         # Output is different on Windows platforms since
         # modelkit.utils.memory cannot track memory increment
         # and write it
@@ -230,10 +228,7 @@ def test_describe_load_info():
     add_dependencies_load_info(load_info_join_dep, library.get("join_dep"))
     assert load_info_join_dep == {}
 
-    if platform.system() == "Windows" or platform.python_version().split(".")[:2] != [
-        "3",
-        "11",
-    ]:
+    if platform.system() == "Windows" or sys.version_info[:2] < (3, 11):
         # Output is different on Windows platforms since
         # modelkit.utils.memory cannot track memory increment
         # and write it
