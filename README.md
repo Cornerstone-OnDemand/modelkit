@@ -7,7 +7,7 @@
 <p align="center">
   <em>Python framework for production ML systems.</em>
 </p>
-    
+
 ---
 
 <p align="center">
@@ -21,7 +21,7 @@
   <a href="https://pepy.tech/project/modelkit"><img src="https://pepy.tech/badge/modelkit" /></a>
 </p>
 
-`modelkit` is a minimalist yet powerful MLOps library for Python, built for people who want to deploy ML models to production. 
+`modelkit` is a minimalist yet powerful MLOps library for Python, built for people who want to deploy ML models to production.
 
 It packs several features which make your go-to-production journey a breeze, and ensures that the same exact code will run in production, on your machine, or on data processing pipelines.
 
@@ -64,13 +64,26 @@ In addition, you will find that `modelkit` is:
 
 ## Installation
 
-Install with `pip`:
+Install the latest stable release with `pip`:
 
 ```
 pip install modelkit
 ```
 
 Optional dependencies are available for remote storage providers ([see documentation](https://cornerstone-ondemand.github.io/modelkit/assets/storage_provider/#using-different-providers))
+
+### 🚧 Beta release
+
+`modelkit 0.1` and onwards will be shipped with `pydantic 2`, bringing significant performance improvements 🎉 ⚡
+
+To try out the beta before it is stable:
+
+```
+pip install --pre modelkit
+```
+
+Also, you can refer to the [modelkit migration note](https://cornerstone-ondemand.github.io/modelkit/migration.md)
+ to ease the migration process!
 
 ## Community
 Join our [community](https://discord.gg/ayj5wdAArV) on Discord to get support and leave feedback
@@ -83,6 +96,6 @@ Contributors, if you want to install and test locally:
 # install
 make setup
 
-# lint & test
+# lint & test
 make tests
 ```

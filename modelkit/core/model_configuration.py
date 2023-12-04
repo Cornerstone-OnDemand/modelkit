@@ -10,20 +10,24 @@ import pydantic
 from structlog import get_logger
 
 from modelkit.core.model import Asset
+from modelkit.core.settings import ModelkitSettings
 from modelkit.core.types import LibraryModelsType
 
 logger = get_logger(__name__)
 
 
-class ModelConfiguration(pydantic.BaseSettings):
+class ModelConfiguration(ModelkitSettings):
     model_type: Type[Asset]
-    asset: Optional[str]
+    asset: Optional[str] = None
     model_settings: Optional[Dict[str, Any]] = {}
-    model_dependencies: Optional[Dict[str, str]]
+    model_dependencies: Optional[Dict[str, str]] = {}
 
-    @pydantic.validator("model_dependencies", always=True, pre=True)
+    model_config = pydantic.ConfigDict(protected_namespaces=("settings",))
+
+    @pydantic.field_validator("model_dependencies", mode="before")
+    @classmethod
     def validate_dependencies(cls, v):
-        if not v:
+        if v is None:
             return {}
         if isinstance(v, (list, set)):
             return {key: key for key in v}
@@ -55,7 +59,7 @@ def walk_objects(mod):
 def _configurations_from_objects(m) -> Dict[str, ModelConfiguration]:
     if inspect.isclass(m) and issubclass(m, Asset):
         return {
-            key: ModelConfiguration(**{**config, "model_type": m})
+            key: ModelConfiguration(**config, model_type=m)
             for key, config in m.CONFIGURATIONS.items()
         }
     elif isinstance(m, (list, tuple)):
@@ -92,7 +96,9 @@ def configure(
                 if isinstance(conf_value, ModelConfiguration):
                     conf[key] = conf_value
                 elif isinstance(conf_value, dict):
-                    conf[key] = ModelConfiguration(**{**conf[key].dict(), **conf_value})
+                    conf[key] = ModelConfiguration(
+                        **{**conf[key].model_dump(), **conf_value}
+                    )
         for key in set(configuration.keys()) - set(conf.keys()):
             conf_value = configuration[key]
             if isinstance(conf_value, ModelConfiguration):

@@ -36,7 +36,6 @@ from modelkit.core.types import ItemType, ReturnType, TestCase
 from modelkit.utils.cache import Cache, CacheItem
 from modelkit.utils.memory import PerformanceTracker
 from modelkit.utils.pretty import describe, pretty_print_type
-from modelkit.utils.pydantic import construct_recursive
 
 logger = get_logger(__name__)
 
@@ -182,11 +181,8 @@ class Asset:
 
 
 class InternalDataModel(pydantic.BaseModel):
-    data: Any
-
-    class Config:
-        arbitrary_types_allowed = True
-        extra = "forbid"
+    data: Any = None
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True, extra="forbid")
 
 
 PYDANTIC_ERROR_TRUNCATION = 20
@@ -392,11 +388,8 @@ class AbstractModel(Asset, Generic[ItemType, ReturnType]):
     ):
         if model:
             try:
-                if self.service_settings.enable_validation:
-                    return model(data=item).data
-                else:
-                    return construct_recursive(model, data=item).data
-            except pydantic.error_wrappers.ValidationError as exc:
+                return model(data=item).data
+            except pydantic.ValidationError as exc:
                 raise exception(
                     f"{self.__class__.__name__}[{self.configuration_key}]",
                     pydantic_exc=exc,

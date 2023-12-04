@@ -61,7 +61,7 @@ class RedisCache(Cache):
 
     def set(self, k: bytes, d: Any):
         if isinstance(d, pydantic.BaseModel):
-            self.redis.set(k, pickle.dumps(d.dict()))
+            self.redis.set(k, pickle.dumps(d.model_dump()))
         else:
             self.redis.set(k, pickle.dumps(d))
 

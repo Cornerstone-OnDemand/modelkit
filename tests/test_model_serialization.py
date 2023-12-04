@@ -15,7 +15,7 @@ class ReturnType(pydantic.BaseModel):
 
 class SomeModel(Model[ItemType, ReturnType]):
     def _predict(self, item):
-        return item
+        return {"x": item.x}
 
 
 def test_model_serialization():

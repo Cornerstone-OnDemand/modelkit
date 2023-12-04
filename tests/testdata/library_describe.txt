@@ -1,45 +1,37 @@
 Settings
 ├── lazy_loading : bool = False
-├── enable_validation : bool = True
 ├── tf_serving : modelkit.core.settings.TFServingSettings
 │   ├── enable : bool = False
 │   ├── mode : str = 'rest'
 │   ├── host : str = 'localhost'
 │   └── port : int = 8501
-└── cache : typing.Union[modelkit.core.settings.RedisSettings, 
-    modelkit.core.settings.NativeCacheSettings, NoneType] = None
+└── cache : redis = None
 Configuration
 ├── some_complex_model_a : ModelConfiguration
-│   ├── model_type : typing.Type[modelkit.core.model.Asset] = 
-│   │   SomeComplexValidatedModelA type
-│   ├── model_settings : typing.Dict[str, typing.Any]
+│   ├── model_type : typing.Type[modelkit.core.model.Asset] = SomeComplexValidatedModelA type
+│   ├── model_settings : typing.Optional[typing.Dict[str, typing.Any]]
 │   │   └── batch_size : int = 128
-│   └── model_dependencies : typing.Dict[str, str]
+│   └── model_dependencies : typing.Optional[typing.Dict[str, str]]
 │       └── some_model_a : str = 'some_model_a'
 └── some_model_a : ModelConfiguration
-    ├── model_type : typing.Type[modelkit.core.model.Asset] = 
-    │   SomeSimpleValidatedModelA type
-    ├── model_settings : typing.Dict[str, typing.Any] = {}
-    └── model_dependencies : typing.Dict[str, str] = {}
+    ├── model_type : typing.Type[modelkit.core.model.Asset] = SomeSimpleValidatedModelA type
+    ├── model_settings : typing.Optional[typing.Dict[str, typing.Any]] = {}
+    └── model_dependencies : typing.Optional[typing.Dict[str, str]] = {}
 Assets
-    ├── path : str = 
-    └── version : str = None
+    └── version : typing.Optional[str] = None
 Models
-├── some_model_a : SomeSimpleValidatedModelA = SomeSimpleValidatedModelA 
-│   instance
+├── some_model_a : SomeSimpleValidatedModelA = SomeSimpleValidatedModelA instance
 │   ├── configuration: some_model_a
 │   ├── doc: This is a summary
 │   │   
 │   │           that also has plenty more text
 │   ├── signature: str -> str
-└── some_complex_model_a : SomeComplexValidatedModelA = 
-    SomeComplexValidatedModelA instance
+└── some_complex_model_a : SomeComplexValidatedModelA = SomeComplexValidatedModelA instance
     ├── configuration: some_complex_model_a
     ├── doc: More complex
     │   
     │           With **a lot** of documentation
-    ├── signature: tests.test_describe.test_describe.<locals>.ItemModel -> 
-    │   tests.test_describe.test_describe.<locals>.ResultModel
+    ├── signature: tests.test_describe.test_describe.<locals>.ItemModel -> tests.test_describe.test_describe.<locals>.ResultModel
     ├── batch size: 128
     ├── model settings
     │   └── batch_size : int = 128

@@ -13,11 +13,12 @@ def describe(obj, t=None):
     if not t:
         t = Tree("")
 
-    if hasattr(obj, "__fields__"):
-        for field_name, field in obj.__fields__.items():
+    if hasattr(obj, "model_fields"):
+        for field_name, field in obj.model_fields.items():
+            field_type = field.annotation
             sub_t = t.add(
                 f"[deep_sky_blue1]{field_name}[/deep_sky_blue1] [dim]: "
-                f"{pretty_print_type(field.outer_type_)}[/dim]"
+                f"{pretty_print_type(field_type)}[/dim]"
             )
             describe(getattr(obj, field_name), t=sub_t)
     elif isinstance(obj, dict):

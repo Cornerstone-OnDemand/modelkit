@@ -17,11 +17,12 @@ AZURE_RETRY_POLICY = retry_policy()
 
 class AzureStorageDriverSettings(StorageDriverSettings):
     connection_string: Optional[str] = pydantic.Field(
-        None, env="AZURE_STORAGE_CONNECTION_STRING"
+        None,
+        validation_alias=pydantic.AliasChoices(
+            "connection_string", "AZURE_STORAGE_CONNECTION_STRING"
+        ),
     )
-
-    class Config:
-        extra = "forbid"
+    model_config = pydantic.ConfigDict(extra="forbid")
 
 
 class AzureStorageDriver(StorageDriver):
