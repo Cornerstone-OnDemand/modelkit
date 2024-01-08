@@ -23,6 +23,8 @@ def json_serializer(obj):
         return obj.isoformat()
     elif isinstance(obj, decimal.Decimal):
         return str(obj)
+    elif isinstance(obj, set):
+        return list(obj)
     raise TypeError("Unexpected " + obj.__class__.__name__)
 
 
