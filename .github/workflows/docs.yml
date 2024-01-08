@@ -3,14 +3,14 @@ name: docs
 on:
   workflow_run:
     workflows: ["tests"]
-    types:
-      - completed
+    branches: [main]
+    types: [completed]
 
 jobs:
   docs:
     name: Deploy docs
     runs-on: ubuntu-latest
-    if: ${{github.ref == 'refs/heads/main'}}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
