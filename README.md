@@ -11,14 +11,13 @@
 ---
 
 <p align="center">
-  <a href="https://github.com/cornerstone-ondemand/modelkit/actions?query=branch%3Amain+"><img src="https://img.shields.io/github/workflow/status/cornerstone-ondemand/modelkit/CI/main" /></a>
-  <a href="https://github.com/cornerstone-ondemand/modelkit/actions/workflows/main.yml?query=branch%3Amain+"><img src="docs/badges/tests.svg" /></a>
-  <a href="https://cornerstone-ondemand.github.io/modelkit/coverage/index.html"><img src="docs/badges/coverage.svg" /></a>
+  <a href="https://github.com/Cornerstone-OnDemand/modelkit/actions/workflows/tests.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/cornerstone-ondemand/modelkit/tests.yml?branch=main" /></a>
   <a href="https://pypi.org/project/modelkit/"><img src="https://img.shields.io/pypi/v/modelkit" /></a>
   <a href="https://pypi.org/project/modelkit/"><img src="https://img.shields.io/pypi/pyversions/modelkit" /></a>
   <a href="https://cornerstone-ondemand.github.io/modelkit/index.html"><img src="https://img.shields.io/badge/docs-latest-blue" /></a>
   <a href="https://github.com/cornerstone-ondemand/modelkit/blob/main/LICENSE"><img src="https://img.shields.io/github/license/cornerstone-ondemand/modelkit" /></a>
   <a href="https://pepy.tech/project/modelkit"><img src="https://pepy.tech/badge/modelkit" /></a>
+  <a href="https://github.com/Cornerstone-OnDemand/modelkit/graphs/contributors"><img src="https://img.shields.io/github/contributors/Cornerstone-OnDemand/modelkit" /></a>
 </p>
 
 `modelkit` is a minimalist yet powerful MLOps library for Python, built for people who want to deploy ML models to production.
