@@ -35,15 +35,6 @@ jobs:
           OS_NAME: "${{ matrix.os }}"
           PYTHON_VERSION: "${{ matrix.python-version }}"
 
-      - name: Add & Commit Badges
-        if: ${{matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8' && github.ref == 'refs/heads/main'}}
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add docs/badges
-          git diff-index --quiet HEAD || git commit -m "generate badges"
-          git push
-
       - name: 'Upload coverage report'
         if: ${{matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8' && github.ref == 'refs/heads/main'}}
         uses: actions/upload-artifact@v3
