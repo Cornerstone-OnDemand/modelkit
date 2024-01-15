@@ -7,14 +7,14 @@ Modelkit 0.1 and onwards will be shipped with `pydantic 2`, which comes with __s
 Details on how to migrate to `pydantic 2` are available in the corresponding migration guide: https://docs.pydantic.dev/latest/migration/
 
 ### Installation
-To install and try out the `modelkit 0.1.0.bX` beta before its stable release:
+To install the brand new stable release of modelkit:
 ```
-pip install --pre modelkit
+pip install modelkit --upgrade
 ```
 
 ### Known breaking changes
 
-Some breaking changes are arising while upgrading to `pydantic 2` and the new `modelkit 0.1 beta`. Here is a brief, rather exhaustive, list of the encountered issues or dropped features.
+Some breaking changes are arising while upgrading to `pydantic 2` and the new `modelkit 0.1`. Here is a brief, rather exhaustive, list of the encountered issues or dropped features.
 
 #### Drop: implicit pydantic model conversion
 
@@ -57,7 +57,7 @@ Fixes: None, just prepare to have your inputs / outputs validated :)
 
 ### Development Workflows
 
-The beta release, along with subsequent patches, will be pushed to the main branch. Prior to the stable release, tags will adopt the format `0.1.0.bX`
+`modelkit 0.1` (and forward) changes will be pushed to the main branch.
 
 For projects that have not migrated, `modelkit 0.0` will continue to receive maintenance on the `v0.0-maintenance` branch. Releases on PyPI and manual tags will adhere to the usual process.
 
