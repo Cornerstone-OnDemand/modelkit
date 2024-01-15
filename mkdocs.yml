@@ -4,6 +4,7 @@ site_description: "Library for machine learning models"
 
 nav:
   - Home: "index.md"
+  - Migration note: "migration.md"
   - Developer guide:
       - "library/overview.md"
       - Models:
