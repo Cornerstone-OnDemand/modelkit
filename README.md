@@ -71,17 +71,9 @@ pip install modelkit
 
 Optional dependencies are available for remote storage providers ([see documentation](https://cornerstone-ondemand.github.io/modelkit/assets/storage_provider/#using-different-providers))
 
-### 🚧 Beta release
+`modelkit >= 0.1` is now be shipped with `pydantic 2`, bringing significant performance improvements 🎉 ⚡
 
-`modelkit 0.1` and onwards will be shipped with `pydantic 2`, bringing significant performance improvements 🎉 ⚡
-
-To try out the beta before it is stable:
-
-```
-pip install --pre modelkit
-```
-
-Also, you can refer to the [modelkit migration note](https://cornerstone-ondemand.github.io/modelkit/migration.md)
+You can refer to the [modelkit migration note](https://cornerstone-ondemand.github.io/modelkit/migration)
  to ease the migration process!
 
 ## Community

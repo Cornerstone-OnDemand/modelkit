@@ -8,4 +8,4 @@ from modelkit.core.model import Model  # NOQA
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
-__version__ = "0.1.0.b1"
+__version__ = "0.1.0"
