@@ -22,7 +22,7 @@ class AzureStorageDriverSettings(StorageDriverSettings):
             "connection_string", "AZURE_STORAGE_CONNECTION_STRING"
         ),
     )
-    model_config = pydantic.ConfigDict(extra="forbid")
+    model_config = pydantic.ConfigDict(extra="ignore")
 
 
 class AzureStorageDriver(StorageDriver):

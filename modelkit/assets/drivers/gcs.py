@@ -24,7 +24,7 @@ class GCSStorageDriverSettings(StorageDriverSettings):
             "service_account_path", "GOOGLE_APPLICATION_CREDENTIALS"
         ),
     )
-    model_config = pydantic.ConfigDict(extra="forbid")
+    model_config = pydantic.ConfigDict(extra="ignore")
 
 
 class GCSStorageDriver(StorageDriver):

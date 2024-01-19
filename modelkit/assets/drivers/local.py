@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 
 
 class LocalStorageDriverSettings(StorageDriverSettings):
-    model_config = pydantic.ConfigDict(extra="forbid")
+    model_config = pydantic.ConfigDict(extra="ignore")
 
 
 class LocalStorageDriver(StorageDriver):
