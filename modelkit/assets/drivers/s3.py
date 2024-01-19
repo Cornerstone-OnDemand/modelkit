@@ -47,7 +47,7 @@ class S3StorageDriverSettings(StorageDriverSettings):
     aws_kms_key_id: Optional[str] = pydantic.Field(
         None, validation_alias=pydantic.AliasChoices("aws_kms_key_id", "AWS_KMS_KEY_ID")
     )
-    model_config = pydantic.ConfigDict(extra="forbid")
+    model_config = pydantic.ConfigDict(extra="ignore")
 
 
 class S3StorageDriver(StorageDriver):
