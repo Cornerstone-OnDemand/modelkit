@@ -160,7 +160,7 @@ ignore_errors = true
 [tool.bumpversion]
 commit = true
 tag = true
-tag_name = "{new_version}"
+tag_name = "v{new_version}"
 allow_dirty = true
 message = "Bump version: {current_version} → {new_version}"
 
