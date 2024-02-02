@@ -126,7 +126,7 @@ addopts = """
 --failed-first
 --durations 10
 --color=yes
-tests"""
+"""
 
 [tool.black]
 target-version = ['py38']
