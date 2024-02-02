@@ -6,7 +6,12 @@ from modelkit.assets.drivers.azure import AzureStorageDriverSettings
 from modelkit.assets.drivers.gcs import GCSStorageDriverSettings
 from modelkit.assets.drivers.local import LocalStorageDriverSettings
 from modelkit.assets.drivers.s3 import S3StorageDriverSettings
-from modelkit.core.settings import ModelkitSettings
+from modelkit.core.settings import (
+    LibrarySettings,
+    ModelkitSettings,
+    NativeCacheSettings,
+    RedisSettings,
+)
 
 
 def test_modelkit_settings_working(monkeypatch):
@@ -48,3 +53,24 @@ def test_storage_driver_settings(Settings, monkeypatch):
     assert Settings(bucket="bar").bucket == "bar"
     with pytest.raises(pydantic.ValidationError):
         _ = Settings()
+
+
+def test_cache_provider_settings(monkeypatch):
+    monkeypatch.setenv("MODELKIT_CACHE_PROVIDER", "redis")
+    lib_settings = LibrarySettings()
+    assert isinstance(lib_settings.cache, RedisSettings)
+    assert lib_settings.cache.cache_provider == "redis"
+
+    monkeypatch.setenv("MODELKIT_CACHE_PROVIDER", "native")
+    lib_settings = LibrarySettings()
+    assert isinstance(lib_settings.cache, NativeCacheSettings)
+    assert lib_settings.cache.cache_provider == "native"
+
+    monkeypatch.setenv("MODELKIT_CACHE_PROVIDER", "none")
+    assert LibrarySettings().cache is None
+
+    monkeypatch.setenv("MODELKIT_CACHE_PROVIDER", "not supported")
+    assert LibrarySettings().cache is None
+
+    monkeypatch.delenv("MODELKIT_CACHE_PROVIDER")
+    assert LibrarySettings().cache is None
