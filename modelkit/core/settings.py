@@ -95,16 +95,15 @@ class NativeCacheSettings(CacheSettings):
 
 def cache_settings():
     s = CacheSettings()
-    if s.cache_provider is None:
+
+    if s.cache_provider == "none":
         return None
-    try:
+    elif s.cache_provider == "redis":
         return RedisSettings()
-    except pydantic.ValidationError:
-        pass
-    try:
+    elif s.cache_provider == "native":
         return NativeCacheSettings()
-    except pydantic.ValidationError:
-        pass
+    else:
+        return None
 
 
 def _get_library_settings_cache_provider(v: Optional[str]) -> str:
@@ -134,8 +133,5 @@ class LibrarySettings(ModelkitSettings):
             Annotated[None, pydantic.Tag("none")],
         ],
         pydantic.Discriminator(_get_library_settings_cache_provider),
-    ] = pydantic.Field(
-        default_factory=cache_settings,
-        union_mode="left_to_right",
-    )
+    ] = pydantic.Field(default_factory=cache_settings)
     model_config = pydantic.ConfigDict(extra="allow")

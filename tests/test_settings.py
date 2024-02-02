@@ -62,18 +62,15 @@ def test_cache_provider_settings(monkeypatch):
     assert lib_settings.cache.cache_provider == "redis"
 
     monkeypatch.setenv("MODELKIT_CACHE_PROVIDER", "native")
-    with pytest.raises(pydantic.ValidationError):  # FIXME: shouldn't raise
-        lib_settings = LibrarySettings()
-        assert isinstance(lib_settings.cache, NativeCacheSettings)
-        assert lib_settings.cache.cache_provider == "native"
+    lib_settings = LibrarySettings()
+    assert isinstance(lib_settings.cache, NativeCacheSettings)
+    assert lib_settings.cache.cache_provider == "native"
 
     monkeypatch.setenv("MODELKIT_CACHE_PROVIDER", "none")
-    with pytest.raises(pydantic.ValidationError):  # FIXME: shouldn't raise
-        assert LibrarySettings().cache is None
+    assert LibrarySettings().cache is None
 
     monkeypatch.setenv("MODELKIT_CACHE_PROVIDER", "not supported")
-    with pytest.raises(pydantic.ValidationError):  # FIXME: shouldn't raise
-        assert LibrarySettings().cache is None
+    assert LibrarySettings().cache is None
 
     monkeypatch.delenv("MODELKIT_CACHE_PROVIDER")
     assert LibrarySettings().cache is None
