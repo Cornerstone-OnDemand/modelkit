@@ -249,7 +249,7 @@ class AssetsManager:
             "Fetched asset",
             name=spec.name,
             version=spec.version,
-            from_cacke=asset_info.get("from_cache"),
+            from_cache=asset_info.get("from_cache"),
         )
 
         if not return_info:
